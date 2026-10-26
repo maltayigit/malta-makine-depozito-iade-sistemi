@@ -2,6 +2,9 @@
 
 Plastik şişe, cam şişe ve teneke kutuları toplayan **depozito iade makineleri (RVM)** için uçtan uca yazılım: tanıtım web sitesi, makineleri uzaktan izleyen yönetim paneli, REST API, PostgreSQL veritabanı ve servis personeli için mobil uygulama.
 
+> **Not:** Bu, depozito iade makinesi (RVM) yazılımlarının nasıl tasarlanabileceğini göstermek için kişisel olarak geliştirdiğim bir **örnek / portföy projesidir**. "Malta Makine" kurgusal bir marka adıdır; projedeki firma, adres ve kullanıcı bilgileri örnek verilerdir.
+
+
 ![Depozito iade sistemi konsept görseli](web-sitesi/market_konusma_1.png)
 
 ## Bileşenler

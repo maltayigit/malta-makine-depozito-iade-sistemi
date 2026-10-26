@@ -1,0 +1,764 @@
+﻿<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Malta Makine — Doluluk Bilgi</title>
+<link rel="icon" type="image/svg+xml" href="assets/image/favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/style.css">
+<script src="assets/js/auth.js"></script>
+<script>sayfaKorumaKontrolEt(['yonetici','market','bakanlik']);</script>
+<script src="assets/js/doluluk-veri.js"></script>
+<script src="assets/js/acil-durum-veri.js"></script>
+<script src="assets/js/kapak-uyari.js"></script>
+</head>
+<body>
+ 
+  <input type="checkbox" id="menu-toggle" class="menu-toggle-input">
+  <label for="menu-toggle" class="hamburger" aria-label="Menüyü aç/kapat">
+    <span></span><span></span><span></span>
+  </label>
+  <label for="menu-toggle" class="overlay" aria-hidden="true"></label>
+ 
+  <aside class="sidebar" aria-label="Ana gezinme">
+    <div class="mark">
+      <div class="mark-glyph" aria-hidden="true">
+        <a href="index.html">
+        <img src="assets/image/logo.svg" alt="Malta logosu" class="mark-glyph-img">
+       </a>
+      </div>
+      <div class="mark-text">Malta Makine</div>
+    </div>
+    <div class="mark-sub">İade Kiosk Sistemleri</div>
+ 
+    <div class="panel-seam"></div>
+ 
+    <nav>
+      <div class="nav-group">
+        <p class="nav-label">Ürün</p>
+        <ul class="nav-list">
+          <li class="nav-item">
+            <a class="nav-link" href="index.html"><span class="led"></span>Bakım</a>
+          </li>
+          <li class="nav-item" data-rol="yonetici,market">
+            <a class="nav-link" href="makine.html"><span class="led"></span>Kapaklar</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="doluluk.html"><span class="led"></span>Doluluk Bilgi</a>
+          </li>
+          <li class="nav-item" data-rol="yonetici,market">
+            <a class="nav-link" href="motor-durum.html"><span class="led"></span>Motor Durum Özeti</a>
+          </li>
+          <li class="nav-item" data-rol="yonetici">
+            <a class="nav-link" href="kapak-motor-durum.html"><span class="led"></span>Kapak Motor Durumu</a>
+          </li>
+          <li class="nav-item" data-rol="yonetici,market">
+            <a class="nav-link" href="fan.html"><span class="led"></span>Fan Durum</a>
+          </li>
+          <li class="nav-item" data-rol="yonetici">
+            <a class="nav-link" href="kamera-durum.html"><span class="led"></span>Kamera Durum</a>
+          </li>
+          <li class="nav-item" data-rol="yonetici,market">
+            <a class="nav-link" href="ekran-durumu.html"><span class="led"></span>Ekran Durum Paneli</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="acil-durum.html"><span class="led"></span>Acil Durum & Alarm</a>
+          </li>
+        </ul>
+      </div>
+ 
+      <div class="nav-group">
+        <p class="nav-label">Motorlar</p>
+        <ul class="nav-list">
+          <li class="nav-item">
+            <a class="nav-link" href="unite.html?unite=ezme1_05l"><span class="led"></span>(0.5L) 1. Plastik Ezme Durum</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="unite.html?unite=ezme2_05l"><span class="led"></span>(0.5L) 2. Plastik Ezme Durum</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="unite.html?unite=ezme1_13l"><span class="led"></span>(1-3L) 1. Plastik Ezme Durum</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="unite.html?unite=ezme2_13l"><span class="led"></span>(1-3L) 2. Plastik Ezme Durum</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="unite.html?unite=ezme3"><span class="led"></span>Teneke/Alüminyum Ezme Durum</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="cam-kirma.html"><span class="led"></span>1. Cam Kırma Durum</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="cam-kirma2.html"><span class="led"></span>2. Cam Kırma Durum</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="unite.html?unite=suKaristirma"><span class="led"></span>Atık Su Tankı Karıştırma Durum</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="unite.html?unite=atikSuPompa"><span class="led"></span>Atık Su Pompa Durum</a>
+          </li>
+        </ul>
+      </div>
+
+      <div class="nav-group">
+        <p class="nav-label">İletişim</p>
+        <ul class="nav-list">
+          <li class="nav-item" data-rol="yonetici,market">
+            <a class="nav-link" href="ariza-bildir.html"><span class="led"></span>Arıza Bildir</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="contact.html"><span class="led"></span>Bizimle İletişime Geçin</a>
+          </li>
+        </ul>
+      </div>
+    </nav>
+
+    <div class="nav-group">
+        <p class="nav-label"></p>
+        <ul class="nav-list">
+          <li class="nav-item">
+            <a class="nav-link" href="makineler.html"><span class="led"></span>Çıkış</a>
+          </li>
+        </ul>
+      </div>
+ 
+    <div class="sidebar-foot">
+      <div class="barcode" aria-hidden="true"></div>
+      <span>PANEL SÜRÜM 0.1</span>
+    </div>
+  </aside>
+ 
+  <main>
+    <section id="doluluk-bilgi">
+ 
+      <div class="doluluk-top">
+        <div>
+          <p class="eyebrow" style="margin-bottom:6px;">Makine #001 · Malta</p>
+          <h1 style="font-size:clamp(24px,3vw,32px); margin:0;">Doluluk Bilgileri</h1>
+        </div>
+        <div style="display:flex; align-items:center; gap:14px; flex-wrap:wrap;">
+          <button class="unite-btn gider" onclick="tumunuBosaltTikla()">Tümünü Boşalt</button>
+          <button class="unite-btn kayit" onclick="atikKayitlarAc()" data-bakanlik-izin="1">Kayıtlar</button>
+          <div class="doluluk-updated">
+            <span class="dot"></span>
+            <span id="son-guncelleme">Son güncelleme: —</span>
+          </div>
+        </div>
+      </div>
+ 
+      <!-- Kritik doluluk uyarısı (sadece kritik bölme varsa görünür) -->
+      <div id="doluluk-alert-wrap"></div>
+
+      <!-- Tümünü Boşalt hata bildirimi (native alert() yerine sayfa tasarımına uygun) -->
+      <div id="bosalt-hata-wrap"></div>
+
+      <!-- Özet kartları -->
+      <div class="doluluk-summary">
+        <div class="summary-card">
+          <div class="s-label">Ortalama Doluluk</div>
+          <div class="s-value" id="ozet-ortalama">—<span>%</span></div>
+        </div>
+        <div class="summary-card">
+          <div class="s-label">En Dolu Bölme</div>
+          <div class="s-value" id="ozet-endolu">—</div>
+        </div>
+        <div class="summary-card">
+          <div class="s-label">Tahmini Boşaltma</div>
+          <div class="s-value" id="ozet-tahmin">—<span>gün</span></div>
+        </div>
+      </div>
+ 
+      <div class="row">
+        <h2>Bölme Durumları</h2>
+        <span>Gerçek Zamanlı İzleme</span>
+      </div>
+ 
+      <div class="doluluk-grid" id="doluluk-grid"></div>
+ 
+      <div class="row" style="margin-top:38px;">
+        <h2>Saatlik Atık Raporu</h2>
+        <span id="atik-toplam-badge" class="toplam-badge">0 hareket kaydedildi</span>
+      </div>
+
+      <div class="saatlik-card">
+        <div class="saatlik-table-wrap">
+          <table class="saatlik-table">
+            <thead><tr id="saatlik-thead-row"></tr></thead>
+            <tbody id="saatlik-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+ 
+    </section>
+  </main>
+
+  <!-- Güvenlik Uyarısı Modalı (index.html / makine.html ile aynı tasarım) -->
+  <div class="warn-overlay" id="warn-overlay">
+    <div class="warn-modal" role="alertdialog" aria-labelledby="warn-title" aria-describedby="warn-text">
+      <div class="warn-head">
+        <div class="warn-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        </div>
+        <div>
+          <p class="warn-sub">Güvenlik Uyarısı</p>
+          <h3 class="warn-title" id="warn-title">Makine Otomatik Kapatıldı</h3>
+        </div>
+      </div>
+      <p class="warn-text" id="warn-text">Aşağıdaki hazne(ler) doluluğa ulaştığı için makine kendiliğinden kapatıldı.</p>
+      <ul class="warn-list" id="warn-list"></ul>
+      <div class="warn-actions">
+        <button class="warn-btn" onclick="uyariKapat()">Anladım</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Atık Kayıtları Modalı (kapak kayıt defteriyle aynı sistem) -->
+  <div class="log-overlay" id="atik-log-overlay">
+    <div class="log-modal" role="dialog" aria-labelledby="atik-log-title">
+      <div class="log-head">
+        <div>
+          <h3 id="atik-log-title">Atık Hareket Kayıtları</h3>
+          <p class="log-sub">Bölme · Olay · Miktar · Zaman bilgisiyle geçmiş</p>
+        </div>
+        <button class="log-close-btn" onclick="atikKayitlarKapat()" data-bakanlik-izin="1" aria-label="Kapat">✕</button>
+      </div>
+      <div class="log-body">
+        <table class="log-table">
+          <thead>
+            <tr>
+              <th class="log-no-col">#</th>
+              <th>Bölme</th>
+              <th>Olay</th>
+              <th>Miktar</th>
+              <th>Zaman (Gün.Ay.Yıl Saat)</th>
+              <th>Doluluk Sonrası</th>
+            </tr>
+          </thead>
+          <tbody id="atik-log-tbody"></tbody>
+        </table>
+      </div>
+      <div class="log-foot">
+        <button class="log-temizle-btn" onclick="atikKayitlariTemizleOnayAc()">Kayıtları Temizle</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Atık Kayıtlarını Temizle Onay Modalı -->
+  <div class="confirm-overlay" id="atik-confirm-overlay">
+    <div class="confirm-modal" role="alertdialog" aria-labelledby="atik-confirm-title" aria-describedby="atik-confirm-text">
+      <div class="confirm-head">
+        <div class="confirm-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg>
+        </div>
+        <div>
+          <p class="confirm-sub">Kayıtlar Silinecek</p>
+          <h3 class="confirm-title" id="atik-confirm-title">Emin misiniz?</h3>
+        </div>
+      </div>
+      <p class="confirm-text" id="atik-confirm-text">Tüm atık hareket kayıtları ve saatlik rapor verileri kalıcı olarak silinecek. Bu işlem geri alınamaz.</p>
+      <div class="confirm-actions">
+        <button class="confirm-btn-ghost" onclick="atikKayitlariTemizleOnayKapat()">Vazgeç</button>
+        <button class="confirm-btn-danger" onclick="atikKayitlariTemizleOnayla()">Evet, Sil</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tümünü Boşalt Onay Modalı -->
+  <div class="confirm-overlay" id="bosalt-confirm-overlay">
+    <div class="confirm-modal" role="alertdialog" aria-labelledby="bosalt-confirm-title" aria-describedby="bosalt-confirm-text">
+      <div class="confirm-head">
+        <div class="confirm-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 2h8v3l2 2v13a1 1 0 01-1 1H7a1 1 0 01-1-1V7l2-2V2z"/><path d="M9 2v3M15 2v3"/></svg>
+        </div>
+        <div>
+          <p class="confirm-sub">Tüm Bölmeler Boşaltılacak</p>
+          <h3 class="confirm-title" id="bosalt-confirm-title">Emin misiniz?</h3>
+        </div>
+      </div>
+      <p class="confirm-text" id="bosalt-confirm-text">Plastik, Teneke/Alüminyum, Cam ve Atık Su bölmelerinin tümü boşaltılacak ve doluluk yüzdeleri %0'a dönecek. Bu işlem geri alınamaz.</p>
+      <div class="confirm-actions">
+        <button class="confirm-btn-ghost" onclick="bosaltOnayKapat()">Vazgeç</button>
+        <button class="confirm-btn-danger" onclick="bosaltOnayla()">Evet, Boşalt</button>
+      </div>
+    </div>
+  </div>
+
+</body>
+<script>
+ 
+  // Mevcut sayfanın URL'sine göre doğru sekmeyi otomatik "aktif" yap
+  (function aktifSekmeAyarla(){
+    var mevcutDosya = window.location.pathname.split('/').pop() || 'index.html';
+    var eslesenLink = null;
+ 
+    document.querySelectorAll('.nav-link').forEach(function(link){
+      var href = link.getAttribute('href');
+      if (!href || href === '#') return;
+      var hedefDosya = href.split('/').pop();
+      if (hedefDosya === mevcutDosya) {
+        eslesenLink = link;
+      }
+    });
+ 
+    document.querySelectorAll('.nav-item').forEach(function(item){
+      item.classList.remove('active');
+    });
+    if (eslesenLink) {
+      eslesenLink.closest('.nav-item').classList.add('active');
+    }
+  })();
+ 
+  // Mobil çekmece açıksa, bir menüye tıklandığında otomatik kapansın
+  document.querySelectorAll('.nav-link').forEach(function(link){
+    link.addEventListener('click', function(){
+      var toggle = document.getElementById('menu-toggle');
+      if (toggle) toggle.checked = false;
+    });
+  });
+ 
+  // Not: bolmeler, dolulukYukle/dolulukTick (gerçek backend'i sorgular),
+  // durum, uyariSesiCal ve renderUyariBanner fonksiyonları artık ortak
+  // "doluluk-veri.js" dosyasında tanımlı.
+
+  // ── Güvenlik Uyarısı modalı (hazne dolup makine otomatik kapandığında) ──
+  function uyariKapat(){
+    const overlay = document.getElementById('warn-overlay');
+    if (overlay) overlay.classList.remove('show');
+  }
+
+  const warnOverlayEl = document.getElementById('warn-overlay');
+  if (warnOverlayEl) {
+    warnOverlayEl.addEventListener('click', function(e){
+      if (e.target === this) uyariKapat();
+    });
+  }
+  document.addEventListener('keydown', function(e){
+    if (e.key === 'Escape') uyariKapat();
+  });
+
+  // Acil durum paneline hangi bölmelerin şu an "uyarı seviyesi ve üstü"
+  // (>= %60 doluluk) alarmı düşürdüğünü, hangi seviyeyle bildirildiğini
+  // takip eder; aynı bölme için tekrar tekrar alarm oluşturmamak, doluluk
+  // yükselince seviyeyi güncellemek ve doluluk düşünce alarmı otomatik
+  // gidermek içindir. Yapı: { bolmeId: 'bilgi' | 'uyari' | 'kritik' }
+  // (dolulukAcilSeviye ve _acilBilinenUyariBolmeler artık doluluk-veri.js
+  // içinde ortak tanımlı — hem burada hem arka planda hangi sayfa açık
+  // olursa olsun aynı mantık kullanılıyor.)
+
+  function renderDoluluk(veri){
+    atikDegisimleriniKaydet(veri); // yeni veriyi çizmeden önce, öncekiyle karşılaştırıp hareketleri kaydet
+
+    const grid = document.getElementById('doluluk-grid');
+    grid.innerHTML = '';
+ 
+    let toplam = 0;
+    let enDolu = { ad: '', yuzde: -1 };
+    let kritikBolmeler = [];
+    let uyariBolmeler = []; // %60 ve üstü (uyarı seviyesi ve üstü) — merkezi alarm paneline bildirilecekler
+ 
+    bolmeler.forEach(function(b){
+      const yuzde = veri[b.id] ?? 0;
+      toplam += yuzde;
+      if (yuzde > enDolu.yuzde) enDolu = { ad: b.ad, yuzde: yuzde };
+ 
+      const st = durum(yuzde);
+      if (st.key === 'kritik') kritikBolmeler.push({ id: b.id, ad: b.ad, yuzde: yuzde });
+      if (st.key !== 'normal') uyariBolmeler.push({ id: b.id, ad: b.ad, yuzde: yuzde });
+      const miktar = Math.round(b.kapasite * (yuzde / 100));
+ 
+      const r = 40;
+      const c = 2 * Math.PI * r;
+      const offset = c - (yuzde / 100) * c;
+ 
+      const card = document.createElement('div');
+      card.className = 'doluluk-card' + (st.key === 'kritik' ? ' kart-kritik' : '');
+      card.innerHTML = `
+        <div class="doluluk-ring">
+          <svg viewBox="0 0 100 100">
+            <circle class="ring-track" cx="50" cy="50" r="${r}"></circle>
+            <circle class="ring-fill" cx="50" cy="50" r="${r}"
+              stroke="${b.renk}"
+              stroke-dasharray="${c}"
+              stroke-dashoffset="${offset}"></circle>
+          </svg>
+          <div class="doluluk-ring-label">
+            <div class="doluluk-ring-pct">%${yuzde}</div>
+            <div class="doluluk-ring-unit">DOLU</div>
+          </div>
+        </div>
+        <div class="doluluk-info">
+          <div class="doluluk-info-head">
+            <div class="doluluk-name">
+              <span class="doluluk-icon" style="background:${b.renk}22; color:${b.renk};">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">${b.icon}</svg>
+              </span>
+              ${b.ad}
+            </div>
+            <span class="doluluk-status ${st.key}">${st.ad}</span>
+          </div>
+          <div class="doluluk-meta">${miktar} / ${b.kapasite} ${b.birim}</div>
+          <div class="doluluk-bar-track">
+            <div class="doluluk-bar-fill" style="width:${yuzde}%; background:${b.renk};"></div>
+          </div>
+        </div>`;
+      grid.appendChild(card);
+    });
+ 
+    const ortalama = Math.round(toplam / bolmeler.length);
+    document.getElementById('ozet-ortalama').innerHTML = ortalama + '<span>%</span>';
+    document.getElementById('ozet-endolu').textContent = enDolu.ad;
+ 
+    const tahminGun = Math.max(1, Math.round((100 - ortalama) / 8));
+    document.getElementById('ozet-tahmin').innerHTML = tahminGun + '<span>gün</span>';
+ 
+    const simdi = new Date();
+    const saat = String(simdi.getHours()).padStart(2, '0') + ':' + String(simdi.getMinutes()).padStart(2, '0');
+    document.getElementById('son-guncelleme').textContent = 'Son güncelleme: ' + saat;
+
+    renderUyariBanner(kritikBolmeler, false);
+
+    // Merkezi acil durum paneline bildir: %60 ve üstü doluluğa ulaşan
+    // (uyarı seviyesi ve üstü) her bölme için alarm oluştur/güncelle;
+    // doluluk oranı değiştikçe alarmın seviyesi de (bilgi/uyarı/kritik)
+    // güncellenir. Bölme %60'ın altına inip normale döndüğünde alarm
+    // otomatik olarak giderilir — elle kapatma yoktur, sadece hazne
+    // fiilen boşaldığında alarm da kendiliğinden kapanır.
+    // (Mantığın kendisi artık doluluk-veri.js'de, arka plan zamanlayıcısıyla
+    // paylaşılıyor — bu sayede doluluk.html açık olmasa bile çalışır.)
+    dolulukAcilDurumSenkronizeEt(veri);
+
+    saatlikTabloOlustur();
+    const atikOverlay = document.getElementById('atik-log-overlay');
+    if (atikOverlay && atikOverlay.classList.contains('show')) atikKayitlarOlustur();
+  }
+ 
+  // "Tümünü Boşalt" butonuna basınca artık direkt işlem yapmıyor, önce
+  // sayfanın tasarımına uygun onay modalını açıyor (native confirm()/alert()
+  // yerine — "Kayıtları Temizle" ile aynı desen).
+  function tumunuBosaltTikla(){
+    const overlay = document.getElementById('bosalt-confirm-overlay');
+    if (overlay) overlay.classList.add('show');
+  }
+
+  function bosaltOnayKapat(){
+    const overlay = document.getElementById('bosalt-confirm-overlay');
+    if (overlay) overlay.classList.remove('show');
+  }
+
+  function bosaltHataGoster(mesaj){
+    const wrap = document.getElementById('bosalt-hata-wrap');
+    if (!wrap) return;
+    if (!mesaj){ wrap.innerHTML = ''; return; }
+    wrap.innerHTML =
+      '<div class="doluluk-alert" role="alert">' +
+        '<span class="doluluk-alert-icon" aria-hidden="true">' +
+          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 9v4M12 17h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>' +
+        '</span>' +
+        '<div class="doluluk-alert-body">' +
+          '<p class="doluluk-alert-title">Boşaltma Başarısız</p>' +
+          '<p class="doluluk-alert-text">' + mesaj + '</p>' +
+        '</div>' +
+      '</div>';
+  }
+
+  async function bosaltOnayla(){
+    bosaltOnayKapat();
+    bosaltHataGoster(null);
+    try{
+      const veri = await dolulukTumunuBosalt();
+      renderDoluluk(veri);
+    }catch(e){
+      console.error('[doluluk] Tümünü boşalt başarısız:', e);
+      bosaltHataGoster('Bölmeler boşaltılamadı: ' + e.message);
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', async function(){
+    menuyuRoleGoreDuzenle();
+    try{
+      const ilkVeri = await dolulukYukle(); // ilk yükte hareket kaydı oluşturma, sadece başlangıç anlık görüntüsünü al
+      oncekiDolulukVerisi = JSON.parse(JSON.stringify(ilkVeri));
+      renderDoluluk(ilkVeri);
+    }catch(e){
+      console.error('[doluluk] İlk veri yüklenemedi:', e);
+    }
+    atikToplamBadgeGuncelle();
+    saatlikTabloOlustur();
+
+    // Canlı güncelleme: doluluk-veri.js'teki dolulukTick() artık gerçek
+    // backend'i (GET /api/machines/:id/doluluk) periyodik olarak sorguluyor;
+    // burada sadece dönen veriyle ekranı yeniden çiziyoruz.
+    // renderUyariBanner fonksiyonu her çağrıldığında kritik listesini otomatik
+    // günceller, yeni kritikleşen bir bölme varsa kısa bir uyarı sesi çalar.
+    setInterval(async function(){
+      try{
+        const veri = await dolulukTick();
+        renderDoluluk(veri);
+        dolulukOtomatikKapanmaBildirimiGosterVarsa(); // hazne bu tick'te eşiği geçip makineyi kapattıysa uyar
+      }catch(e){
+        console.error('[doluluk] Periyodik güncelleme başarısız:', e);
+      }
+    }, 4000);
+
+    // Saat sınırı geçtiğinde (yeni saat başladığında) tablo "şu an" satırını
+    // güncelleyebilsin diye, tick'i beklemeden de düzenli tazele.
+    setInterval(saatlikTabloOlustur, 30000);
+  });
+
+  // ── Atık Kayıt Defteri (kapak açılma/kapanma kayıt sistemiyle aynı mantık) ──
+  const ATIK_KAYIT_KEY = 'atikKayitlari';
+  const ATIK_TOPLAM_KEY = 'atikToplamHareket';
+  const ATIK_KAYIT_SERT_TAVAN = 1000; // tarayıcı depolaması aşırı şişmesin diye mutlak üst sınır
+
+  let oncekiDolulukVerisi = null; // bir önceki render'daki doluluk yüzdeleri (hareket farkını hesaplamak için)
+
+  function ikiHaneli(n) { return String(n).padStart(2, '0'); }
+
+  function tarihFormatla(ts) {
+    if (!ts) return '—';
+    const d = new Date(ts);
+    return ikiHaneli(d.getDate()) + '.' + ikiHaneli(d.getMonth() + 1) + '.' + d.getFullYear() +
+           ' ' + ikiHaneli(d.getHours()) + ':' + ikiHaneli(d.getMinutes()) + ':' + ikiHaneli(d.getSeconds());
+  }
+
+  function atikKayitlariYukleGuvenli() {
+    try { return JSON.parse(localStorage.getItem(ATIK_KAYIT_KEY) || '[]'); }
+    catch (e) { return []; }
+  }
+
+  function atikKayitlariKaydet(kayitlar) {
+    localStorage.setItem(ATIK_KAYIT_KEY, JSON.stringify(kayitlar));
+  }
+
+  function atikKayitEkle(kayit) {
+    const kayitlar = atikKayitlariYukleGuvenli();
+    kayitlar.unshift(kayit); // en yeni en üstte
+    if (kayitlar.length > ATIK_KAYIT_SERT_TAVAN) kayitlar.length = ATIK_KAYIT_SERT_TAVAN;
+    atikKayitlariKaydet(kayitlar);
+  }
+
+  function atikToplamHareketYukle() {
+    return parseInt(localStorage.getItem(ATIK_TOPLAM_KEY) || '0', 10) || 0;
+  }
+
+  function atikToplamHareketArtir(adet) {
+    if (!adet) return;
+    localStorage.setItem(ATIK_TOPLAM_KEY, String(atikToplamHareketYukle() + adet));
+    atikToplamBadgeGuncelle();
+  }
+
+  function atikToplamBadgeGuncelle() {
+    const el = document.getElementById('atik-toplam-badge');
+    if (!el) return;
+    const sayi = atikToplamHareketYukle();
+    el.textContent = sayi + ' hareket kaydedildi';
+  }
+
+  // Yeni doluluk verisini bir önceki anlık görüntüyle kıyaslar; artan bölmeler
+  // için "atık eklendi", azalan bölmeler için "boşaltıldı" kaydı oluşturur.
+  function atikDegisimleriniKaydet(yeniVeri) {
+    if (oncekiDolulukVerisi) {
+      let hareketSayisi = 0;
+      bolmeler.forEach(function (b) {
+        const eski = oncekiDolulukVerisi[b.id] ?? 0;
+        const yeni = yeniVeri[b.id] ?? 0;
+        const fark = yeni - eski;
+        if (fark > 0) {
+          const miktar = Math.max(1, Math.round(b.kapasite * (fark / 100)));
+          atikKayitEkle({ id: b.id, ad: b.ad, tur: 'ekleme', miktar: miktar, birim: b.birim, yuzdeSonrasi: yeni, zaman: Date.now() });
+          hareketSayisi++;
+        } else if (fark < 0) {
+          const miktar = Math.max(1, Math.round(b.kapasite * (Math.abs(fark) / 100)));
+          atikKayitEkle({ id: b.id, ad: b.ad, tur: 'bosaltma', miktar: miktar, birim: b.birim, yuzdeSonrasi: yeni, zaman: Date.now() });
+          hareketSayisi++;
+        }
+      });
+      if (hareketSayisi) atikToplamHareketArtir(hareketSayisi);
+    }
+    oncekiDolulukVerisi = JSON.parse(JSON.stringify(yeniVeri));
+  }
+
+  function atikKayitlarOlustur() {
+    const govde = document.getElementById('atik-log-tbody');
+    if (!govde) return;
+    const kayitlar = atikKayitlariYukleGuvenli();
+    let satirlar = '';
+    let sira = 1;
+
+    kayitlar.forEach(function (k) {
+      const turBadge = k.tur === 'ekleme'
+        ? '<span class="log-acik-badge">+ Atık Eklendi</span>'
+        : '<span class="log-acik-badge" style="background:#FCEAEA;color:#C0392B;">− Boşaltıldı</span>';
+      satirlar += '<tr class="log-row">' +
+        '<td class="log-no">' + (sira++) + '</td>' +
+        '<td>' + k.ad + '</td>' +
+        '<td>' + turBadge + '</td>' +
+        '<td>' + k.miktar + ' ' + k.birim + '</td>' +
+        '<td>' + tarihFormatla(k.zaman) + '</td>' +
+        '<td>%' + k.yuzdeSonrasi + '</td>' +
+      '</tr>';
+    });
+
+    govde.innerHTML = satirlar || '<tr><td colspan="6" class="log-bos">Henüz kayıt yok</td></tr>';
+  }
+
+  function atikKayitlarAc() {
+    atikKayitlarOlustur();
+    const overlay = document.getElementById('atik-log-overlay');
+    if (overlay) overlay.classList.add('show');
+  }
+
+  function atikKayitlarKapat() {
+    const overlay = document.getElementById('atik-log-overlay');
+    if (overlay) overlay.classList.remove('show');
+  }
+
+  function atikKayitlariTemizleOnayAc() {
+    const overlay = document.getElementById('atik-confirm-overlay');
+    if (overlay) overlay.classList.add('show');
+  }
+
+  function atikKayitlariTemizleOnayKapat() {
+    const overlay = document.getElementById('atik-confirm-overlay');
+    if (overlay) overlay.classList.remove('show');
+  }
+
+  function atikKayitlariTemizleOnayla() {
+    localStorage.removeItem(ATIK_KAYIT_KEY);
+    localStorage.removeItem(ATIK_TOPLAM_KEY);
+    atikKayitlarOlustur();
+    atikToplamBadgeGuncelle();
+    saatlikTabloOlustur();
+    atikKayitlariTemizleOnayKapat();
+  }
+
+  document.addEventListener('DOMContentLoaded', function () {
+    const atikLogOverlayEl = document.getElementById('atik-log-overlay');
+    if (atikLogOverlayEl) {
+      atikLogOverlayEl.addEventListener('click', function (e) {
+        if (e.target === this) atikKayitlarKapat();
+      });
+    }
+    const atikConfirmOverlayEl = document.getElementById('atik-confirm-overlay');
+    if (atikConfirmOverlayEl) {
+      atikConfirmOverlayEl.addEventListener('click', function (e) {
+        if (e.target === this) atikKayitlariTemizleOnayKapat();
+      });
+    }
+    const bosaltConfirmOverlayEl = document.getElementById('bosalt-confirm-overlay');
+    if (bosaltConfirmOverlayEl) {
+      bosaltConfirmOverlayEl.addEventListener('click', function (e) {
+        if (e.target === this) bosaltOnayKapat();
+      });
+    }
+  });
+  document.addEventListener('keydown', function (e) {
+    if (e.key !== 'Escape') return;
+    const bosaltConfirmOverlayEl = document.getElementById('bosalt-confirm-overlay');
+    if (bosaltConfirmOverlayEl && bosaltConfirmOverlayEl.classList.contains('show')) {
+      bosaltOnayKapat();
+      return;
+    }
+    const atikConfirmOverlayEl = document.getElementById('atik-confirm-overlay');
+    if (atikConfirmOverlayEl && atikConfirmOverlayEl.classList.contains('show')) {
+      atikKayitlariTemizleOnayKapat();
+      return;
+    }
+    atikKayitlarKapat();
+  });
+
+  // ── Saatlik Atık Raporu ──────────────────────────────────────────────────
+  // Bugüne ait "ekleme" (atık geldi) kayıtlarını saat dilimlerine göre toplar.
+  function saatlikOzetHesapla() {
+    const kayitlar = atikKayitlariYukleGuvenli();
+    const simdi = new Date();
+    const bugunAnahtari = simdi.getFullYear() + '-' + simdi.getMonth() + '-' + simdi.getDate();
+
+    const saatler = {};
+    for (let s = 0; s < 24; s++) {
+      saatler[s] = { toplam: 0, bolmeler: {} };
+      bolmeler.forEach(function (b) { saatler[s].bolmeler[b.id] = 0; });
+    }
+
+    kayitlar.forEach(function (k) {
+      if (k.tur !== 'ekleme') return;
+      const d = new Date(k.zaman);
+      const gunAnahtari = d.getFullYear() + '-' + d.getMonth() + '-' + d.getDate();
+      if (gunAnahtari !== bugunAnahtari) return; // sadece bugünün verisi
+      const saat = d.getHours();
+      saatler[saat].toplam += k.miktar;
+      if (saatler[saat].bolmeler[k.id] != null) saatler[saat].bolmeler[k.id] += k.miktar;
+    });
+
+    return saatler;
+  }
+
+  function saatlikTabloOlustur() {
+    const baslikSatiri = document.getElementById('saatlik-thead-row');
+    const govde = document.getElementById('saatlik-tbody');
+    if (!baslikSatiri || !govde) return;
+
+    // Başlıkları bölme listesine göre dinamik oluştur (yalnız ilk seferde)
+    if (baslikSatiri.dataset.hazir !== '1') {
+      let th = '<th>Saat Aralığı</th>';
+      bolmeler.forEach(function (b) { th += '<th>' + b.ad + '</th>'; });
+      th += '<th class="saatlik-toplam-cell">Toplam</th>';
+      baslikSatiri.innerHTML = th;
+      baslikSatiri.dataset.hazir = '1';
+    }
+
+    const saatler = saatlikOzetHesapla();
+    const simdiSaat = new Date().getHours();
+
+    let enYuksekToplam = 0;
+    for (let s = 0; s <= simdiSaat; s++) enYuksekToplam = Math.max(enYuksekToplam, saatler[s].toplam);
+
+    let satirlar = '';
+    for (let s = simdiSaat; s >= 0; s--) {
+      const veri = saatler[s];
+      const suAn = s === simdiSaat;
+      const saatEtiket = ikiHaneli(s) + ':00 – ' + ikiHaneli((s + 1) % 24) + ':00';
+      const barGenislik = enYuksekToplam > 0 ? Math.round((veri.toplam / enYuksekToplam) * 100) : 0;
+
+      let hucreler = '';
+      bolmeler.forEach(function (b) {
+        hucreler += '<td>' + (veri.bolmeler[b.id] || 0) + ' ' + b.birim + '</td>';
+      });
+
+      satirlar += '<tr class="saatlik-row' + (suAn ? ' saat-simdi' : '') + '">' +
+        '<td class="saatlik-saat">' + saatEtiket + (suAn ? '<span class="simdi-badge">Şu An</span>' : '') + '</td>' +
+        hucreler +
+        '<td class="saatlik-toplam-cell">' +
+          '<span class="saatlik-toplam-deger">' + veri.toplam + ' adet</span>' +
+          '<div class="saatlik-bar-track"><div class="saatlik-bar-fill" style="width:' + barGenislik + '%;"></div></div>' +
+        '</td>' +
+      '</tr>';
+    }
+
+    govde.innerHTML = satirlar || '<tr><td colspan="' + (bolmeler.length + 2) + '" class="log-bos">Bugün henüz veri yok</td></tr>';
+  }
+
+
+  // Makine açıkken panelden çıkışı engelle
+  (function makineAcikkenCikisiEngelle(){
+    function makineCalisiyorMu(){
+      return JSON.parse(localStorage.getItem('makineAcik') || 'false');
+    }
+
+    function cikisUyarisiGoster(){
+      alert('Makine açıkken siteden çıkamazsınız. Lütfen önce makineyi kapatın.');
+    }
+
+    document.querySelectorAll('a[href="login.html"]').forEach(function(link){
+      link.addEventListener('click', function(e){
+        if (!makineCalisiyorMu()) return;
+        e.preventDefault();
+        e.stopPropagation();
+        cikisUyarisiGoster();
+      });
+    });
+  })();</script>
+</html>

@@ -1,0 +1,730 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Acil Durum Işığı & Alarm Sistemi — Malta Makine</title>
+<link rel="icon" type="image/svg+xml" href="assets/image/favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/style.css">
+<script src="assets/js/auth.js"></script>
+<script>sayfaKorumaKontrolEt(['yonetici','market','bakanlik']);</script>
+<script src="assets/js/makine-veri.js"></script>
+<script src="assets/js/doluluk-veri.js"></script>
+<script src="assets/js/acil-durum-veri.js"></script>
+<script src="assets/js/kapak-uyari.js"></script>
+
+<style>
+  /* ── ACİL DURUM IŞIĞI & ALARM PANELİ — sitenin çelik/kağıt diline uyumlu ek stiller ── */
+
+  .isik-panel{
+    display:flex;
+    align-items:center;
+    gap:26px;
+    border-radius:16px;
+    padding:26px 28px;
+    border:1.5px solid;
+    margin-bottom:20px;
+    flex-wrap:wrap;
+  }
+  .isik-beacon-wrap{ position:relative; width:74px; height:74px; flex-shrink:0; }
+  .isik-beacon{
+    width:74px; height:74px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    position:relative;
+  }
+  .isik-beacon svg{ width:32px; height:32px; }
+  .isik-beacon-halka{
+    position:absolute; inset:-8px; border-radius:50%; border:2px solid; opacity:0.35;
+  }
+  .isik-panel.normal{ background:#E8F5F0; border-color:#0F6E56; }
+  .isik-panel.normal .isik-beacon{ background:#0F6E56; color:#fff; }
+  .isik-panel.normal .isik-beacon-halka{ border-color:#0F6E56; }
+
+  .isik-panel.bilgi{ background:#EFF3FA; border-color:#2E5FA3; }
+  .isik-panel.bilgi .isik-beacon{ background:#2E5FA3; color:#fff; }
+  .isik-panel.bilgi .isik-beacon-halka{ border-color:#2E5FA3; animation:isikNabizYavas 2.2s ease-in-out infinite; }
+
+  .isik-panel.uyari{ background:#FBF3E2; border-color:#B9791A; }
+  .isik-panel.uyari .isik-beacon{ background:#B9791A; color:#fff; }
+  .isik-panel.uyari .isik-beacon-halka{ border-color:#B9791A; animation:isikNabizYavas 1.6s ease-in-out infinite; }
+
+  .isik-panel.kritik{ background:#FCEAEA; border-color:#C0392B; animation:heroUyariNabiz 1.2s ease-in-out infinite; }
+  .isik-panel.kritik .isik-beacon{ background:#C0392B; color:#fff; }
+  .isik-panel.kritik .isik-beacon-halka{ border-color:#C0392B; animation:isikNabizHizli 0.9s ease-in-out infinite; }
+
+  @keyframes isikNabizYavas{ 0%,100%{ transform:scale(1); opacity:.35; } 50%{ transform:scale(1.18); opacity:0; } }
+  @keyframes isikNabizHizli{ 0%,100%{ transform:scale(1); opacity:.5; } 50%{ transform:scale(1.3); opacity:0; } }
+
+  .isik-metin{ flex:1; min-width:220px; }
+  .isik-metin .durum-ad{
+    font-family:'Space Grotesk', sans-serif;
+    font-weight:700;
+    font-size:22px;
+    line-height:1.25;
+  }
+  .isik-metin .durum-alt{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12px;
+    color:var(--muted);
+    margin-top:4px;
+  }
+
+  .isik-kontrol{ display:flex; flex-direction:column; gap:8px; align-items:flex-end; }
+  .ses-btn{
+    display:inline-flex; align-items:center; gap:8px;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11.5px;
+    font-weight:500;
+    padding:8px 14px;
+    border-radius:20px;
+    border:1.5px solid rgba(32,34,36,0.18);
+    background:var(--paper, #fff);
+    cursor:pointer;
+    color:var(--ink);
+    transition:background .2s ease;
+  }
+  .ses-btn:hover{ background:rgba(0,0,0,0.04); }
+  .ses-btn svg{ width:15px; height:15px; }
+  .demo-toggle{
+    display:inline-flex; align-items:center; gap:7px;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:10.5px;
+    color:var(--muted);
+    cursor:pointer;
+    user-select:none;
+  }
+  .demo-toggle input{ accent-color:#0F6E56; }
+
+  .alarm-liste{ display:flex; flex-direction:column; gap:10px; margin-bottom:8px; }
+  .alarm-satir{
+    display:flex;
+    align-items:flex-start;
+    gap:14px;
+    border-radius:12px;
+    padding:14px 16px;
+    border:1.5px solid rgba(32,34,36,0.12);
+    background:var(--paper-deep, #f7f5f0);
+  }
+  .alarm-satir.tiklanabilir{ cursor:pointer; transition:filter .15s ease, transform .1s ease; }
+  .alarm-satir.tiklanabilir:hover{ filter:brightness(0.97); }
+  .alarm-satir.tiklanabilir:active{ transform:scale(0.997); }
+  .alarm-sayfa-link{
+    display:inline-flex; align-items:center; gap:5px;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:10.5px;
+    font-weight:500;
+    color:#2E5FA3;
+    margin-top:7px;
+  }
+  .alarm-sayfa-link svg{ width:12px; height:12px; }
+  .gecmis-satir.tiklanabilir{ cursor:pointer; }
+  .gecmis-satir.tiklanabilir:hover{ background:rgba(0,0,0,0.03); }
+  .alarm-satir.kritik{ border-color:rgba(192,57,43,0.35); background:#FCEAEA; }
+  .alarm-satir.uyari{ border-color:rgba(185,121,26,0.35); background:#FBF3E2; }
+  .alarm-satir.bilgi{ border-color:rgba(46,95,163,0.3); background:#EFF3FA; }
+
+  .alarm-rozet{
+    font-family:'Space Grotesk', sans-serif;
+    font-weight:700;
+    font-size:10.5px;
+    text-transform:uppercase;
+    letter-spacing:0.05em;
+    padding:4px 9px;
+    border-radius:6px;
+    flex-shrink:0;
+    white-space:nowrap;
+    margin-top:2px;
+  }
+  .alarm-satir.kritik .alarm-rozet{ background:#C0392B; color:#fff; }
+  .alarm-satir.uyari .alarm-rozet{ background:#B9791A; color:#fff; }
+  .alarm-satir.bilgi .alarm-rozet{ background:#2E5FA3; color:#fff; }
+
+  .alarm-govde{ flex:1; min-width:0; }
+  .alarm-kaynak{ font-family:'Space Grotesk', sans-serif; font-weight:700; font-size:14px; }
+  .alarm-mesaj{ font-size:13px; color:var(--ink); margin-top:3px; line-height:1.45; }
+  .alarm-zaman{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:10.5px;
+    color:var(--muted);
+    margin-top:6px;
+  }
+  .alarm-onay-etiketi{
+    display:inline-flex; align-items:center; gap:5px;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:10.5px;
+    color:#0F6E56;
+    margin-top:6px;
+  }
+
+  .alarm-aksiyonlar{ display:flex; flex-direction:column; gap:7px; flex-shrink:0; }
+  .alarm-btn{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px;
+    font-weight:500;
+    padding:7px 12px;
+    border-radius:7px;
+    border:1.5px solid rgba(32,34,36,0.2);
+    background:var(--paper, #fff);
+    cursor:pointer;
+    white-space:nowrap;
+    transition:background .15s ease;
+  }
+  .alarm-btn:hover{ background:rgba(0,0,0,0.05); }
+  .alarm-btn.birincil{ background:var(--steel-950, #202224); color:#fff; border-color:var(--steel-950, #202224); }
+  .alarm-btn.birincil:hover{ opacity:0.88; }
+  .alarm-btn:disabled{ opacity:0.45; cursor:not-allowed; }
+  .alarm-otomatik-not{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:10px;
+    color:var(--muted);
+    text-align:right;
+    max-width:120px;
+    line-height:1.35;
+  }
+
+  .bos-durum{
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    gap:10px;
+    padding:38px 20px;
+    color:var(--muted);
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12.5px;
+    text-align:center;
+  }
+  .bos-durum svg{ width:30px; height:30px; opacity:0.5; }
+
+  .test-cubuk{ display:flex; gap:8px; flex-wrap:wrap; }
+  .test-btn{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px;
+    padding:7px 13px;
+    border-radius:20px;
+    border:1.5px solid rgba(32,34,36,0.18);
+    background:transparent;
+    cursor:pointer;
+  }
+  .test-btn:hover{ background:rgba(0,0,0,0.04); }
+  .test-btn.kritik{ color:#C0392B; border-color:rgba(192,57,43,0.4); }
+  .test-btn.uyari{ color:#B9791A; border-color:rgba(185,121,26,0.4); }
+  .test-btn.bilgi{ color:#2E5FA3; border-color:rgba(46,95,163,0.4); }
+
+  .gecmis-satir{
+    display:flex; align-items:center; gap:12px;
+    padding:10px 4px;
+    border-bottom:1px solid rgba(32,34,36,0.08);
+    font-size:12.5px;
+  }
+  .gecmis-satir:last-child{ border-bottom:none; }
+  .gecmis-nokta{ width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+  .gecmis-nokta.kritik{ background:#C0392B; }
+  .gecmis-nokta.uyari{ background:#B9791A; }
+  .gecmis-nokta.bilgi{ background:#2E5FA3; }
+  .gecmis-kaynak{ font-weight:600; flex-shrink:0; }
+  .gecmis-mesaj{ color:var(--muted); flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .gecmis-zaman{ font-family:'IBM Plex Mono', monospace; font-size:10.5px; color:var(--muted); flex-shrink:0; }
+
+  .kod{
+    background:var(--steel-950);
+    color:var(--paper);
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11.5px;
+    padding:3px 9px;
+    border-radius:5px;
+    display:inline-block;
+    line-height:1.6;
+  }
+</style>
+</head>
+<body>
+
+  <input type="checkbox" id="menu-toggle" class="menu-toggle-input">
+  <label for="menu-toggle" class="hamburger" aria-label="Menüyü aç/kapat">
+    <span></span><span></span><span></span>
+  </label>
+  <label for="menu-toggle" class="overlay" aria-hidden="true"></label>
+
+  <aside class="sidebar" aria-label="Ana gezinme">
+    <div class="mark">
+      <div class="mark-glyph" aria-hidden="true">
+        <a href="index.html">
+        <img src="assets/image/logo.svg" alt="Malta logosu" class="mark-glyph-img">
+       </a>
+      </div>
+      <div class="mark-text">Malta Makine</div>
+    </div>
+    <div class="mark-sub">İade Kiosk Sistemleri</div>
+
+    <div class="panel-seam"></div>
+
+    <nav>
+      <div class="nav-group">
+        <p class="nav-label">Ürün</p>
+        <ul class="nav-list">
+          <li class="nav-item">
+            <a class="nav-link" href="index.html"><span class="led"></span>Bakım</a>
+          </li>
+          <li class="nav-item" data-rol="yonetici,market">
+            <a class="nav-link" href="makine.html"><span class="led"></span>Kapaklar</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="doluluk.html"><span class="led"></span>Doluluk Bilgi</a>
+          </li>
+          <li class="nav-item" data-rol="yonetici,market">
+            <a class="nav-link" href="motor-durum.html"><span class="led"></span>Motor Durum Özeti</a>
+          </li>
+          <li class="nav-item" data-rol="yonetici">
+            <a class="nav-link" href="kapak-motor-durum.html"><span class="led"></span>Kapak Motor Durumu</a>
+          </li>
+          <li class="nav-item" data-rol="yonetici,market">
+            <a class="nav-link" href="fan.html"><span class="led"></span>Fan Durum</a>
+          </li>
+          <li class="nav-item" data-rol="yonetici">
+            <a class="nav-link" href="kamera-durum.html"><span class="led"></span>Kamera Durum</a>
+          </li>
+          <li class="nav-item" data-rol="yonetici,market">
+            <a class="nav-link" href="ekran-durumu.html"><span class="led"></span>Ekran Durum Paneli</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="acil-durum.html"><span class="led"></span>Acil Durum & Alarm</a>
+          </li>
+        </ul>
+      </div>
+ 
+      <div class="nav-group">
+        <p class="nav-label">Motorlar</p>
+        <ul class="nav-list">
+          <li class="nav-item">
+            <a class="nav-link" href="unite.html?unite=ezme1_05l"><span class="led"></span>(0.5L) 1. Plastik Ezme Durum</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="unite.html?unite=ezme2_05l"><span class="led"></span>(0.5L) 2. Plastik Ezme Durum</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="unite.html?unite=ezme1_13l"><span class="led"></span>(1-3L) 1. Plastik Ezme Durum</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="unite.html?unite=ezme2_13l"><span class="led"></span>(1-3L) 2. Plastik Ezme Durum</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="unite.html?unite=ezme3"><span class="led"></span>Teneke/Alüminyum Ezme Durum</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="cam-kirma.html"><span class="led"></span>1. Cam Kırma Durum</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="cam-kirma2.html"><span class="led"></span>2. Cam Kırma Durum</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="unite.html?unite=suKaristirma"><span class="led"></span>Atık Su Tankı Karıştırma Durum</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="unite.html?unite=atikSuPompa"><span class="led"></span>Atık Su Pompa Durum</a>
+          </li>
+        </ul>
+      </div>
+
+        <div class="nav-group">
+        <p class="nav-label">İletişim</p>
+        <ul class="nav-list">
+          <li class="nav-item">
+            <a class="nav-link" href="ariza-bildir.html"><span class="led"></span>Arıza Bildir</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="contact.html"><span class="led"></span>Bizimle İletişime Geçin</a>
+          </li>
+        </ul>
+      </div>
+    </nav>
+
+    <div class="nav-group">
+        <p class="nav-label"></p>
+        <ul class="nav-list">
+          <li class="nav-item">
+            <a class="nav-link" href="makineler.html"><span class="led"></span>Çıkış</a>
+          </li>
+        </ul>
+      </div>
+
+    <div class="sidebar-foot">
+      <div class="barcode" aria-hidden="true"></div>
+      <span>PANEL SÜRÜM 0.1</span>
+    </div>
+  </aside>
+
+  <main>
+    <section id="acil-durum">
+      <span class="eyebrow">Güvenlik / Alarm</span>
+      <h1>Acil Durum Işığı & Alarm Sistemi</h1>
+      <p class="lede">Makine üzerindeki fiziksel acil durum ışığının (döner far / sinyal lambası) ve sesli alarmın anlık durumu. Tüm alt sistemler (ezme üniteleri, cam kırma, su karıştırma, motor, doluluk, kamera, ekran paneli) bir sorun tespit ettiğinde buraya bir alarm kaydı düşer; en yüksek seviyeli aktif alarma göre ışığın rengi belirlenir.</p>
+
+      <!-- Fiziksel ışığın anlık durumu -->
+      <div class="isik-panel normal" id="isik-panel">
+        <div class="isik-beacon-wrap">
+          <div class="isik-beacon-halka" id="isik-halka"></div>
+          <div class="isik-beacon" id="isik-beacon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a7 7 0 00-7 7c0 5 7 13 7 13s7-8 7-13a7 7 0 00-7-7z"/><circle cx="12" cy="9" r="2.5"/></svg>
+          </div>
+        </div>
+        <div class="isik-metin">
+          <div class="durum-ad" id="isik-durum-ad">Kontrol ediliyor…</div>
+          <div class="durum-alt" id="isik-durum-alt">—</div>
+        </div>
+        <div class="isik-kontrol">
+          <button class="ses-btn" id="ses-btn" type="button">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" id="ses-ikon"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 010 7.07"/><path d="M19.07 4.93a10 10 0 010 14.14"/></svg>
+            <span id="ses-metin">Sesli Alarm Açık</span>
+          </button>
+          <label class="demo-toggle">
+            <input type="checkbox" id="demo-checkbox"> Demo Modu (örnek alarm üret)
+          </label>
+        </div>
+      </div>
+
+      <!-- Özet kartları -->
+      <div class="doluluk-summary">
+        <div class="summary-card">
+          <div class="s-label">Aktif Alarm</div>
+          <div class="s-value" id="ozet-aktif">—</div>
+        </div>
+        <div class="summary-card">
+          <div class="s-label">Onay Bekleyen</div>
+          <div class="s-value" id="ozet-onay-bekleyen">—</div>
+        </div>
+        <div class="summary-card">
+          <div class="s-label">Bugün Toplam</div>
+          <div class="s-value" id="ozet-bugun">—</div>
+        </div>
+        <div class="summary-card">
+          <div class="s-label">Sistem Durumu</div>
+          <div class="s-value" id="ozet-sistem" style="font-size:16px;">—</div>
+        </div>
+      </div>
+
+      <div class="row">
+        <h2>Aktif Alarmlar</h2>
+        <span class="ekran-ozet" id="son-guncelleme">Son güncelleme: —</span>
+      </div>
+
+      <div id="alarm-alert-wrap"></div>
+
+      <div class="alarm-liste" id="alarm-liste"></div>
+
+      <div class="row" style="margin-top:8px;">
+        <div class="test-cubuk">
+          <button class="test-btn kritik" data-seviye="kritik" type="button">Test: Kritik Alarm</button>
+          <button class="test-btn uyari" data-seviye="uyari" type="button">Test: Uyarı</button>
+          <button class="test-btn bilgi" data-seviye="bilgi" type="button">Test: Bilgi</button>
+          <button class="test-btn" id="test-gider-btn" type="button">Test Alarmlarını Gider</button>
+        </div>
+      </div>
+
+      <div class="row" style="margin-top:28px;">
+        <h2>Alarm Geçmişi</h2>
+        <span class="ekran-ozet">Son 20 kayıt</span>
+      </div>
+      <div id="gecmis-liste" style="margin-bottom:8px;"></div>
+
+      <div class="guvenlik-notu">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+        <div>
+          <strong>Nasıl çalışır:</strong> Bu panel, her alt sistemin çağırdığı tek bir fonksiyon üzerinden merkezi bir alarm kaydı tutar. Aktif kayıtlar arasındaki <strong>en yüksek seviye</strong> ışığın rengini belirler: kritik (kırmızı, hızlı nabız) &gt; uyarı (sarı) &gt; bilgi (mavi) &gt; normal (yeşil). Bir sayfaya alarm gönderme yeteneği eklemek için o sayfaya şunu ekleyin:
+          <br><br>
+          <span class="kod">&lt;script src="acil-durum-veri.js"&gt;&lt;/script&gt;</span><br><br>
+          ve sorun tespit edildiği yerde:<br><br>
+          <span class="kod">acilDurumAlarmVer('Kaynak Adı', 'kritik', 'Kısa açıklama mesajı');</span>
+          <br><br>
+          Seviye olarak <code style="font-family:'IBM Plex Mono',monospace;">'kritik'</code>, <code style="font-family:'IBM Plex Mono',monospace;">'uyari'</code> veya <code style="font-family:'IBM Plex Mono',monospace;">'bilgi'</code> kullanılabilir.
+          <br><br>
+          <strong>Bu panel artık makineye entegre edilmiş durumda:</strong> 1./2. Plastik Ezme, Teneke/Alüminyum Ezme ve Cam Kırma üniteleri sıkışma tespit ettiğinde (kritik), Su Tankı Karıştırma tıkanma tespit ettiğinde (uyarı), bir depolama bölmesi %60 ve üzerinde doluluğa ulaştığında (doluluk oranına göre bilgi/uyarı/kritik), bir kamera sinyal vermeyi kestiğinde (uyarı) ve bir tablet 8 saniyeden uzun süre sinyal göndermeyince (bilgi) buraya otomatik olarak alarm düşer.
+          <br><br>
+          <strong>Alarmlar elle kapatılamaz:</strong> Bir alarmı sadece "Onayla" ile görüldüğünü işaretleyebilirsiniz; alarmın kendisi ancak ilgili alt sistemdeki sorun fiilen giderildiğinde (örn. sıkışma açıldığında, hazne boşaltıldığında) otomatik olarak kapanır. Bu, operatörün gerçek bir sorunu görmezden gelip paneli "temizleyememesini" garanti eder.
+          <br><br>
+          <strong>Demo Modu</strong> varsayılan olarak <u>kapalıdır</u> — yalnızca gerçek entegrasyonu test etmeden önce panelin nasıl görüneceğini denemek isterseniz açın. Gerçek acil durum ışığının fiziksel açık/kapalı durumu ayrıca bir PLC/röle/GPIO girişinden okunup doğrudan yukarıdaki fonksiyonla bildirilebilir.
+        </div>
+      </div>
+    </section>
+  </main>
+
+<script>
+
+    // Mevcut sayfanın URL'sine göre doğru sekmeyi otomatik "aktif" yap
+    (function aktifSekmeAyarla(){
+      var mevcutDosya = window.location.pathname.split('/').pop() || 'index.html';
+      var eslesenLink = null;
+
+      document.querySelectorAll('.nav-link').forEach(function(link){
+        var href = link.getAttribute('href');
+        if (!href || href === '#') return;
+        var hedefDosya = href.split('/').pop();
+        if (hedefDosya === mevcutDosya) {
+          eslesenLink = link;
+        }
+      });
+
+      document.querySelectorAll('.nav-item').forEach(function(item){
+        item.classList.remove('active');
+      });
+      if (eslesenLink) {
+        eslesenLink.closest('.nav-item').classList.add('active');
+      }
+    })();
+
+    // Mobil çekmece açıksa, bir menüye tıklandığında otomatik kapansın
+    document.querySelectorAll('.nav-link').forEach(function(link){
+      link.addEventListener('click', function(){
+        var toggle = document.getElementById('menu-toggle');
+        if (toggle) toggle.checked = false;
+      });
+    });
+
+  // ── Yardımcılar ──────────────────────────────────────────────────────
+  function ikonUyari(){
+    return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 9v4M12 17h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>';
+  }
+  function ikonCheck(){
+    return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="8 12 11 15 16 9"/></svg>';
+  }
+  function ikonBos(){
+    return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a7 7 0 00-7 7c0 5 7 13 7 13s7-8 7-13a7 7 0 00-7-7z"/><circle cx="12" cy="9" r="2.5"/></svg>';
+  }
+  function ikonOk(){
+    return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>';
+  }
+
+  // Sayfa dosya adı -> menüdeki görünen başlık (sol menüdeki linklerden otomatik çıkarılır)
+  var SAYFA_BASLIK = {};
+  document.querySelectorAll('.nav-link').forEach(function(link){
+    var href = link.getAttribute('href');
+    if (!href || href === '#') return;
+    SAYFA_BASLIK[href] = link.textContent.trim();
+  });
+  function sayfaBaslik(dosya){
+    return SAYFA_BASLIK[dosya] || dosya;
+  }
+
+  function saatMetni(ts){
+    var d = new Date(ts);
+    return String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0') + ':' + String(d.getSeconds()).padStart(2,'0');
+  }
+  function zamanFarkiMetni(ms){
+    var sn = Math.floor(ms / 1000);
+    if (sn < 5) return 'az önce';
+    if (sn < 60) return sn + ' sn önce';
+    var dk = Math.floor(sn / 60);
+    if (dk < 60) return dk + ' dk önce';
+    var sa = Math.floor(dk / 60);
+    return sa + ' sa önce';
+  }
+  function bugunMu(ts){
+    var a = new Date(ts), b = new Date();
+    return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+  }
+
+  var ISIK_METIN = {
+    normal: { ad: 'Normal', alt: 'Aktif alarm yok, sistem sorunsuz çalışıyor.' },
+    bilgi:  { ad: 'Bilgi Seviyesinde Uyarı', alt: 'Takip edilmesi gereken düşük öncelikli bir durum var.' },
+    uyari:  { ad: 'Uyarı', alt: 'Dikkat gerektiren bir durum tespit edildi.' },
+    kritik: { ad: 'KRİTİK ALARM', alt: 'Acil müdahale gerekiyor — işık kırmızı yanıp sönüyor.' }
+  };
+
+  var _oncekiSeviye = 'normal';
+  var _bipSayaci = 0;
+
+  function panelGuncelle(){
+    var tumKayitlar = acilDurumKayitlariYukle();
+    var aktifler = acilDurumBirlesikAktifler();
+    var seviye = acilDurumBirlesikMevcutSeviye();
+
+    // Işık paneli
+    var panel = document.getElementById('isik-panel');
+    panel.className = 'isik-panel ' + seviye;
+    document.getElementById('isik-durum-ad').textContent = ISIK_METIN[seviye].ad;
+    document.getElementById('isik-durum-alt').textContent = ISIK_METIN[seviye].alt;
+
+    // Kritik alarm sürerken periyodik bip (yaklaşık her 3 döngüde bir; bu fonksiyon 1sn'de bir çağrılır)
+    if (seviye === 'kritik'){
+      _bipSayaci++;
+      if (_oncekiSeviye !== 'kritik' || _bipSayaci >= 3){
+        acilDurumBipCal();
+        _bipSayaci = 0;
+      }
+    } else {
+      _bipSayaci = 0;
+    }
+    _oncekiSeviye = seviye;
+
+    // Özet kartları
+    var onayBekleyen = aktifler.filter(function(k){ return !k.onaylandi; }).length;
+    var bugunToplam = tumKayitlar.filter(function(k){ return bugunMu(k.zaman); }).length;
+    document.getElementById('ozet-aktif').textContent = aktifler.length;
+    document.getElementById('ozet-onay-bekleyen').textContent = onayBekleyen;
+    document.getElementById('ozet-bugun').textContent = bugunToplam;
+    document.getElementById('ozet-sistem').textContent = seviye === 'normal' ? 'Sorunsuz' : ISIK_METIN[seviye].ad;
+
+    // Üst kritik banner
+    var alertWrap = document.getElementById('alarm-alert-wrap');
+    var kritikAktif = aktifler.filter(function(k){ return k.seviye === 'kritik'; });
+    if (kritikAktif.length){
+      alertWrap.innerHTML =
+        '<div class="doluluk-alert" role="alert">' +
+          '<span class="doluluk-alert-icon" aria-hidden="true">' + ikonUyari() + '</span>' +
+          '<div class="doluluk-alert-body">' +
+            '<p class="doluluk-alert-title">Kritik Alarm Aktif</p>' +
+            '<p class="doluluk-alert-text"><strong>' + kritikAktif.map(function(k){ return k.kaynak; }).join(', ') + '</strong> için acil müdahale gerekiyor.</p>' +
+          '</div>' +
+        '</div>';
+    } else {
+      alertWrap.innerHTML = '';
+    }
+
+    // Aktif alarm listesi
+    var liste = document.getElementById('alarm-liste');
+    if (!aktifler.length){
+      liste.innerHTML = '<div class="bos-durum">' + ikonCheck() + '<span>Şu anda aktif alarm yok. Sistem sorunsuz çalışıyor.</span></div>';
+    } else {
+      liste.innerHTML = aktifler.map(function(k){
+        var onayHtml = k.onaylandi
+          ? '<div class="alarm-onay-etiketi">' + ikonCheck() + ' Onaylandı</div>'
+          : '';
+        var sayfa = acilDurumKaynakSayfasi(k.kaynak);
+        var sayfaLinkHtml = sayfa
+          ? '<div class="alarm-sayfa-link">' + ikonOk() + ' İlgili sayfaya git: ' + sayfaBaslik(sayfa) + '</div>'
+          : '';
+        var aksiyonHtml = k.backendKaynakli
+          ? '<span class="alarm-otomatik-not">Backend arıza kaydı — "Bildirilen Arızalar" sayfasından yönetilir</span>'
+          : (
+              '<button class="alarm-btn onayla-btn" data-id="' + k.id + '"' + (k.onaylandi ? ' disabled' : '') + '>' + (k.onaylandi ? 'Onaylandı' : 'Onayla') + '</button>' +
+              '<span class="alarm-otomatik-not">Arıza giderilince otomatik kapanır</span>'
+            );
+        return (
+          '<div class="alarm-satir ' + k.seviye + (sayfa ? ' tiklanabilir' : '') + '" data-id="' + k.id + '"' + (sayfa ? ' data-sayfa="' + sayfa + '"' : '') + '>' +
+            '<span class="alarm-rozet">' + (ACIL_SEVIYE_METIN[k.seviye] || k.seviye) + '</span>' +
+            '<div class="alarm-govde">' +
+              '<div class="alarm-kaynak">' + k.kaynak + '</div>' +
+              '<div class="alarm-mesaj">' + k.mesaj + '</div>' +
+              '<div class="alarm-zaman">' + saatMetni(k.zaman) + ' · ' + zamanFarkiMetni(Date.now() - k.zaman) + '</div>' +
+              onayHtml +
+              sayfaLinkHtml +
+            '</div>' +
+            '<div class="alarm-aksiyonlar">' +
+              aksiyonHtml +
+            '</div>' +
+          '</div>'
+        );
+      }).join('');
+    }
+
+    // Geçmiş (çözülmüş dahil, en yeni 20 kayıt)
+    var gecmis = document.getElementById('gecmis-liste');
+    var sonYirmi = tumKayitlar.slice(0, 20);
+    if (!sonYirmi.length){
+      gecmis.innerHTML = '<div class="bos-durum">' + ikonBos() + '<span>Henüz herhangi bir alarm kaydı yok.</span></div>';
+    } else {
+      gecmis.innerHTML = sonYirmi.map(function(k){
+        var durumEtiketi = k.giderildi ? 'Giderildi · ' + saatMetni(k.giderilmeZamani) : 'Aktif';
+        var sayfa = acilDurumKaynakSayfasi(k.kaynak);
+        return (
+          '<div class="gecmis-satir' + (sayfa ? ' tiklanabilir' : '') + '"' + (sayfa ? ' data-sayfa="' + sayfa + '"' : '') + '>' +
+            '<span class="gecmis-nokta ' + k.seviye + '"></span>' +
+            '<span class="gecmis-kaynak">' + k.kaynak + '</span>' +
+            '<span class="gecmis-mesaj">' + k.mesaj + '</span>' +
+            '<span class="gecmis-zaman">' + saatMetni(k.zaman) + ' · ' + durumEtiketi + '</span>' +
+          '</div>'
+        );
+      }).join('');
+    }
+
+    document.getElementById('son-guncelleme').textContent = 'Son güncelleme: ' + saatMetni(Date.now());
+
+    // Ses butonu metni
+    var sesKapali = acilDurumSesKapaliMi();
+    document.getElementById('ses-metin').textContent = sesKapali ? 'Sesli Alarm Kapalı' : 'Sesli Alarm Açık';
+    document.getElementById('ses-btn').style.opacity = sesKapali ? '0.55' : '1';
+
+    // Demo modu kutucuğu
+    document.getElementById('demo-checkbox').checked = acilDurumDemoAcikMi();
+  }
+
+  // Aktif alarm listesindeki onayla butonu (event delegation).
+  // Not: kasıtlı olarak "gider/kapat" butonu YOK — bir alarm yalnızca ilgili
+  // alt sistem sorunu giderip acilDurumGiderKaynak(...) çağırdığında otomatik
+  // olarak kapanır. Operatör aktif bir alarmı elle kapatamaz.
+  document.getElementById('alarm-liste').addEventListener('click', function(e){
+    var onaylaBtn = e.target.closest('.onayla-btn');
+    if (onaylaBtn){
+      acilDurumOnayla(onaylaBtn.getAttribute('data-id'));
+      panelGuncelle();
+      return;
+    }
+    // Satırın kendisine (buton hariç) tıklanırsa, ilgili alt sistemin
+    // durum sayfasına yönlendir.
+    var satir = e.target.closest('.alarm-satir');
+    if (satir){
+      var sayfa = satir.getAttribute('data-sayfa');
+      if (sayfa) window.location.href = sayfa;
+    }
+  });
+
+  document.querySelectorAll('.test-btn[data-seviye]').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var seviye = btn.getAttribute('data-seviye');
+      var mesajlar = {
+        kritik: 'Manuel test: kritik seviye alarm tetiklendi.',
+        uyari: 'Manuel test: uyarı seviyesi alarm tetiklendi.',
+        bilgi: 'Manuel test: bilgi seviyesi alarm tetiklendi.'
+      };
+      acilDurumAlarmVer('Manuel Test', seviye, mesajlar[seviye]);
+      panelGuncelle();
+    });
+  });
+
+  // Test butonlarıyla oluşturulan "Manuel Test" alarmları gerçek bir alt
+  // sisteme bağlı olmadığı için kendi kendine kapanmaz; bu buton sadece
+  // test kaynağının sorunu giderdiğini simüle eder (gerçek alarmlarda
+  // karşılığı yoktur, gerçek alarmlar hâlâ elle kapatılamaz).
+  document.getElementById('test-gider-btn').addEventListener('click', function(){
+    acilDurumGiderKaynak('Manuel Test');
+    panelGuncelle();
+  });
+
+  document.getElementById('gecmis-liste').addEventListener('click', function(e){
+    var satir = e.target.closest('.gecmis-satir');
+    if (satir){
+      var sayfa = satir.getAttribute('data-sayfa');
+      if (sayfa) window.location.href = sayfa;
+    }
+  });
+
+  document.getElementById('ses-btn').addEventListener('click', function(){
+    var kapali = !acilDurumSesKapaliMi();
+    acilDurumSesAyarla(kapali);
+    if (!kapali) acilDurumBipCal();
+    panelGuncelle();
+  });
+
+  document.getElementById('demo-checkbox').addEventListener('change', function(e){
+    acilDurumDemoAyarla(e.target.checked);
+  });
+
+  panelGuncelle();
+  setInterval(panelGuncelle, 1000);
+
+  // Backend'deki gerçek açık arıza kayıtlarını çek — sayfa ilk açıldığında
+  // hemen, sonrasında da 5sn'de bir. Bu, başka bir cihaz/tarayıcıda
+  // tetiklenen bir sıkışma/arızanın da bu panelde görünmesini sağlar.
+  acilDurumBackendArizalariniYukle().then(panelGuncelle);
+  setInterval(function(){ acilDurumBackendArizalariniYukle().then(panelGuncelle); }, 5000);
+  setInterval(function(){ acilDurumDemoTick(0.05); }, 5000);
+
+  window.addEventListener('storage', function(e){
+    if (e.key === ACIL_KAYIT_KEY || e.key === ACIL_SES_KEY || e.key === ACIL_DEMO_KEY) panelGuncelle();
+  });
+
+
+document.addEventListener('DOMContentLoaded', function(){ menuyuRoleGoreDuzenle(); });
+</script>
+</body>
+</html>

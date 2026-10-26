@@ -1,0 +1,236 @@
+﻿<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Malta Makine — İletişim</title>
+<link rel="icon" type="image/svg+xml" href="assets/image/favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/style.css">
+<script src="assets/js/auth.js"></script>
+<script>sayfaKorumaKontrolEt(['yonetici','market','bakanlik']);</script>
+<script src="assets/js/kapak-uyari.js"></script>
+</head>
+<body>
+ 
+  <input type="checkbox" id="menu-toggle" class="menu-toggle-input">
+  <label for="menu-toggle" class="hamburger" aria-label="Menüyü aç/kapat">
+    <span></span><span></span><span></span>
+  </label>
+  <label for="menu-toggle" class="overlay" aria-hidden="true"></label>
+ 
+  <aside class="sidebar" aria-label="Ana gezinme">
+    <div class="mark">
+      <div class="mark-glyph" aria-hidden="true">
+        <a href="index.html">
+        <img src="assets/image/logo.svg" alt="Malta logosu" class="mark-glyph-img">
+       </a>
+      </div>
+      <div class="mark-text">Malta Makine</div>
+    </div>
+    <div class="mark-sub">İade Kiosk Sistemleri</div>
+ 
+    <div class="panel-seam"></div>
+ 
+    <nav>
+      <div class="nav-group">
+        <p class="nav-label">Ürün</p>
+        <ul class="nav-list">
+          <li class="nav-item">
+            <a class="nav-link" href="index.html"><span class="led"></span>Bakım</a>
+          </li>
+          <li class="nav-item" data-rol="yonetici,market">
+            <a class="nav-link" href="makine.html"><span class="led"></span>Kapaklar</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="doluluk.html"><span class="led"></span>Doluluk Bilgi</a>
+          </li>
+          <li class="nav-item" data-rol="yonetici,market">
+            <a class="nav-link" href="motor-durum.html"><span class="led"></span>Motor Durum Özeti</a>
+          </li>
+          <li class="nav-item" data-rol="yonetici">
+            <a class="nav-link" href="kapak-motor-durum.html"><span class="led"></span>Kapak Motor Durumu</a>
+          </li>
+          <li class="nav-item" data-rol="yonetici,market">
+            <a class="nav-link" href="fan.html"><span class="led"></span>Fan Durum</a>
+          </li>
+          <li class="nav-item" data-rol="yonetici">
+            <a class="nav-link" href="kamera-durum.html"><span class="led"></span>Kamera Durum</a>
+          </li>
+          <li class="nav-item" data-rol="yonetici,market">
+            <a class="nav-link" href="ekran-durumu.html"><span class="led"></span>Ekran Durum Paneli</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="acil-durum.html"><span class="led"></span>Acil Durum & Alarm</a>
+          </li>
+        </ul>
+      </div>
+ 
+      <div class="nav-group">
+        <p class="nav-label">Motorlar</p>
+        <ul class="nav-list">
+          <li class="nav-item">
+            <a class="nav-link" href="unite.html?unite=ezme1_05l"><span class="led"></span>(0.5L) 1. Plastik Ezme Durum</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="unite.html?unite=ezme2_05l"><span class="led"></span>(0.5L) 2. Plastik Ezme Durum</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="unite.html?unite=ezme1_13l"><span class="led"></span>(1-3L) 1. Plastik Ezme Durum</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="unite.html?unite=ezme2_13l"><span class="led"></span>(1-3L) 2. Plastik Ezme Durum</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="unite.html?unite=ezme3"><span class="led"></span>Teneke/Alüminyum Ezme Durum</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="cam-kirma.html"><span class="led"></span>1. Cam Kırma Durum</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="cam-kirma2.html"><span class="led"></span>2. Cam Kırma Durum</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="unite.html?unite=suKaristirma"><span class="led"></span>Atık Su Tankı Karıştırma Durum</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="unite.html?unite=atikSuPompa"><span class="led"></span>Atık Su Pompa Durum</a>
+          </li>
+        </ul>
+      </div>
+
+        <div class="nav-group">
+        <p class="nav-label">İletişim</p>
+        <ul class="nav-list">
+          <li class="nav-item" data-rol="yonetici,market">
+            <a class="nav-link" href="ariza-bildir.html"><span class="led"></span>Arıza Bildir</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="contact.html"><span class="led"></span>Bizimle İletişime Geçin</a>
+          </li>
+        </ul>
+      </div>
+    </nav>
+
+    <div class="nav-group">
+        <p class="nav-label"></p>
+        <ul class="nav-list">
+          <li class="nav-item">
+            <a class="nav-link" href="makineler.html"><span class="led"></span>Çıkış</a>
+          </li>
+        </ul>
+      </div>
+ 
+    <div class="sidebar-foot">
+      <div class="barcode" aria-hidden="true"></div>
+      <span>PANEL SÜRÜM 0.1</span>
+    </div>
+  </aside>
+ 
+  <main>
+    <section id="iletisim">
+      <p class="eyebrow">Malta Makine · İade Kiosku</p>
+      <h1>Bize ulaşın.</h1>
+      <p class="lede">Kurulum, bakım talepleriniz için aşağıdaki kanallardan bizimle iletişime geçebilirsiniz.</p>
+    </section>
+ 
+    <div class="divider-full"></div>
+ 
+    <section id="iletisim-bilgileri">
+      <div class="row">
+        <h2>İletişim Bilgileri</h2>
+        <span>Malta Makine San. ve Tic. Ltd. Şti.</span>
+      </div>
+ 
+      <div class="contact-grid">
+        <div class="contact-card">
+          <div class="contact-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 6-9 12-9 12s-9-6-9-12a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+          </div>
+          <div>
+            <p class="contact-label">Adres</p>
+            <p class="contact-value">Örnek Mahallesi, Sanayi Caddesi No:12<br>34000 İstanbul</p>
+          </div>
+        </div>
+ 
+        <div class="contact-card">
+          <div class="contact-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16v16H4z" opacity="0"/><path d="M22 6l-10 7L2 6"/><rect x="2" y="4" width="20" height="16" rx="2"/></svg>
+          </div>
+          <div>
+            <p class="contact-label">E-Posta</p>
+            <p class="contact-value">E-posta bilgisi güncellenecek</p>
+          </div>
+        </div>
+ 
+        <div class="contact-card">
+          <div class="contact-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>
+          </div>
+          <div>
+            <p class="contact-label">Telefon</p>
+            <p class="contact-value"><a href="tel:+902120000000">0 212 000 00 00</a></p>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+ 
+</body>
+<script>
+
+    menuyuRoleGoreDuzenle();
+ 
+    // Mevcut sayfanın URL'sine göre doğru sekmeyi otomatik "aktif" yap
+    (function aktifSekmeAyarla(){
+      var mevcutDosya = window.location.pathname.split('/').pop() || 'index.html';
+      var eslesenLink = null;
+ 
+      document.querySelectorAll('.nav-link').forEach(function(link){
+        var href = link.getAttribute('href');
+        if (!href || href === '#') return;
+        var hedefDosya = href.split('/').pop();
+        if (hedefDosya === mevcutDosya) {
+          eslesenLink = link;
+        }
+      });
+ 
+      document.querySelectorAll('.nav-item').forEach(function(item){
+        item.classList.remove('active');
+      });
+      if (eslesenLink) {
+        eslesenLink.closest('.nav-item').classList.add('active');
+      }
+    })();
+ 
+    // Mobil çekmece açıksa, bir menüye tıklandığında otomatik kapansın
+    document.querySelectorAll('.nav-link').forEach(function(link){
+      link.addEventListener('click', function(){
+        var toggle = document.getElementById('menu-toggle');
+        if (toggle) toggle.checked = false;
+      });
+    });
+ 
+
+  // Makine açıkken panelden çıkışı engelle
+  (function makineAcikkenCikisiEngelle(){
+    function makineCalisiyorMu(){
+      return JSON.parse(localStorage.getItem('makineAcik') || 'false');
+    }
+
+    function cikisUyarisiGoster(){
+      alert('Makine açıkken siteden çıkamazsınız. Lütfen önce makineyi kapatın.');
+    }
+
+    document.querySelectorAll('a[href="login.html"]').forEach(function(link){
+      link.addEventListener('click', function(e){
+        if (!makineCalisiyorMu()) return;
+        e.preventDefault();
+        e.stopPropagation();
+        cikisUyarisiGoster();
+      });
+    });
+  })();</script>
+</html>

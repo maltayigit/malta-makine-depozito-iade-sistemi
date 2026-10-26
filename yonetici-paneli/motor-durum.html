@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Malta Makine — Motor Durum Özeti</title>
+<link rel="icon" type="image/svg+xml" href="assets/image/favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/style.css">
+<script src="assets/js/auth.js"></script>
+<script>sayfaKorumaKontrolEt(['yonetici','market']);</script>
+<script src="assets/js/doluluk-veri.js"></script>
+<script src="assets/js/ezme-veri.js"></script>
+<script src="assets/js/acil-durum-veri.js"></script>
+<script src="assets/js/kapak-uyari.js"></script>  
+
+<style>
+  .motor-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 20px;
+    margin-bottom: 36px;
+  }
+  .motor-card-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 4px;
+  }
+  .motor-card-tag {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    letter-spacing: .04em;
+    opacity: .6;
+  }
+  .motor-card-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 14px;
+    flex-wrap: wrap;
+  }
+  .motor-card-actions .unite-btn {
+    padding: 8px 14px;
+    font-size: 13px;
+  }
+  .motor-besleme {
+    margin-top: 10px;
+    font-size: 12.5px;
+    opacity: .75;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .motor-besleme .nokta {
+    width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0;
+  }
+  .motor-detay-link {
+    font-size: 12.5px;
+    text-decoration: underline;
+    white-space: nowrap;
+  }
+  .motor-otomatik-etiket {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10.5px;
+    letter-spacing: .04em;
+    color: var(--muted);
+    text-transform: uppercase;
+  }
+  .motor-otomatik-etiket svg { width: 13px; height: 13px; flex-shrink: 0; }
+</style>
+
+</head>
+<body>
+
+  <input type="checkbox" id="menu-toggle" class="menu-toggle-input">
+  <label for="menu-toggle" class="hamburger" aria-label="Menüyü aç/kapat">
+    <span></span><span></span><span></span>
+  </label>
+  <label for="menu-toggle" class="overlay" aria-hidden="true"></label>
+
+  <aside class="sidebar" aria-label="Ana gezinme">
+    <div class="mark">
+      <div class="mark-glyph" aria-hidden="true">
+        <a href="index.html">
+        <img src="assets/image/logo.svg" alt="Malta logosu" class="mark-glyph-img">
+       </a>
+      </div>
+      <div class="mark-text">Malta Makine</div>
+    </div>
+    <div class="mark-sub">İade Kiosk Sistemleri</div>
+
+    <div class="panel-seam"></div>
+
+    <nav>
+      <div class="nav-group">
+        <p class="nav-label">Ürün</p>
+        <ul class="nav-list">
+          <li class="nav-item" data-rol="yonetici,market">
+            <a class="nav-link" href="index.html"><span class="led"></span>Bakım</a>
+          </li>
+          <li class="nav-item" data-rol="yonetici,market">
+            <a class="nav-link" href="makine.html"><span class="led"></span>Kapaklar</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="doluluk.html"><span class="led"></span>Doluluk Bilgi</a>
+          </li>
+          <li class="nav-item" data-rol="yonetici,market">
+            <a class="nav-link" href="motor-durum.html"><span class="led"></span>Motor Durum Özeti</a>
+          </li>
+          <li class="nav-item" data-rol="yonetici">
+            <a class="nav-link" href="kapak-motor-durum.html"><span class="led"></span>Kapak Motor Durumu</a>
+          </li>
+          <li class="nav-item" data-rol="yonetici,market">
+            <a class="nav-link" href="fan.html"><span class="led"></span>Fan Durum</a>
+          </li>
+          <li class="nav-item" data-rol="yonetici">
+            <a class="nav-link" href="kamera-durum.html"><span class="led"></span>Kamera Durum</a>
+          </li>
+          <li class="nav-item" data-rol="yonetici,market">
+            <a class="nav-link" href="ekran-durumu.html"><span class="led"></span>Ekran Durum Paneli</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="acil-durum.html"><span class="led"></span>Acil Durum & Alarm</a>
+          </li>
+        </ul>
+      </div>
+ 
+      <div class="nav-group">
+        <p class="nav-label">Motorlar</p>
+        <ul class="nav-list">
+          <li class="nav-item">
+            <a class="nav-link" href="unite.html?unite=ezme1_05l"><span class="led"></span>(0.5L) 1. Plastik Ezme Durum</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="unite.html?unite=ezme2_05l"><span class="led"></span>(0.5L) 2. Plastik Ezme Durum</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="unite.html?unite=ezme1_13l"><span class="led"></span>(1-3L) 1. Plastik Ezme Durum</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="unite.html?unite=ezme2_13l"><span class="led"></span>(1-3L) 2. Plastik Ezme Durum</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="unite.html?unite=ezme3"><span class="led"></span>Teneke/Alüminyum Ezme Durum</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="cam-kirma.html"><span class="led"></span>1. Cam Kırma Durum</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="cam-kirma2.html"><span class="led"></span>2. Cam Kırma Durum</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="unite.html?unite=suKaristirma"><span class="led"></span>Atık Su Tankı Karıştırma Durum</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="unite.html?unite=atikSuPompa"><span class="led"></span>Atık Su Pompa Durum</a>
+          </li>
+        </ul>
+      </div>
+
+        <div class="nav-group">
+        <p class="nav-label">İletişim</p>
+        <ul class="nav-list">
+          <li class="nav-item active">
+            <a class="nav-link" href="ariza-bildir.html"><span class="led"></span>Arıza Bildir</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="contact.html"><span class="led"></span>Bizimle İletişime Geçin</a>
+          </li>
+        </ul>
+      </div>
+    </nav>
+
+    <div class="nav-group">
+        <p class="nav-label"></p>
+        <ul class="nav-list">
+          <li class="nav-item">
+            <a class="nav-link" href="makineler.html"><span class="led"></span>Çıkış</a>
+          </li>
+        </ul>
+      </div>
+
+    <div class="sidebar-foot">
+      <div class="barcode" aria-hidden="true"></div>
+      <span>PANEL SÜRÜM 0.1</span>
+    </div>
+  </aside>
+
+  <main>
+    <section id="motor-durum-ozeti">
+
+      <div class="doluluk-top">
+        <div>
+          <p class="eyebrow" style="margin-bottom:6px;">Motor Durum Özeti · Malta</p>
+          <h1 style="font-size:clamp(24px,3vw,32px); margin:0;">Ezme &amp; Kırma Motorları</h1>
+        </div>
+        <div style="text-align:right;">
+          <div class="doluluk-status" id="ana-makine-badge" style="margin-bottom:8px; display:inline-block;">Ana Makine: —</div>
+          <div class="doluluk-updated">
+            <span class="dot"></span>
+            <span id="son-guncelleme">Son güncelleme: —</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Herhangi bir motorda sıkışma varsa toplu uyarı -->
+      <div id="genel-alert-wrap"></div>
+
+      <!-- Özet kartları -->
+      <div class="doluluk-summary">
+        <div class="summary-card">
+          <div class="s-label">Çalışan Motor</div>
+          <div class="s-value" id="ozet-calisan">—<span>/ 9</span></div>
+        </div>
+        <div class="summary-card">
+          <div class="s-label">Sıkışma Bildirimi</div>
+          <div class="s-value" id="ozet-sikisma">—</div>
+        </div>
+        <div class="summary-card">
+          <div class="s-label">Bugünkü Toplam İşlem</div>
+          <div class="s-value" id="ozet-toplam-islem">—<span>adet</span></div>
+        </div>
+      </div>
+
+      <div class="row">
+        <h2>Motor Durumları</h2>
+        <span>Gerçek Zamanlı İzleme · 4 Plastik · 1 Teneke/Alüminyum · 2 Cam Kırma · 1 Su Karıştırma · 1 Atık Su Pompa</span>
+      </div>
+
+      <div class="motor-grid" id="motor-grid"></div>
+
+    </section>
+  </main>
+
+
+</body>
+<script>
+
+  // Mevcut sayfanın URL'sine göre doğru sekmeyi otomatik "aktif" yap
+  (function aktifSekmeAyarla(){
+    var mevcutDosya = window.location.pathname.split('/').pop() || 'index.html';
+    var eslesenLink = null;
+
+    document.querySelectorAll('.nav-link').forEach(function(link){
+      var href = link.getAttribute('href');
+      if (!href || href === '#') return;
+      var hedefDosya = href.split('/').pop();
+      if (hedefDosya === mevcutDosya) {
+        eslesenLink = link;
+      }
+    });
+
+    document.querySelectorAll('.nav-item').forEach(function(item){
+      item.classList.remove('active');
+    });
+    if (eslesenLink) {
+      eslesenLink.closest('.nav-item').classList.add('active');
+    }
+  })();
+
+  // Mobil çekmece açıksa, bir menüye tıklandığında otomatik kapansın
+  document.querySelectorAll('.nav-link').forEach(function(link){
+    link.addEventListener('click', function(){
+      var toggle = document.getElementById('menu-toggle');
+      if (toggle) toggle.checked = false;
+    });
+  });
+
+
+  async function anaMakineDurumGoster(){
+    const badge = document.getElementById('ana-makine-badge');
+    if (!badge) return;
+    const acik = await anaMakineAcikMiAsync();
+    badge.textContent = 'Ana Makine: ' + (acik ? 'AÇIK' : 'KAPALI');
+    badge.className = 'doluluk-status ' + (acik ? 'calisiyor' : 'beklemede');
+  }
+
+  // ── Bu sayfada gösterilecek 4 motor ve her birinin ikonu / detay sayfası ──
+  const motorListesi = [
+    {
+      anahtar: 'ezme1_05l', href: 'ezme1-05l.html',
+      ikon: '<path d="M8 2h8v3l2 2v13a1 1 0 01-1 1H7a1 1 0 01-1-1V7l2-2V2z"/><path d="M9 2v3M15 2v3"/>'
+    },
+    {
+      anahtar: 'ezme1_13l', href: 'ezme1-13l.html',
+      ikon: '<path d="M8 2h8v3l2 2v13a1 1 0 01-1 1H7a1 1 0 01-1-1V7l2-2V2z"/><path d="M9 2v3M15 2v3"/>'
+    },
+    {
+      anahtar: 'ezme2_05l', href: 'ezme2-05l.html',
+      ikon: '<path d="M8 2h8v3l2 2v13a1 1 0 01-1 1H7a1 1 0 01-1-1V7l2-2V2z"/><path d="M9 2v3M15 2v3"/>'
+    },
+    {
+      anahtar: 'ezme2_13l', href: 'ezme2-13l.html',
+      ikon: '<path d="M8 2h8v3l2 2v13a1 1 0 01-1 1H7a1 1 0 01-1-1V7l2-2V2z"/><path d="M9 2v3M15 2v3"/>'
+    },
+    {
+      anahtar: 'ezme3', href: 'ezme3.html',
+      ikon: '<rect x="6" y="4" width="12" height="17" rx="2"/><path d="M9 4V2h6v2"/>'
+    },
+    {
+      anahtar: 'camkirma', href: 'cam-kirma.html',
+      ikon: '<path d="M9 2h6l1 6-1 3v9a2 2 0 01-2 2h-2a2 2 0 01-2-2v-9L8 8z"/><path d="M6 13l3-1M18 13l-3-1"/>'
+    },
+    {
+      anahtar: 'camkirma2', href: 'cam-kirma2.html',
+      ikon: '<path d="M9 2h6l1 6-1 3v9a2 2 0 01-2 2h-2a2 2 0 01-2-2v-9L8 8z"/><path d="M6 13l3-1M18 13l-3-1"/>'
+    },
+    {
+      anahtar: 'suKaristirma', href: 'atik-su-karistirma.html',
+      ikon: '<path d="M12 2C8 8 5 11.5 5 15a7 7 0 0014 0c0-3.5-3-7-7-13z"/>'
+    },
+    {
+      anahtar: 'atikSuPompa', href: 'atik-su-pompa.html',
+      ikon: '<path d="M12 3v11"/><path d="m7.5 10.5 4.5 4.5 4.5-4.5"/><path d="M4 21h16"/>'
+    }
+  ];
+
+  // Bir ünitenin sayacKey'i, doluluk-veri.js'deki DOLULUK_UNITE_ESLESME
+  // üzerinden hangi bölmeyi besliyorsa onu bulur (ör. ezme1State → plastik).
+  function besledigiBolmeyiBul(sayacKey){
+    if (typeof DOLULUK_UNITE_ESLESME === 'undefined') return null;
+    const bolmeId = Object.keys(DOLULUK_UNITE_ESLESME).find(function(id){
+      const anahtarlar = DOLULUK_UNITE_ESLESME[id];
+      return Array.isArray(anahtarlar) ? anahtarlar.indexOf(sayacKey) !== -1 : anahtarlar === sayacKey;
+    });
+    if (!bolmeId) return null;
+    return bolmeler.find(function(b){ return b.id === bolmeId; }) || null;
+  }
+
+  function durumBilgisi(state){
+    if (state.sikisma) return { key: 'sikisma', ad: 'Sıkışma' };
+    if (state.calisiyor) return { key: 'calisiyor', ad: 'Çalışıyor' };
+    return { key: 'beklemede', ad: 'Beklemede' };
+  }
+
+  async function motorGuncelle(){
+    const grid = document.getElementById('motor-grid');
+    let calisan = 0;
+    let sikismalar = [];
+    let toplamIslem = 0;
+    const dolulukVerisi = (typeof dolulukYukle === 'function') ? await dolulukYukle() : null;
+
+    // Tüm ünitelerin güncel durumunu backend'den tek seferde çekip önbelleğe
+    // alıyoruz (motorListesi.map içindeki her birimDurumuYukle çağrısı bu
+    // önbellekten okur, tekrar tekrar fetch atmaz).
+    if (typeof _uniteListesiGetir === 'function'){
+      try { await _uniteListesiGetir(); } catch(e){ console.error('[motor-durum] Ünite listesi alınamadı:', e); }
+    }
+
+    const durumlar = {};
+    for (const m of motorListesi){
+      const ayar = uniteAyarlari[m.anahtar];
+      durumlar[m.anahtar] = await birimDurumuYukle(ayar.sayacKey);
+    }
+
+    grid.innerHTML = motorListesi.map(function(m){
+      const ayar = uniteAyarlari[m.anahtar];
+      const state = durumlar[m.anahtar];
+      const st = durumBilgisi(state);
+
+      if (state.calisiyor && !state.sikisma) calisan++;
+      if (state.sikisma) sikismalar.push(ayar.baslik);
+      toplamIslem += state.bugunSayisi;
+
+      const r = 40, c = 2 * Math.PI * r;
+      const offset = c - (state.yuk / 100) * c;
+      const bolme = besledigiBolmeyiBul(ayar.sayacKey);
+      const bolmeYuzde = (bolme && dolulukVerisi) ? (dolulukVerisi[bolme.id] ?? 0) : null;
+
+      return `
+        <div class="doluluk-card" data-anahtar="${m.anahtar}">
+          <div class="doluluk-ring">
+            <svg viewBox="0 0 100 100">
+              <circle class="ring-track" cx="50" cy="50" r="${r}"></circle>
+              <circle class="ring-fill" cx="50" cy="50" r="${r}"
+                stroke="${ayar.renk}"
+                stroke-dasharray="${c}"
+                stroke-dashoffset="${offset}"></circle>
+            </svg>
+            <div class="doluluk-ring-label">
+              <div class="doluluk-ring-pct">%${state.yuk}</div>
+              <div class="doluluk-ring-unit">YÜK</div>
+            </div>
+          </div>
+          <div class="doluluk-info">
+            <div class="motor-card-head">
+              <div class="doluluk-name">
+                <span class="doluluk-icon" style="background:${ayar.renk}22; color:${ayar.renk};">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">${m.ikon}</svg>
+                </span>
+                ${ayar.baslik}
+              </div>
+              <span class="doluluk-status ${st.key}">${st.ad}</span>
+            </div>
+            <div class="doluluk-meta">
+              ${state.sicaklik}${ayar.olcuBirimi} · Bugün ${state.bugunSayisi} adet
+            </div>
+            <div class="doluluk-bar-track">
+              <div class="doluluk-bar-fill" style="width:${state.yuk}%; background:${ayar.renk};"></div>
+            </div>
+            ${bolme ? `
+            <div class="motor-besleme">
+              <span class="nokta" style="background:${bolme.renk};"></span>
+              Beslediği bölme: <strong>${bolme.ad}</strong> — %${bolmeYuzde}
+            </div>` : ''}
+            <div class="motor-card-actions">
+              <button class="unite-btn gider" onclick="motorSikismaGider('${m.anahtar}')" style="${state.sikisma ? '' : 'display:none;'}">Sıkışmayı Gider</button>
+              <span class="motor-otomatik-etiket" style="${state.sikisma ? 'display:none;' : ''}">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
+                Otomatik · Ana Makineye Bağlı
+              </span>
+              <a class="motor-detay-link" href="${m.href}" style="color:${ayar.renk};">Detay →</a>
+            </div>
+          </div>
+        </div>`;
+    }).join('');
+
+    document.getElementById('ozet-calisan').innerHTML = calisan + '<span>/ 9</span>';
+    document.getElementById('ozet-sikisma').textContent = sikismalar.length ? sikismalar.length + ' motor' : 'Yok';
+    document.getElementById('ozet-toplam-islem').innerHTML = toplamIslem + '<span>adet</span>';
+
+    const alertWrap = document.getElementById('genel-alert-wrap');
+    if (sikismalar.length){
+      alertWrap.innerHTML =
+        '<div class="doluluk-alert" role="alert">' +
+          '<span class="doluluk-alert-icon" aria-hidden="true">' +
+            '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 9v4M12 17h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>' +
+          '</span>' +
+          '<div class="doluluk-alert-body">' +
+            '<p class="doluluk-alert-title">Sıkışma Tespit Edildi</p>' +
+            '<p class="doluluk-alert-text"><strong>' + sikismalar.join(', ') + '</strong> içinde sıkışma algılandı. İlgili motoru durum sayfasından veya buradaki "Sıkışmayı Gider" butonundan giderin.</p>' +
+          '</div>' +
+        '</div>';
+    } else {
+      alertWrap.innerHTML = '';
+    }
+
+    await anaMakineDurumGoster();
+    document.getElementById('son-guncelleme').textContent = 'Son güncelleme: ' + saatStr(new Date());
+  }
+
+  // ── Kontrol fonksiyonları (her motor için genel amaçlı) ────────────────
+  // Motorlar artık manuel başlatılıp durdurulmuyor; fanlar gibi tamamen
+  // otomatik olarak ana makinenin AÇIK/KAPALI durumunu takip ediyorlar
+  // (bkz. ezme-veri.js -> tumUniteleriAyarla ve aşağıdaki senkronizasyon).
+  // Sıkışmayı Gider artık gerçek bir PATCH /units/:code isteği; başarısız
+  // olursa (ör. ağ hatası) buton durumu değişmeden kalır.
+  async function motorSikismaGider(anahtar){
+    const ayar = uniteAyarlari[anahtar];
+    try{
+      await uniteSikismaGiderApi(anahtar);
+    }catch(e){
+      console.error('[motor-durum] Sıkışma giderilemedi:', ayar.backendKod, e);
+      alert('Sıkışma giderilemedi, bağlantıyı kontrol edin: ' + e.message);
+      return;
+    }
+    if (typeof acilDurumGiderKaynak === 'function') acilDurumGiderKaynak(ayar.baslik);
+
+    // Ana makine kapalıysa motoru tamamen durdur, açıksa yeniden çalıştır.
+    const acik = await anaMakineAcikMiAsync();
+    const yerel = _yerelDurumYukle(ayar);
+    if (!acik){
+      try{ await uniteDurdur(anahtar); }catch(e){ console.error('[motor-durum] Ünite durdurulamadı:', ayar.backendKod, e); }
+      yerel.yuk = 0;
+    } else {
+      try{ await uniteBaslat(anahtar); }catch(e){ console.error('[motor-durum] Ünite başlatılamadı:', ayar.backendKod, e); }
+      yerel.yuk = rastgele(45, 60);
+    }
+    _yerelDurumKaydet(ayar, yerel);
+    motorGuncelle();
+  }
+
+  // ── Canlı simülasyon: bu sayfa açıkken 9 motorun tümü ilerler ───────────
+  // Sıcaklık/yük/son işlemler hâlâ istemcide simüle ediliyor (backend'de bu
+  // alanlar yok). Sıkışma tespiti ise artık gerçek bir olay: rastgele
+  // tetiklendiğinde gerçekten PATCH /units/:code {isJammed:true} çağrılıyor —
+  // yani gerçek donanım bağlandığında yapılması gereken tek şey bu rastgele
+  // tetikleyiciyi (Math.random() < 0.03) fiziksel sensör sinyaliyle değiştirmek.
+  async function simulateTickHepsi(){
+    const acik = await anaMakineAcikMiAsync();
+
+    for (const m of motorListesi){
+      const ayar = uniteAyarlari[m.anahtar];
+      const state = await birimDurumuYukle(ayar.sayacKey);
+
+      if (!acik){
+        // Makine kapalıyken: sadece çalışan (sıkışmamış) üniteleri durdur.
+        // Sıkışma durumu backend'de zaten KORUNUYOR; "Sıkışmayı Gider" ile
+        // temizlenmeden burada otomatik olarak sıfırlanmıyor.
+        if (state.calisiyor && !state.sikisma){
+          try{ await uniteDurdur(m.anahtar); }catch(e){ console.error('[motor-durum] Ünite durdurulamadı:', ayar.backendKod, e); }
+          const yerel = _yerelDurumYukle(ayar);
+          yerel.yuk = 0;
+          _yerelDurumKaydet(ayar, yerel);
+        }
+        continue;
+      }
+
+      if (!state.calisiyor || state.sikisma) continue;
+
+      if (Math.random() < 0.03){
+        try{
+          await uniteSikismaBildir(m.anahtar);
+          await sikismaBildirimiOlustur(ayar);
+        }catch(e){
+          console.error('[motor-durum] Sıkışma backend’e işlenemedi:', ayar.backendKod, e);
+          continue;
+        }
+        const yerel = _yerelDurumYukle(ayar);
+        yerel.yuk = 0;
+        _yerelDurumKaydet(ayar, yerel);
+        if (typeof acilDurumAlarmVer === 'function'){
+          acilDurumAlarmVer(ayar.baslik, 'kritik', 'Sıkışma algılandı, motor otomatik olarak durduruldu.');
+        }
+        continue;
+      }
+
+      const yerel = _yerelDurumYukle(ayar);
+      yerel.yuk = Math.max(35, Math.min(92, yerel.yuk + rastgele(-8, 8)));
+      yerel.sicaklik = Math.max(22, Math.min(58, yerel.sicaklik + rastgele(-1, 2)));
+
+      const boyut = ayar.boyutlar[rastgele(0, ayar.boyutlar.length - 1)];
+      yerel.sonIslemler.unshift({ zaman: saatStr(), text: ayar.islemAdi + ' (' + boyut + ')' });
+      yerel.sonIslemler = yerel.sonIslemler.slice(0, 8);
+
+      _yerelDurumKaydet(ayar, yerel);
+    }
+
+    motorGuncelle();
+    if (typeof dolulukTick === 'function') dolulukTick();
+  }
+
+  document.addEventListener('DOMContentLoaded', async function(){
+    menuyuRoleGoreDuzenle();
+    await motorGuncelle();
+    setInterval(simulateTickHepsi, 4000);
+  });
+
+  // Makine açıkken panelden çıkışı engelle
+  (function makineAcikkenCikisiEngelle(){
+    function makineCalisiyorMu(){
+      return JSON.parse(localStorage.getItem('makineAcik') || 'false');
+    }
+    function cikisUyarisiGoster(){
+      alert('Makine açıkken siteden çıkamazsınız. Lütfen önce makineyi kapatın.');
+    }
+    document.querySelectorAll('a[href="login.html"]').forEach(function(link){
+      link.addEventListener('click', function(e){
+        if (!makineCalisiyorMu()) return;
+        e.preventDefault();
+        e.stopPropagation();
+        cikisUyarisiGoster();
+      });
+    });
+  })();
+</script>
+</html>

@@ -1,0 +1,819 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Depozito İade Sistemi</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --green-900: #1B4332;
+      --green-700: #2D6A4F;
+      --green-500: #52B788;
+      --green-300: #95D5B2;
+      --green-100: #D8F3DC;
+      --green-50:  #F0FFF4;
+      --accent:    #74C69D;
+      --gold:      #B7E4C7;
+      --slate:     #0D1B2A;
+      --gray-800:  #1F2937;
+      --gray-600:  #4B5563;
+      --gray-300:  #D1D5DB;
+      --gray-100:  #F3F4F6;
+      --white:     #FFFFFF;
+      --cream:     #F9FAFB;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: var(--cream);
+      color: var(--gray-800);
+      line-height: 1.6;
+    }
+
+    /* ── NAV ── */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 1rem 2.5rem;
+      background: rgba(27, 67, 50, 0.95);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+    .nav-logo {
+      display: flex; align-items: center; gap: 0.6rem;
+      font-weight: 800; font-size: 1.1rem; color: var(--green-100);
+      text-decoration: none; letter-spacing: -0.02em;
+    }
+    .nav-logo svg { flex-shrink: 0; }
+    nav ul { list-style: none; display: flex; gap: 1.5rem; flex-wrap: wrap; }
+    nav ul a {
+      color: var(--green-300); text-decoration: none;
+      font-size: 0.875rem; font-weight: 500;
+      transition: color 0.2s;
+    }
+    nav ul a:hover { color: var(--white); }
+
+    /* ── HERO ── */
+    #hero {
+      min-height: 100vh;
+      background: linear-gradient(160deg, var(--green-900) 0%, var(--slate) 100%);
+      display: flex; align-items: center; justify-content: center;
+      text-align: center;
+      padding: 7rem 1.5rem 5rem;
+      position: relative; overflow: hidden;
+    }
+    #hero::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%2395D5B2' fill-opacity='0.04'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    }
+    .hero-badge {
+      display: inline-block;
+      background: rgba(116, 198, 157, 0.15);
+      border: 1px solid rgba(116, 198, 157, 0.3);
+      color: var(--accent);
+      font-size: 0.75rem; font-weight: 600; letter-spacing: 0.12em;
+      text-transform: uppercase;
+      padding: 0.4rem 1rem; border-radius: 999px;
+      margin-bottom: 1.5rem;
+    }
+    #hero h1 {
+      font-size: clamp(2.2rem, 6vw, 4.5rem);
+      font-weight: 900; line-height: 1.05;
+      color: var(--white);
+      letter-spacing: -0.03em;
+      max-width: 800px; margin: 0 auto 1rem;
+    }
+    #hero h1 span { color: var(--accent); }
+    .hero-sub {
+      font-size: clamp(1rem, 2vw, 1.2rem);
+      color: var(--green-300);
+      max-width: 560px; margin: 0 auto 2.5rem;
+      font-weight: 400;
+    }
+    .hero-cta {
+      display: inline-flex; align-items: center; gap: 0.5rem;
+      background: var(--accent);
+      color: var(--slate);
+      font-weight: 700; font-size: 0.95rem;
+      padding: 0.85rem 2rem; border-radius: 8px;
+      text-decoration: none;
+      transition: transform 0.2s, box-shadow 0.2s;
+      box-shadow: 0 4px 24px rgba(116,198,157,0.3);
+    }
+    .hero-cta:hover { transform: translateY(-2px); box-shadow: 0 8px 32px rgba(116,198,157,0.4); }
+    .hero-stats {
+      display: flex; justify-content: center; gap: 3rem; flex-wrap: wrap;
+      margin-top: 4rem; padding-top: 3rem;
+      border-top: 1px solid rgba(255,255,255,0.1);
+    }
+    .stat-item { text-align: center; }
+    .stat-num {
+      display: block;
+      font-size: 2.2rem; font-weight: 900; color: var(--accent);
+      letter-spacing: -0.04em;
+    }
+    .stat-label {
+      font-size: 0.8rem; color: var(--green-300);
+      font-weight: 500; letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    /* ── WAVE DIVIDER ── */
+    .wave {
+      display: block; width: 100%;
+      margin-bottom: -2px;
+      background: transparent;
+    }
+
+    /* ── SECTION BASE ── */
+    section { padding: 6rem 1.5rem; }
+    .container { max-width: 1100px; margin: 0 auto; }
+    .section-eyebrow {
+      display: inline-block;
+      font-size: 0.7rem; font-weight: 700; letter-spacing: 0.15em;
+      text-transform: uppercase; color: var(--green-500);
+      margin-bottom: 0.75rem;
+    }
+    h2.section-title {
+      font-size: clamp(1.8rem, 4vw, 2.8rem);
+      font-weight: 800; letter-spacing: -0.03em;
+      color: var(--green-900); line-height: 1.1;
+      margin-bottom: 1rem;
+    }
+    .section-lead {
+      font-size: 1.05rem; color: var(--gray-600);
+      max-width: 600px; margin-bottom: 3.5rem;
+    }
+
+    /* ── ÜRÜNLER ── */
+    .urun-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; }
+    .urun-card { border-radius: 20px; overflow: hidden; border: 1px solid var(--gray-300); background: var(--white); box-shadow: 0 2px 12px rgba(0,0,0,0.06); transition: transform 0.25s, box-shadow 0.25s; }
+    .urun-card:hover { transform: translateY(-4px); box-shadow: 0 12px 32px rgba(0,0,0,0.12); }
+    .urun-header { padding: 2rem 1.5rem 1.5rem; display: flex; align-items: center; justify-content: center; }
+    .urun-emoji-group { display: flex; align-items: flex-end; gap: 1rem; }
+    .sise-wrap { display: flex; flex-direction: column; align-items: center; gap: 0.3rem; }
+    .sise-emoji { font-size: 1.6rem; line-height: 1; }
+    .sise-label { font-size: 0.65rem; font-weight: 700; color: var(--gray-600); letter-spacing: 0.04em; }
+    .urun-body { padding: 1.5rem; }
+    .urun-badge { display: inline-block; font-size: 0.7rem; font-weight: 700; padding: 0.3rem 0.75rem; border-radius: 999px; margin-bottom: 0.6rem; letter-spacing: 0.04em; }
+    .urun-body h3 { font-size: 1.1rem; font-weight: 800; color: var(--green-900); margin-bottom: 0.2rem; }
+    .urun-aralik { font-size: 0.8rem; color: var(--gray-600); margin-bottom: 0.75rem; font-weight: 500; }
+    .urun-list { list-style: none; margin-bottom: 1rem; }
+    .urun-list li { font-size: 0.82rem; color: var(--gray-600); padding: 0.25rem 0 0.25rem 1rem; position: relative; }
+    .urun-list li::before { content: '✓'; position: absolute; left: 0; color: var(--green-500); font-weight: 700; }
+    .urun-depozito { background: var(--green-50); border: 1px solid var(--green-100); border-radius: 8px; padding: 0.6rem 1rem; font-size: 0.9rem; color: var(--green-700); text-align: center; }
+    .urun-depozito strong { font-size: 1.1rem; color: var(--green-900); }
+
+    /* ── SSS ── */
+    .sss-layout { display: grid; grid-template-columns: 1fr 1.2fr; gap: 3rem; align-items: start; }
+    .sss-gorsel img { width: 100%; border-radius: 16px; box-shadow: 0 8px 32px rgba(0,0,0,0.12); }
+    .sss-gorsel-aciklama { font-size: 0.8rem; color: var(--gray-600); margin-top: 0.75rem; text-align: center; font-style: italic; }
+    .sss-sorular { display: flex; flex-direction: column; gap: 1rem; }
+    .sss-item { background: var(--white); border-radius: 12px; padding: 1.25rem 1.5rem; border: 1px solid var(--gray-300); transition: box-shadow 0.2s; }
+    .sss-item:hover { box-shadow: 0 4px 16px rgba(27,67,50,0.08); }
+    .sss-q { font-size: 0.95rem; font-weight: 700; color: var(--green-900); margin-bottom: 0.5rem; }
+    .sss-a { font-size: 0.85rem; color: var(--gray-600); line-height: 1.6; }
+    @media (max-width: 768px) { .sss-layout { grid-template-columns: 1fr; } }
+
+    /* ── KAZANÇ ── */
+    .kazan-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 2.5rem; }
+    .kazan-hesap { background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.15); border-radius: 20px; padding: 2rem; }
+    .kazan-row { display: flex; align-items: center; gap: 1rem; }
+    .kazan-icon { font-size: 2rem; width: 48px; text-align: center; }
+    .kazan-val { font-size: 1.4rem; font-weight: 800; color: var(--white); }
+    .kazan-desc { font-size: 0.78rem; color: var(--green-300); }
+    .kazan-x { font-size: 1.5rem; color: var(--accent); font-weight: 900; text-align: center; margin: 0.75rem 0; }
+    .kazan-sonuc { background: var(--accent); border-radius: 12px; padding: 1.25rem; text-align: center; margin: 0.75rem 0; }
+    .kazan-sonuc-num { font-size: 2.5rem; font-weight: 900; color: var(--green-900); letter-spacing: -0.04em; }
+    .kazan-sonuc-label { font-size: 0.8rem; color: var(--green-900); font-weight: 600; }
+    .kazan-ay { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; padding: 1rem 1.25rem; display: flex; justify-content: space-between; align-items: center; margin-top: 0.75rem; font-size: 0.85rem; color: var(--green-300); }
+    .kazan-ay strong { font-size: 1.1rem; color: var(--white); }
+    .kazan-info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    .kazan-info-card { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); border-radius: 14px; padding: 1.25rem; }
+    .kazan-info-card h3 { font-size: 0.9rem; font-weight: 700; color: var(--white); margin: 0.5rem 0 0.35rem; }
+    .kazan-info-card p { font-size: 0.78rem; color: var(--green-300); line-height: 1.5; }
+    .kazan-tablo { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; padding: 1.5rem; }
+    .tablo-grid { display: flex; flex-direction: column; gap: 0.5rem; }
+    .tablo-row { display: grid; grid-template-columns: 1fr 1fr 1fr; padding: 0.75rem 1rem; border-radius: 8px; font-size: 0.85rem; color: var(--green-100); }
+    .header-row { background: rgba(255,255,255,0.08); font-weight: 700; font-size: 0.75rem; color: var(--green-300); letter-spacing: 0.05em; text-transform: uppercase; }
+    .highlight-row { background: rgba(116,198,157,0.15); border: 1px solid rgba(116,198,157,0.3); font-weight: 700; }
+    .tablo-vurgu { color: var(--accent); font-weight: 700; }
+
+    /* ── HOW IT WORKS ── */
+    #nasil-calisir { background: var(--white); }
+    .steps-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 0;
+    }
+    .step {
+      padding: 2rem 1.75rem;
+      position: relative;
+    }
+    .step:not(:last-child)::after {
+      content: '';
+      position: absolute; top: 2.6rem; right: 0;
+      width: 1px; height: 2.5rem;
+      background: var(--gray-300);
+    }
+    .step-num {
+      font-size: 3rem; font-weight: 900;
+      color: var(--green-100); letter-spacing: -0.06em;
+      line-height: 1; margin-bottom: 0.75rem;
+    }
+    .step-icon {
+      width: 48px; height: 48px;
+      background: var(--green-50);
+      border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: 1rem;
+      font-size: 1.4rem;
+    }
+    .step h3 {
+      font-size: 1rem; font-weight: 700; color: var(--green-900);
+      margin-bottom: 0.5rem;
+    }
+    .step p { font-size: 0.875rem; color: var(--gray-600); }
+
+    /* ── ENV IMPACT (bullet list) ── */
+    #cevre { background: var(--green-900); }
+    #cevre .section-eyebrow { color: var(--green-300); }
+    #cevre h2.section-title { color: var(--white); }
+    #cevre .section-lead { color: var(--green-300); }
+    .impact-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 1rem;
+    }
+    .impact-item {
+      display: flex; align-items: flex-start; gap: 1rem;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 12px; padding: 1.25rem 1.5rem;
+      transition: background 0.2s;
+    }
+    .impact-item:hover { background: rgba(255,255,255,0.1); }
+    .impact-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--accent); flex-shrink: 0; margin-top: 0.45rem;
+    }
+    .impact-item p { font-size: 0.9rem; color: var(--green-100); font-weight: 500; }
+
+    /* ── MACHINE FEATURES ── */
+    #makine { background: var(--cream); }
+    .features-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 1.5rem;
+    }
+    .feature-card {
+      background: var(--white);
+      border: 1px solid var(--gray-300);
+      border-radius: 16px; padding: 1.75rem;
+      transition: box-shadow 0.25s, transform 0.25s;
+    }
+    .feature-card:hover {
+      box-shadow: 0 8px 32px rgba(27,67,50,0.1);
+      transform: translateY(-3px);
+    }
+    .feature-icon {
+      font-size: 1.75rem; margin-bottom: 0.75rem;
+      display: block;
+    }
+    .feature-card h3 {
+      font-size: 0.95rem; font-weight: 700;
+      color: var(--green-900); margin-bottom: 0.25rem;
+    }
+    .feature-card p { font-size: 0.85rem; color: var(--gray-600); }
+
+    /* ── WHO IS IT FOR ── */
+    #kimler { background: var(--white); }
+    .sectors-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 1.25rem;
+    }
+    .sector-card {
+      border-left: 3px solid var(--green-500);
+      background: var(--cream);
+      border-radius: 0 12px 12px 0;
+      padding: 1.25rem 1.5rem;
+      transition: border-color 0.2s, background 0.2s;
+    }
+    .sector-card:hover { border-color: var(--green-900); background: var(--green-50); }
+    .sector-icon { font-size: 1.5rem; margin-bottom: 0.5rem; display: block; }
+    .sector-card h3 {
+      font-size: 0.95rem; font-weight: 700;
+      color: var(--green-900); margin-bottom: 0.35rem;
+    }
+    .sector-card p { font-size: 0.82rem; color: var(--gray-600); }
+
+    /* ── CTA FOOTER ── */
+    #cta {
+      background: linear-gradient(135deg, var(--green-700) 0%, var(--green-900) 100%);
+      text-align: center; padding: 6rem 1.5rem;
+    }
+    #cta h2 {
+      font-size: clamp(1.8rem, 4vw, 3rem);
+      font-weight: 900; color: var(--white);
+      letter-spacing: -0.03em; margin-bottom: 1rem;
+    }
+    #cta p {
+      font-size: 1.05rem; color: var(--green-300);
+      max-width: 520px; margin: 0 auto 2.5rem;
+    }
+    #cta a {
+      display: inline-flex; align-items: center; gap: 0.5rem;
+      background: var(--white); color: var(--green-900);
+      font-weight: 800; padding: 0.9rem 2.25rem;
+      border-radius: 8px; text-decoration: none; font-size: 1rem;
+      transition: transform 0.2s;
+    }
+    #cta a:hover { transform: translateY(-2px); }
+
+    footer {
+      background: var(--slate); color: var(--gray-600);
+      text-align: center; padding: 1.5rem;
+      font-size: 0.8rem;
+    }
+
+    /* ── SCROLL REVEAL ── */
+    .reveal { opacity: 0; transform: translateY(24px); transition: opacity 0.6s ease, transform 0.6s ease; }
+    .reveal.visible { opacity: 1; transform: none; }
+
+    @media (max-width: 640px) {
+      nav ul { display: none; }
+      .hero-stats { gap: 1.5rem; }
+      .step::after { display: none; }
+      .kazan-layout { grid-template-columns: 1fr; }
+      .kazan-info-grid { grid-template-columns: 1fr; }
+      .tablo-row { font-size: 0.72rem; padding: 0.6rem 0.5rem; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a href="#hero" class="nav-logo">
+    <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+      <rect width="28" height="28" rx="7" fill="#74C69D"/>
+      <path d="M8 19l4-8 4 5 2-3 2 6" stroke="#1B4332" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+    Depozito İade
+  </a>
+  <ul>
+    <li><a href="#urunler">Ürünler</a></li>
+    <li><a href="#sss">SSS</a></li>
+    <li><a href="#kazan">Kazanç</a></li>
+    <li><a href="#nasil-calisir">Nasıl Çalışır?</a></li>
+    <li><a href="#cevre">Çevre Etkisi</a></li>
+    <li><a href="#makine">Makine</a></li>
+    <li><a href="#kimler">Kimler İçin?</a></li>
+  </ul>
+</nav>
+
+<!-- HERO -->
+<section id="hero">
+  <div>
+    <span class="hero-badge">♻ Geleceğe Değer Katan Sistem</span>
+    <h1><span>Depozito İade</span><br>Sistemi</h1>
+    <p class="hero-sub">Doğayı Koru,Çevreni Temiz Tut — Ülke Ekonomisine Katkı Sağla-Aile ekonomisine Katkı Sağla</p>
+    <a href="#nasil-calisir" class="hero-cta">Sistemi Keşfet →</a>
+    <div class="hero-stats">
+      <div class="stat-item">
+        <span class="stat-num">3</span>
+        <span class="stat-label">Ambalaj Türü</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-num">10+</span>
+        <span class="stat-label">Sektör</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-num">%100</span>
+        <span class="stat-label">Geri Dönüşüm</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-num">↓CO₂</span>
+        <span class="stat-label">Karbon Azaltımı</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- WAVE -->
+<svg class="wave" viewBox="0 0 1440 60" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+  <path d="M0,40 C360,80 1080,0 1440,40 L1440,60 L0,60 Z" fill="#ffffff"/>
+</svg>
+
+<!-- ÜRÜNLER -->
+<section id="urunler" style="background: var(--white);">
+  <div class="container">
+    <span class="section-eyebrow reveal">Kabul Edilen Ambalajlar</span>
+    <h2 class="section-title reveal">Hangi Ürünleri Getirebilirsiniz?</h2>
+    <p class="section-lead reveal">Plastik, teneke ve cam olmak üzere üç farklı ambalaj türünü sisteme dahil edebilirsiniz.</p>
+    <div class="urun-grid">
+
+      <!-- PLASTİK -->
+      <div class="urun-card reveal">
+        <div class="urun-header" style="background: linear-gradient(135deg, #e0f7fa, #b2ebf2);">
+          <div class="urun-emoji-group">
+            <div class="sise-wrap"><span class="sise-emoji" style="font-size:1.4rem;">🧴</span><span class="sise-label">0.5 L</span></div>
+            <div class="sise-wrap"><span class="sise-emoji" style="font-size:1.8rem;">🧴</span><span class="sise-label">1 L</span></div>
+            <div class="sise-wrap"><span class="sise-emoji" style="font-size:2.2rem;">🧴</span><span class="sise-label">1.5 L</span></div>
+            <div class="sise-wrap"><span class="sise-emoji" style="font-size:2.8rem;">🧴</span><span class="sise-label">2–3 L</span></div>
+          </div>
+        </div>
+        <div class="urun-body">
+          <div class="urun-badge" style="background:#e0f7fa; color:#00796b;">♻ Plastik</div>
+          <h3>Plastik Şişeler</h3>
+          <p class="urun-aralik">0,5 Lt — 3 Lt arası tüm boyutlar</p>
+          <ul class="urun-list">
+            <li>Su, meyve suyu, gazlı içecek şişeleri</li>
+            <li>PET ambalajlı tüm içecekler</li>
+            <li>Temizlenmiş ve ezilmemiş olmalı</li>
+          </ul>
+          <div class="urun-depozito">1 şişe = <strong>1 ₺</strong></div>
+        </div>
+      </div>
+
+      <!-- TENEKE -->
+      <div class="urun-card reveal">
+        <div class="urun-header" style="background: linear-gradient(135deg, #fce4ec, #f8bbd0);">
+          <div class="urun-emoji-group">
+            <div class="sise-wrap">
+              <img src="WhatsApp Image 2026-06-23 at 21.44.48.png" alt="kola" style="width:1.8rem;height:1.8rem;object-fit:contain;vertical-align:middle;" onerror="this.style.display='none';this.nextElementSibling.style.display='inline'">
+              <span class="sise-emoji" style="display:none;font: size 2.4em;rem;vertical-align:middle;">🥫</span>
+              <span class="sise-label">0.2 L</span>
+            </div>
+            <div class="sise-wrap">
+              <img src="WhatsApp Image 2026-06-23 at 21.44.48.png" alt="kola" style="width:2.4rem;height:2.4rem;object-fit:contain;vertical-align:middle;" onerror="this.style.display='none';this.previousElementSibling.style.display='inline';">
+              <span class="sise-emoji" style="display:none;font-size:3rem;vertical-align:middle;">🥫</span>
+              <span class="sise-label">0.33 L</span>
+            </div>
+          </div>
+        </div>
+        <div class="urun-body">
+          <div class="urun-badge" style="background:#fce4ec; color:#c62828;">🥤 Teneke / Alüminyum</div>
+          <h3>Teneke Kutular</h3>
+          <p class="urun-aralik">0,2 Lt ve 0,33 Lt</p>
+          <ul class="urun-list">
+            <li>Alüminyum içecek kutuları</li>
+            <li>Enerji içeceği ve bira kutuları</li>
+            <li>Ezilmemiş, barkodu okunabilir olmalı</li>
+          </ul>
+          <div class="urun-depozito">1 kutu = <strong>1 ₺</strong></div>
+        </div>
+      </div>
+
+      <!-- CAM -->
+      <div class="urun-card reveal">
+        <div class="urun-header" style="background: linear-gradient(135deg, #f3e5f5, #e1bee7);">
+          <div class="urun-emoji-group">
+            <div class="sise-wrap"><span class="sise-emoji" style="font-size:1.4rem;">🍶</span><span class="sise-label">200 ml</span></div>
+            <div class="sise-wrap"><span class="sise-emoji" style="font-size:1.9rem;">🍶</span><span class="sise-label">500 ml</span></div>
+            <div class="sise-wrap"><span class="sise-emoji" style="font-size:2.4rem;">🍶</span><span class="sise-label">1 Lt</span></div>
+            <div class="sise-wrap"><span class="sise-emoji" style="font-size:2.9rem;">🍶</span><span class="sise-label">1.1 Lt</span></div>
+          </div>
+        </div>
+        <div class="urun-body">
+          <div class="urun-badge" style="background:#f3e5f5; color:#6a1b9a;">🍶 Cam</div>
+          <h3>Cam Şişeler</h3>
+          <p class="urun-aralik">200 ml — 1,1 Lt arası tüm boyutlar</p>
+          <ul class="urun-list">
+            <li>Su, ayran, meyve suyu cam şişeleri</li>
+            <li>gazlı içecek cam şişeleri</li>
+            <li>Kırılmamış, barkodu okunabilir olmalı</li>
+          </ul>
+          <div class="urun-depozito">1 şişe = <strong>1 ₺</strong></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+
+<!-- WAVE -->
+<svg class="wave" viewBox="0 0 1440 60" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg" style="background:#fff">
+  <path d="M0,30 C500,70 900,0 1440,30 L1440,60 L0,60 Z" fill="#F0FFF4"/>
+</svg>
+
+<!-- SIKÇA SORULAN SORULAR -->
+<section id="sss" style="background: var(--green-50);">
+  <div class="container">
+    <span class="section-eyebrow reveal">Merak Edilenler</span>
+    <h2 class="section-title reveal">MEVCUT SİSTEM İŞLEYEŞİ</h2>
+    <p class="section-lead reveal"></p>
+
+    <div class="sss-layout">
+      <!-- GÖRSEL -->
+      <div class="sss-gorsel reveal">
+        <img src="market_konusma_1.png" alt="market konuşma" class="sss-gorsel" />
+        <div style="display:flex;justify-content:center;margin-top:0.75rem;">
+          <div class="sss-gorsel-box" style="background:#e6ffed;border:1px solid #c6f0d0;padding:0.6rem 0.9rem;border-radius:8px;display:inline-block;">
+            <p class="sss-gorsel-aciklama" style="font-size:1.2rem;color:#c40000;margin:0;font-weight:700;">BU SORULARIN CEVABINA 30 GÜN</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- SORULAR -->
+      <div class="sss-sorular">
+        <div class="sss-item reveal">
+          <div class="sss-q">💧 Şisemde su kalmış, bunu nereye dökeceğim?</div>
+        </div>
+        <div class="sss-item reveal">
+          <div class="sss-q">🔩 Şişemin kapağını nereye atacağım?</div>
+        </div>
+        <div class="sss-item reveal">
+          <div class="sss-q">⏳ Sadece bir şişe atacaktım, neden bu kadar sıra bekliyorum?</div>
+        </div>
+      
+        
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- WAVE -->
+<svg class="wave" viewBox="0 0 1440 60" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg" style="background:#F0FFF4">
+  <path d="M0,10 C400,70 1000,0 1440,40 L1440,60 L0,60 Z" fill="#1B4332"/>
+</svg>
+<!-- KAZANÇ -->
+<section id="kazan" style="background: var(--green-900);">
+  <div class="container">
+    <span class="section-eyebrow reveal" style="color:var(--green-300);">Ek Gelir Fırsatı</span>
+    <h2 class="section-title reveal" style="color:var(--white);">Her Şişe Bir Kazanç</h2>
+    <p class="section-lead reveal" style="color:var(--green-300);">Emekliler ve ek gelir arayan herkes için sürdürülebilir bir kazanç modeli. Günde birkaç şişe bile fark yaratır.</p>
+    <div class="kazan-layout">
+      <div class="kazan-hesap reveal">
+        <div class="kazan-row">
+          <span class="kazan-icon">♻</span>
+          <div><div class="kazan-val">1.000 şişe</div><div class="kazan-desc">Günde toplanabilecek miktar</div></div>
+        </div>
+        <div class="kazan-x">×</div>
+        <div class="kazan-row">
+          <span class="kazan-icon">₺</span>
+          <div><div class="kazan-val">1 ₺</div><div class="kazan-desc">Şişe başına depozito bedeli</div></div>
+        </div>
+        <div class="kazan-x">=</div>
+        <div class="kazan-sonuc">
+          <div class="kazan-sonuc-num">1.000 ₺</div>
+          <div class="kazan-sonuc-label">Günlük kazanç</div>
+        </div>
+        <div class="kazan-ay">
+          <span>30 gün × 1.000 ₺</span>
+          <strong>= 30.000 ₺ / ay</strong>
+        </div>
+      </div>
+      <div class="kazan-info-grid reveal">
+        <div class="kazan-info-card">
+          <span style="font-size:2rem;">👴👵</span>
+          <h3>Emekliler İçin Ek Gelir</h3>
+          <p>Emekli maaşınıza ek olarak, düzenli şişe toplama alışkanlığıyla her ay ciddi bir gelir elde edebilirsiniz.</p>
+        </div>
+        <div class="kazan-info-card">
+          <span style="font-size:2rem;">🏘️</span>
+          <h3>Mahalle & Site Bazlı</h3>
+          <p>Site yöneticileri veya mahalle sakinleri organize olarak toplu şişe toplayıp geliri paylaşabilir.</p>
+        </div>
+        <div class="kazan-info-card">
+          <span style="font-size:2rem;">📅</span>
+          <h3>Düzenli ve Güvenilir</h3>
+          <p>Her gün belirli bir miktarda şişe toplarsanız, ay sonunda sabit ve öngörülebilir bir kazanç elde edersiniz.</p>
+        </div>
+        <div class="kazan-info-card">
+          <span style="font-size:2rem;">🌍</span>
+          <h3>Hem Kazan Hem Koru</h3>
+          <p>Kazanırken aynı zamanda çevreye katkı sağlarsınız — bu bir kazan-kazan modelidir.</p>
+        </div>
+      </div>
+    </div>
+    <div class="kazan-tablo reveal">
+      <h3 style="color:var(--white); margin-bottom:1rem; font-size:1rem;">Günlük Şişe Miktarına Göre Aylık Kazanç</h3>
+      <div class="tablo-grid">
+        <div class="tablo-row header-row"><span>Günlük Şişe</span><span>Günlük Kazanç</span><span>Aylık Kazanç (30 gün)</span></div>
+        <div class="tablo-row"><span>🧴 100 şişe</span><span>100 ₺</span><span class="tablo-vurgu">3.000 ₺</span></div>
+        <div class="tablo-row"><span>🧴 250 şişe</span><span>250 ₺</span><span class="tablo-vurgu">7.500 ₺</span></div>
+        <div class="tablo-row"><span>🧴 500 şişe</span><span>500 ₺</span><span class="tablo-vurgu">15.000 ₺</span></div>
+        <div class="tablo-row highlight-row"><span>🧴 1.000 şişe</span><span>1.000 ₺</span><span class="tablo-vurgu">30.000 ₺</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- WAVE -->
+<svg class="wave" viewBox="0 0 1440 60" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg" style="background:#1B4332">
+  <path d="M0,40 C360,0 1080,60 1440,20 L1440,60 L0,60 Z" fill="#ffffff"/>
+</svg>
+
+<!-- HOW IT WORKS -->
+<section id="nasil-calisir">
+  <div class="container">
+    <span class="section-eyebrow reveal">Sistem Nasıl Çalışır?</span>
+    <h2 class="section-title reveal">4 Adımda Geri Dönüşüm</h2>
+    <p class="section-lead reveal">Kullanıcı dostu süreç sayesinde herkes kolaylıkla geri dönüşüme katkı sağlayabilir.</p>
+    <div class="steps-grid">
+      <div class="step reveal">
+        <div class="step-num">01</div>
+        <div class="step-icon">📦</div>
+        <h3>Ambalajı Yerleştirin</h3>
+        <p>Kullanılmış içecek ambalajını depozito iade makinesine yerleştirin.</p>
+      </div>
+      <div class="step reveal">
+        <div class="step-num">02</div>
+        <div class="step-icon">🔍</div>
+        <h3>Akıllı Tanıma</h3>
+        <p>Makine, barkodu ve ambalajın uygunluğunu saniyeler içerisinde otomatik olarak kontrol eder.</p>
+      </div>
+      <div class="step reveal">
+        <div class="step-num">03</div>
+        <div class="step-icon">✅</div>
+        <h3>Güvenli Kabul</h3>
+        <p>Onaylanan ambalaj sistem tarafından güvenli şekilde kabul edilerek depolanır.</p>
+      </div>
+      <div class="step reveal">
+        <div class="step-num">04</div>
+        <div class="step-icon">♻</div>
+        <h3>Geri Dönüşüm</h3>
+        <p>Toplanan ambalajlar geri dönüşüm tesislerine gönderilir ve yeniden üretim sürecine kazandırılır.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- WAVE -->
+<svg class="wave" viewBox="0 0 1440 60" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg" style="background:#fff">
+  <path d="M0,20 C480,60 960,0 1440,20 L1440,60 L0,60 Z" fill="#1B4332"/>
+</svg>
+
+<!-- ENVIRONMENT -->
+<section id="cevre">
+  <div class="container">
+    <span class="section-eyebrow reveal">Çevre İçin Güçlü Bir Adım</span>
+    <h2 class="section-title reveal">Sürdürülebilir Geleceğe<br>Somut Katkı</h2>
+    <p class="section-lead reveal">Depozito İade Sistemi yalnızca ambalaj toplamakla kalmaz, sürdürülebilir yaşamın önemli bir parçasını oluşturur.</p>
+    <div class="impact-grid">
+      <div class="impact-item reveal"><div class="impact-dot"></div><p>Plastik, cam ve metal atıkların doğaya karışmasını önler</p></div>
+      <div class="impact-item reveal"><div class="impact-dot"></div><p>Geri dönüşüm oranlarının artmasına katkı sağlar</p></div>
+      <div class="impact-item reveal"><div class="impact-dot"></div><p>Doğal kaynakların daha verimli kullanılmasını destekler</p></div>
+      <div class="impact-item reveal"><div class="impact-dot"></div><p>Enerji tüketimini ve karbon salınımını azaltmaya yardımcı olur</p></div>
+      <div class="impact-item reveal"><div class="impact-dot"></div><p>Temiz çevre bilincinin yaygınlaşmasına katkı sağlar</p></div>
+      <div class="impact-item reveal"><div class="impact-dot"></div><p>Döngüsel ekonomiyi destekleyerek ülke ekonomisine değer katar</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- WAVE -->
+<svg class="wave" viewBox="0 0 1440 60" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg" style="background:#1B4332">
+  <path d="M0,30 C720,80 1440,0 1440,30 L1440,60 L0,60 Z" fill="#F9FAFB"/>
+</svg>
+
+<!-- MACHINE -->
+<section id="makine">
+  <div class="container">
+    <span class="section-eyebrow reveal">Akıllı Depozito İade Makinesi</span>
+    <h2 class="section-title reveal">Yüksek Teknoloji,<br>Kolay Kullanım</h2>
+    <p class="section-lead reveal">Hızlı, güvenilir ve kullanıcı dostu yapısıyla geri dönüşüm sürecini en üst düzeyde kolaylaştırır.</p>
+    <div class="features-grid">
+      <div class="feature-card reveal">
+        <span class="feature-icon">⚡</span>
+        <h3>Hızlı Barkod Okuma</h3>
+        <p>Saniyeler içinde barkod tarama ve doğrulama sistemi.</p>
+      </div>
+      <div class="feature-card reveal">
+        <span class="feature-icon">🤖</span>
+        <h3>Otomatik Tanıma</h3>
+        <p>Ambalaj türünü ve uygunluğunu yapay zeka destekli teknoloji ile otomatik tanır.</p>
+      </div>
+      <div class="feature-card reveal">
+        <span class="feature-icon">🔒</span>
+        <h3>Güvenli Depolama</h3>
+        <p>Kabul edilen ambalajlar izole depolama mekanizmasında güvenle tutulur.</p>
+      </div>
+      <div class="feature-card reveal">
+        <span class="feature-icon">👆</span>
+        <h3>Kolay Kullanım Arayüzü</h3>
+        <p>Her yaştan kullanıcının rahatlıkla kullanabileceği sezgisel dokunmatik ekran.</p>
+      </div>
+      <div class="feature-card reveal">
+        <span class="feature-icon">🏗️</span>
+        <h3>Dayanıklı Tasarım</h3>
+        <p>Uzun ömürlü, yüksek kapasiteli ve modern estetik yapı.</p>
+      </div>
+      <div class="feature-card reveal">
+        <span class="feature-icon">🌱</span>
+        <h3>Düşük Enerji Tüketimi</h3>
+        <p>Çevre dostu, enerji tasarruflu çalışma modu ile minimum karbon izi.</p>
+      </div>
+      <div class="feature-card reveal">
+        <span class="feature-icon">🔧</span>
+        <h3>Kolay Bakım</h3>
+        <p>Modüler yapısı sayesinde hızlı servis ve minimum bakım maliyeti.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- WAVE -->
+<svg class="wave" viewBox="0 0 1440 60" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg" style="background:#F9FAFB">
+  <path d="M0,0 C480,60 960,10 1440,40 L1440,60 L0,60 Z" fill="#ffffff"/>
+</svg>
+
+<!-- WHO IS IT FOR -->
+<section id="kimler">
+  <div class="container">
+    <span class="section-eyebrow reveal">Kimler İçin Uygundur?</span>
+    <h2 class="section-title reveal">Farklı Sektörler İçin<br>İdeal Çözüm</h2>
+    <p class="section-lead reveal">Kullanıcı dostu yapısı sayesinde hem çevreye katkı sağlar hem de geri dönüşüm süreçlerini kolaylaştırır.</p>
+    <div class="sectors-grid">
+      <div class="sector-card reveal">
+        <span class="sector-icon">🛒</span>
+        <h3>Marketler ve Süpermarketler</h3>
+        <p>Müşterilere hızlı ve pratik bir iade deneyimi sunarken geri dönüşüm bilincinin artmasına katkı sağlar.</p>
+      </div>
+      <div class="sector-card reveal">
+        <span class="sector-icon">🏬</span>
+        <h3>Alışveriş Merkezleri (AVM)</h3>
+        <p>Yoğun ziyaretçi trafiğine sahip alanlarda ambalaj atıklarının düzenli toplanmasını sağlar.</p>
+      </div>
+      <div class="sector-card reveal">
+        <span class="sector-icon">🏛️</span>
+        <h3>Belediyeler</h3>
+        <p>Sürdürülebilir atık yönetimi projelerine katkı sağlayarak geri dönüşüm oranlarını artırır.</p>
+      </div>
+      <div class="sector-card reveal">
+        <span class="sector-icon">🎓</span>
+        <h3>Üniversiteler ve Okullar</h3>
+        <p>Öğrencilerde çevre bilinci oluşturur ve kampüslerde geri dönüşüm kültürünü yaygınlaştırır.</p>
+      </div>
+      <div class="sector-card reveal">
+        <span class="sector-icon">🏥</span>
+        <h3>Hastaneler ve Kamu Kurumları</h3>
+        <p>Yoğun kullanım alanlarında oluşan içecek ambalajlarının kontrollü şekilde toplanmasını sağlar.</p>
+      </div>
+      <div class="sector-card reveal">
+        <span class="sector-icon">🏨</span>
+        <h3>Oteller ve Turizm Tesisleri</h3>
+        <p>Misafirlerin çevre dostu uygulamalara kolayca katılmasına olanak tanır, sürdürülebilir turizmi destekler.</p>
+      </div>
+      <div class="sector-card reveal">
+        <span class="sector-icon">🏭</span>
+        <h3>Fabrikalar ve Sanayi Tesisleri</h3>
+        <p>Çalışanların geri dönüşüm alışkanlığı kazanmasına katkı sağlar ve kurumsal sürdürülebilirliği destekler.</p>
+      </div>
+      <div class="sector-card reveal">
+        <span class="sector-icon">🏟️</span>
+        <h3>Spor Salonları ve Stadyumlar</h3>
+        <p>Yoğun tüketimin olduğu alanlarda plastik, cam ve metal ambalajların etkin toplanmasını sağlar.</p>
+      </div>
+      <div class="sector-card reveal">
+        <span class="sector-icon">✈️</span>
+        <h3>Havalimanları, Garlar ve Otogarlar</h3>
+        <p>Yüksek yolcu kapasitesine sahip ulaşım noktalarında atık yönetimini kolaylaştırır.</p>
+      </div>
+      <div class="sector-card reveal">
+        <span class="sector-icon">🏘️</span>
+        <h3>Toplu Yaşam Alanları</h3>
+        <p>Site yönetimleri ve rezidanslarda geri dönüşümü teşvik ederek daha temiz ortak yaşam alanları oluşturur.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section id="cta">
+  <div class="container">
+    <h2 class="reveal">Herkes İçin Daha Temiz<br>Bir Gelecek</h2>
+    <p class="reveal">Bireylerden kurumlara, küçük işletmelerden büyük tesislere kadar çevreye duyarlı herkes için sürdürülebilir, güvenilir ve modern bir geri dönüşüm çözümü.</p>
+    <a href="#nasil-calisir" class="reveal">Bugün Başlayın ♻</a>
+    <p style="margin-top:2.5rem;font-size:0.9rem;color:var(--green-300);font-style:italic;" class="reveal">
+      "Doğaya Değer Katıyoruz. Geleceği Birlikte Koruyoruz."
+    </p>
+  </div>
+</section>
+
+<footer>
+  <p>© 2026 Depozito İade Sistemi — Sürdürülebilir bir gelecek için.</p>
+</footer>
+
+<script>
+  // Scroll reveal
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach((e, i) => {
+      if (e.isIntersecting) {
+        setTimeout(() => e.target.classList.add('visible'), i * 60);
+        observer.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.1 });
+  document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+</script>
+
+</body>
+</html>
+

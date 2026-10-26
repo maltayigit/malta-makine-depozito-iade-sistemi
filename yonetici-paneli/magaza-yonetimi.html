@@ -1,0 +1,1103 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Malta Makine — Mağaza ve Firma Yönetimi</title>
+<link rel="icon" type="image/svg+xml" href="assets/image/favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/style.css">
+<script src="assets/js/auth.js"></script>
+<script>
+  // Bu sayfayı sadece 'yonetici' rolündeki kullanıcılar görebilir.
+  sayfaKorumaKontrolEt(['yonetici']);
+</script>
+
+<style>
+  /* style.css'teki mevcut sınıfların üstüne yazmaz; kayitlar.html'deki
+     tablo/modal/arama diliyle aynı token'lar kullanılır (--steel-950/800/700,
+     --paper, --paper-deep, --ink, --muted, --approve, --signal). */
+
+  .gizli{ display:none !important; }
+
+  .yon-uyari{
+    display:flex;
+    align-items:flex-start;
+    gap:12px;
+    background: var(--paper-deep);
+    border:1px solid rgba(32,34,36,0.14);
+    border-left:4px solid var(--steel-950);
+    border-radius:10px;
+    padding:13px 16px;
+    margin:22px 0 26px;
+    font-size:13px;
+    line-height:1.55;
+    color: var(--muted);
+  }
+  .yon-uyari strong{ color: var(--ink); }
+
+  /* ── Sekmeler (Makineler / Firmalar) ── */
+  .yon-tab-row{
+    display:flex;
+    gap:8px;
+    margin:26px 0 0;
+    border-bottom:1.5px solid rgba(32,34,36,0.14);
+  }
+  .yon-tab-btn{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12px;
+    letter-spacing:0.03em;
+    border:none;
+    background:none;
+    color:var(--muted);
+    cursor:pointer;
+    padding:11px 4px;
+    margin-bottom:-1.5px;
+    border-bottom:2.5px solid transparent;
+    transition: all .15s ease;
+  }
+  .yon-tab-btn + .yon-tab-btn{ margin-left:22px; }
+  .yon-tab-btn:hover{ color:var(--ink); }
+  .yon-tab-btn.aktif-tab{ color:var(--steel-950); border-bottom-color:var(--signal); font-weight:700; }
+
+  /* ── Arama + filtre çubuğu ── */
+  .makine-arama-row{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    flex-wrap:wrap;
+    margin:18px 0 0;
+  }
+  .makine-arama-input{
+    flex:1 1 260px;
+    min-width:200px;
+    font-family:'IBM Plex Sans', sans-serif;
+    font-size:13.5px;
+    color:var(--ink);
+    background:var(--paper-deep);
+    border:1px solid rgba(32,34,36,0.16);
+    border-radius:8px;
+    padding:10px 14px;
+    transition:border-color .15s ease, background .15s ease;
+  }
+  .makine-arama-input::placeholder{ color:var(--muted); }
+  .makine-arama-input:focus{
+    outline:none;
+    border-color:var(--steel-950);
+    background:var(--paper);
+  }
+  .makine-filtre-chip{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11.5px;
+    letter-spacing:0.03em;
+    border:1.5px solid rgba(32,34,36,0.18);
+    border-radius:999px;
+    padding:9px 15px;
+    background:none;
+    color:var(--muted);
+    cursor:pointer;
+    transition: all .15s ease;
+    white-space:nowrap;
+  }
+  .makine-filtre-chip:hover{ border-color:var(--steel-950); color:var(--ink); }
+  .makine-filtre-chip.aktif-filtre{
+    background:var(--steel-950);
+    border-color:var(--steel-950);
+    color:#fff;
+  }
+
+  .yon-tablo-wrap{
+    overflow-x:auto;
+    border:1px solid rgba(32,34,36,0.12);
+    border-radius:12px;
+    background: var(--paper);
+  }
+  table.yon-tablo{
+    width:100%;
+    border-collapse:collapse;
+    font-size:13.5px;
+    min-width:760px;
+  }
+  table.yon-tablo thead th{
+    text-align:left;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px;
+    letter-spacing:0.05em;
+    text-transform:uppercase;
+    color: var(--muted);
+    padding:13px 16px;
+    border-bottom:1.5px solid rgba(32,34,36,0.14);
+    white-space:nowrap;
+  }
+  table.yon-tablo tbody td{
+    padding:13px 16px;
+    border-bottom:1px solid rgba(32,34,36,0.08);
+    vertical-align:middle;
+  }
+  table.yon-tablo tbody tr:last-child td{ border-bottom:none; }
+  table.yon-tablo tbody tr:hover{ background: var(--paper-deep); }
+
+  .yon-ad{ font-weight:600; color: var(--ink); }
+  .yon-alt{ font-family:'IBM Plex Mono', monospace; font-size:12px; color: var(--muted); }
+
+  .yon-rozet{
+    display:inline-flex;
+    align-items:center;
+    gap:5px;
+    padding:4px 10px;
+    border-radius:999px;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:10.5px;
+    font-weight:700;
+    letter-spacing:0.04em;
+    border:1.5px solid;
+  }
+  .yon-rozet.aktif{ background:rgba(47,125,94,0.12); border-color:var(--approve); color:var(--approve); }
+  .yon-rozet.bakim{ background:#FEF6E7; border-color:#B7791F; color:#B7791F; }
+  .yon-rozet.ariza{ background:rgba(226,87,43,0.12); border-color:var(--signal); color:var(--signal); }
+  .yon-rozet.pasif{ background:rgba(32,34,36,0.08); border-color:rgba(32,34,36,0.25); color:var(--muted); }
+
+  .yon-onayla-btn, .yon-reddet-btn{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px;
+    font-weight:700;
+    letter-spacing:0.03em;
+    border-radius:7px;
+    padding:6px 11px;
+    cursor:pointer;
+    transition: all .15s ease;
+    white-space:nowrap;
+    margin-right:6px;
+  }
+  .yon-duzelt-btn{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px;
+    letter-spacing:0.03em;
+    border:1.5px solid rgba(32,34,36,0.18);
+    border-radius:999px;
+    padding:6px 13px;
+    background:none;
+    color: var(--ink);
+    cursor:pointer;
+    transition: all .15s ease;
+    white-space:nowrap;
+    margin-right:6px;
+  }
+  .yon-duzelt-btn:hover{ border-color: var(--steel-950); background: var(--paper-deep); }
+  .yon-sil-btn{ border:1.5px solid rgba(226,87,43,0.4); background:none; color:var(--signal); }
+  .yon-sil-btn:hover{ background:var(--signal); color:#fff; border-color:var(--signal); }
+
+  .yon-sabit-not{ font-size:11.5px; color: var(--muted); }
+
+  .yon-bos-durum{
+    text-align:center;
+    padding:44px 0;
+    color: var(--muted);
+    font-size:13.5px;
+  }
+  .yon-bos-durum:not(.show){ display:none; }
+
+  .yon-ust-satir{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:14px;
+    flex-wrap:wrap;
+    margin:26px 0 4px;
+  }
+  .yon-disa-aktar-btn{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px;
+    letter-spacing:0.04em;
+    text-transform:uppercase;
+    border:1.5px solid rgba(32,34,36,0.18);
+    border-radius:999px;
+    padding:9px 16px;
+    background:none;
+    color: var(--ink);
+    cursor:pointer;
+    transition: all .15s ease;
+  }
+  .yon-disa-aktar-btn:hover{ border-color: var(--steel-950); background: var(--paper-deep); }
+  .yon-ekle-btn{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px;
+    letter-spacing:0.04em;
+    text-transform:uppercase;
+    border:1.5px solid var(--steel-950);
+    border-radius:999px;
+    padding:9px 16px;
+    background:var(--steel-950);
+    color:#fff;
+    cursor:pointer;
+    transition: all .15s ease;
+  }
+  .yon-ekle-btn:hover{ background:var(--steel-800); }
+
+  /* ── Düzenle / Görüntüle modalı ── */
+  .yon-modal-overlay{
+    position:fixed;
+    inset:0;
+    background:rgba(20,21,23,0.55);
+    backdrop-filter:blur(2px);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:20px;
+    z-index:200;
+    opacity:0;
+    pointer-events:none;
+    transition:opacity .18s ease;
+  }
+  .yon-modal-overlay.show{ opacity:1; pointer-events:auto; }
+
+  .yon-modal{
+    background:var(--paper);
+    border-radius:14px;
+    width:100%;
+    max-width:440px;
+    box-shadow:0 20px 60px rgba(0,0,0,0.35);
+    transform:translateY(10px) scale(0.97);
+    transition:transform .2s ease;
+    border-top:4px solid var(--steel-950);
+    font-family:'IBM Plex Sans', sans-serif;
+  }
+  .yon-modal-overlay.show .yon-modal{ transform:translateY(0) scale(1); }
+  .yon-modal.ton-ret{ border-top-color: var(--signal); }
+
+  .yon-modal-head{
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:12px;
+    padding:22px 24px 4px;
+  }
+  .yon-modal-head h3{
+    font-family:'Space Grotesk', sans-serif;
+    font-weight:700;
+    font-size:17px;
+    margin:0;
+    color:var(--ink);
+  }
+  .yon-modal-sub{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px;
+    letter-spacing:0.05em;
+    color:var(--muted);
+    text-transform:uppercase;
+    margin:3px 0 0;
+  }
+  .yon-modal-close-btn{
+    background:none;
+    border:1.5px solid var(--steel-700);
+    color:var(--steel-950);
+    border-radius:8px;
+    width:30px;
+    height:30px;
+    flex-shrink:0;
+    cursor:pointer;
+    font-size:13px;
+    transition:all .15s ease;
+  }
+  .yon-modal-close-btn:hover{ background:var(--steel-950); color:#fff; border-color:var(--steel-950); }
+
+  .yon-modal-body{ padding:14px 24px 24px; }
+  .yon-modal-body .field{ margin-bottom:16px; }
+  .yon-modal-body label{
+    display:block;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px;
+    letter-spacing:0.06em;
+    text-transform:uppercase;
+    color:var(--muted);
+    margin-bottom:8px;
+  }
+  .yon-modal-body input[type="text"],
+  .yon-modal-body input[type="date"],
+  .yon-modal-body select{
+    width:100%;
+    font-family:'IBM Plex Sans', sans-serif;
+    font-size:14.5px;
+    color:var(--ink);
+    background:var(--paper-deep);
+    border:1px solid rgba(32,34,36,0.16);
+    border-radius:6px;
+    padding:11px 13px;
+    transition:border-color .15s ease, background .15s ease;
+  }
+  .yon-modal-body input[readonly]{ color: var(--muted); }
+  .yon-modal-body input:focus,
+  .yon-modal-body select:focus{
+    outline:none;
+    border-color:var(--steel-950);
+    background:var(--paper);
+  }
+  .yon-modal-body .field-2col{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+
+  .yon-modal-hata{
+    display:none;
+    color:#C0392B;
+    background:#FCEAEA;
+    border-radius:7px;
+    padding:9px 12px;
+    font-size:13px;
+    margin:-4px 0 14px;
+  }
+  .yon-modal-hata.show{ display:block; }
+
+  .yon-modal-foot{
+    display:flex;
+    justify-content:flex-end;
+    gap:10px;
+    margin-top:6px;
+  }
+  .yon-modal-vazgec-btn{
+    font-family:'IBM Plex Sans', sans-serif;
+    font-size:13.5px;
+    font-weight:500;
+    background:none;
+    border:none;
+    color:var(--muted);
+    cursor:pointer;
+    padding:11px 6px;
+    transition:color .15s ease;
+  }
+  .yon-modal-vazgec-btn:hover{ color:var(--ink); }
+  .yon-modal-kaydet-btn{
+    font-family:'IBM Plex Sans', sans-serif;
+    font-size:13.5px;
+    font-weight:500;
+    background:var(--steel-950);
+    color:var(--paper);
+    border:none;
+    border-radius:6px;
+    padding:11px 22px;
+    cursor:pointer;
+    transition:background .15s ease, transform .15s ease;
+  }
+  .yon-modal-kaydet-btn:hover{ background:var(--steel-800); transform:translateY(-1px); }
+  .yon-modal-kaydet-btn:disabled{ opacity:0.6; cursor:not-allowed; transform:none; }
+  .yon-modal-sil-btn{ background:var(--signal) !important; }
+  .yon-modal-sil-btn:hover{ background:#c94a25 !important; }
+
+  /* ── Firma detay listesi (görüntüle modalı içinde) ── */
+  .yon-firma-market-liste{ list-style:none; margin:0; padding:0; }
+  .yon-firma-market-liste li{
+    display:flex;
+    justify-content:space-between;
+    padding:9px 0;
+    border-bottom:1px solid rgba(32,34,36,0.1);
+    font-size:13px;
+  }
+  .yon-firma-market-liste li:last-child{ border-bottom:none; }
+  .yon-firma-market-bos{ color:var(--muted); font-size:13px; padding:6px 0; }
+
+  /* ── Onay kutusu (native confirm() yerine) ── */
+  .yon-onay-overlay{
+    position:fixed; inset:0;
+    background:rgba(20,21,23,0.55);
+    backdrop-filter:blur(2px);
+    display:flex; align-items:center; justify-content:center;
+    padding:20px; z-index:220;
+    opacity:0; pointer-events:none;
+    transition:opacity .18s ease;
+  }
+  .yon-onay-overlay.show{ opacity:1; pointer-events:auto; }
+  .yon-onay-modal{
+    background:var(--paper);
+    border-radius:14px;
+    width:100%; max-width:380px;
+    box-shadow:0 20px 60px rgba(0,0,0,0.35);
+    transform:translateY(10px) scale(0.97);
+    transition:transform .2s ease;
+    border-top:4px solid var(--signal);
+    padding:24px 24px 20px;
+    font-family:'IBM Plex Sans', sans-serif;
+  }
+  .yon-onay-overlay.show .yon-onay-modal{ transform:translateY(0) scale(1); }
+  .yon-onay-modal h3{ font-family:'Space Grotesk', sans-serif; font-size:16px; margin:0 0 8px; color:var(--ink); }
+  .yon-onay-modal p{ font-size:13.5px; color:var(--muted); line-height:1.55; margin:0 0 20px; }
+  .yon-onay-foot{ display:flex; justify-content:flex-end; gap:10px; }
+  .yon-onay-vazgec-btn{
+    font-size:13.5px; font-weight:500; background:none; border:none;
+    color:var(--muted); cursor:pointer; padding:11px 6px;
+  }
+  .yon-onay-vazgec-btn:hover{ color:var(--ink); }
+  .yon-onay-evet-btn{
+    font-size:13.5px; font-weight:500; background:var(--signal); color:#fff;
+    border:none; border-radius:6px; padding:11px 20px; cursor:pointer;
+    transition:background .15s ease;
+  }
+  .yon-onay-evet-btn:hover{ background:#c94a25; }
+</style>
+</head>
+<body>
+  
+  <aside class="sidebar" aria-label="Ana gezinme">
+    <div class="mark">
+      <div class="mark-glyph" aria-hidden="true">
+        <a href="makineler.html">
+        <img src="assets/image/logo.svg" alt="Malta logosu" class="mark-glyph-img">
+       </a>
+      </div>
+      <div class="mark-text">Malta Makine</div>
+    </div>
+    <div class="mark-sub">İade Kiosk Sistemleri</div>
+
+    <div class="panel-seam"></div>
+
+    <nav>
+      <div class="nav-group">
+        <p class="nav-label">Genel</p>
+        <ul class="nav-list">
+          <li class="nav-item">
+            <a class="nav-link" href="makineler.html"><span class="led"></span>Makinelerim</a>
+          </li>
+          <li class="nav-item " data-rol="yonetici">
+            <a class="nav-link" href="makine-yonetimi.html"><span class="led"></span>Makine Yönetimi</a>
+          </li>
+          <li class="nav-item active" data-rol="yonetici">
+            <a class="nav-link" href="magaza-yonetimi.html"><span class="led"></span>Mağaza Yönetimi</a>
+          </li>
+          <li class="nav-item" data-rol="yonetici">
+            <a class="nav-link" href="kayitlar.html"><span class="led"></span>Kullanıcı Kayıtları</a>
+          </li>
+          <li class="nav-item " data-rol="yonetici">
+            <a class="nav-link" href="log-kayitlari.html"><span class="led"></span>Giriş / Aktivite Logları</a>
+          </li>
+          <li class="nav-item " data-rol="yonetici">
+            <a class="nav-link" href="bildirilen-arizalar.html"><span class="led"></span>Bildirilen Arızalar</a>
+          </li>
+        </ul>
+      </div>
+    </nav>
+
+    <div class="nav-group">
+        <p class="nav-label"></p>
+        <ul class="nav-list">
+          <li class="nav-item">
+            <a class="nav-link" href="#" onclick="cikisYap(); return false;"><span class="led"></span>Çıkış</a>
+          </li>
+        </ul>
+      </div>
+
+    <div class="sidebar-foot">
+      <div class="barcode" aria-hidden="true"></div>
+      <span>PANEL SÜRÜM 0.1</span>
+    </div>
+  </aside>
+
+  <main>
+    <section id="ana-sayfa">
+      <div class="home-body">
+
+        <p class="eyebrow" style="margin-bottom:6px;">Yönetim Paneli</p>
+        <h1 style="font-size:clamp(24px,3vw,32px); margin:0 0 10px;">Mağaza ve Firma Yönetimi</h1>
+        <p class="lede" style="margin:0 0 8px;">Sistemdeki tüm mağazaları (marketleri) ve bağlı oldukları firmaları buradan yönetebilirsiniz.</p>
+
+        <div class="yon-uyari">
+          <span>ℹ️</span>
+          <span><strong>Not:</strong> Buradan hem mağaza hem de firma kayıtlarını ekleyebilir, düzenleyebilir ve silebilirsiniz. Bu işlemler yalnızca yönetici (admin) rolündeki kullanıcılara açıktır.</span>
+        </div>
+
+        <div class="yon-tab-row">
+          <button class="yon-tab-btn aktif-tab" data-tab="magazalar" onclick="sekmeSec('magazalar', this)">Mağazalar</button>
+          <button class="yon-tab-btn" data-tab="firmalar" onclick="sekmeSec('firmalar', this)">Firmalar</button>
+        </div>
+
+        <!-- ══════════════ MAĞAZALAR SEKMESİ ══════════════ -->
+        <div id="magazalar-panel">
+
+          <div class="kapak-baslik" style="margin:22px 0 4px;">
+            <h3>Mağazalar</h3>
+            <span class="acik-badge" id="magaza-toplam-badge">0 toplam</span>
+          </div>
+
+          <div class="makine-arama-row">
+            <input type="text" id="magaza-arama" class="makine-arama-input" placeholder="Mağaza adı, adres veya firma ara…" oninput="magazaListesiFiltrele()">
+          </div>
+
+          <div class="yon-ust-satir">
+            <span></span>
+            <div style="display:flex; gap:10px;">
+              <button class="yon-ekle-btn" onclick="magazaEkleAc()">+ Yeni Mağaza Ekle</button>
+              <button class="yon-disa-aktar-btn" onclick="magazalariCsvIndir()">⭳ CSV olarak dışa aktar</button>
+            </div>
+          </div>
+
+          <div class="yon-tablo-wrap" style="margin-top:14px;">
+            <table class="yon-tablo">
+              <thead>
+                <tr>
+                  <th>Mağaza Adı</th>
+                  <th>Firma</th>
+                  <th>Adres</th>
+                  <th>Bağlı Makine</th>
+                  <th>Kayıt Tarihi</th>
+                  <th>İşlem</th>
+                </tr>
+              </thead>
+              <tbody id="magaza-tablo-govde"></tbody>
+            </table>
+          </div>
+          <p class="yon-bos-durum" id="magaza-bos-durum">Aramanızla eşleşen bir mağaza bulunamadı.</p>
+        </div>
+
+        <!-- ══════════════ FİRMALAR SEKMESİ ══════════════ -->
+        <div id="firmalar-panel" class="gizli">
+
+          <div class="kapak-baslik" style="margin:22px 0 4px;">
+            <h3>Firmalar</h3>
+            <span class="acik-badge" id="firma-toplam-badge">0 toplam</span>
+          </div>
+
+          <div class="makine-arama-row">
+            <input type="text" id="firma-arama" class="makine-arama-input" placeholder="Firma adı ara…" oninput="firmaListesiFiltrele()">
+          </div>
+
+          <div class="yon-ust-satir">
+            <span></span>
+            <div style="display:flex; gap:10px;">
+              <button class="yon-ekle-btn" onclick="firmaEkleAc()">+ Yeni Firma Ekle</button>
+              <button class="yon-disa-aktar-btn" onclick="firmalariCsvIndir()">⭳ CSV olarak dışa aktar</button>
+            </div>
+          </div>
+
+          <div class="yon-tablo-wrap" style="margin-top:14px;">
+            <table class="yon-tablo">
+              <thead>
+                <tr>
+                  <th>Firma Adı</th>
+                  <th>Adres</th>
+                  <th>Mağaza Sayısı</th>
+                  <th>Kayıt Tarihi</th>
+                  <th>İşlem</th>
+                </tr>
+              </thead>
+              <tbody id="firma-tablo-govde"></tbody>
+            </table>
+          </div>
+          <p class="yon-bos-durum" id="firma-bos-durum">Aramanızla eşleşen bir firma bulunamadı.</p>
+        </div>
+
+      </div>
+    </section>
+  </main>
+
+  <!-- ── Mağaza Ekle/Düzenle modalı ── -->
+  <div class="yon-modal-overlay" id="magaza-duzenle-overlay">
+    <div class="yon-modal">
+      <div class="yon-modal-head">
+        <div>
+          <h3 id="magaza-duzenle-baslik">Yeni mağaza ekle</h3>
+          <p class="yon-modal-sub" id="magaza-duzenle-sub">—</p>
+        </div>
+        <button type="button" class="yon-modal-close-btn" onclick="magazaDuzenleKapat()" aria-label="Kapat">✕</button>
+      </div>
+      <form class="yon-modal-body" id="magaza-duzenle-form">
+        <div class="field">
+          <label for="magaza-ad">Mağaza Adı</label>
+          <input id="magaza-ad" type="text" placeholder="Örn. Nişantaşı Şubesi" required>
+        </div>
+        <div class="field">
+          <label for="magaza-firma">Firma</label>
+          <select id="magaza-firma" required><option value="">— Firma seçin —</option></select>
+        </div>
+        <div class="field">
+          <label for="magaza-adres">Adres</label>
+          <input id="magaza-adres" type="text" placeholder="Örn. Teşvikiye Cd. No:12, Şişli/İstanbul">
+        </div>
+        <p class="yon-modal-hata" id="magaza-duzenle-hata"></p>
+        <div class="yon-modal-foot">
+          <button type="button" class="yon-modal-vazgec-btn" onclick="magazaDuzenleKapat()">Vazgeç</button>
+          <button type="submit" class="yon-modal-kaydet-btn" id="magaza-duzenle-kaydet-btn">Kaydet</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ── Firma Ekle/Düzenle modalı ── -->
+  <div class="yon-modal-overlay" id="firma-duzenle-overlay">
+    <div class="yon-modal">
+      <div class="yon-modal-head">
+        <div>
+          <h3 id="firma-duzenle-baslik">Yeni firma ekle</h3>
+          <p class="yon-modal-sub" id="firma-duzenle-sub">—</p>
+        </div>
+        <button type="button" class="yon-modal-close-btn" onclick="firmaDuzenleKapat()" aria-label="Kapat">✕</button>
+      </div>
+      <form class="yon-modal-body" id="firma-duzenle-form">
+        <div class="field">
+          <label for="firma-ad">Firma Adı</label>
+          <input id="firma-ad" type="text" placeholder="Örn. Malta Gıda A.Ş." required>
+        </div>
+        <div class="field">
+          <label for="firma-adres">Adres (opsiyonel)</label>
+          <input id="firma-adres" type="text" placeholder="Örn. Merkez Mah. No:5, Şişli/İstanbul">
+        </div>
+        <div class="field gizli" id="firma-tarih-alan">
+          <label>Kayıt Tarihi</label>
+          <input type="text" id="firma-duzenle-tarih" readonly>
+        </div>
+        <div class="field gizli" id="firma-market-alan">
+          <label>Bağlı Marketler / Mağazalar</label>
+          <ul class="yon-firma-market-liste" id="firma-duzenle-market-liste"></ul>
+        </div>
+        <p class="yon-modal-hata" id="firma-duzenle-hata"></p>
+        <div class="yon-modal-foot">
+          <button type="button" class="yon-modal-kaydet-btn yon-modal-sil-btn gizli" id="firma-duzenle-sil-btn" onclick="firmaSilOnayla(duzenlenenFirmaId)">Sil</button>
+          <span style="flex:1"></span>
+          <button type="button" class="yon-modal-vazgec-btn" onclick="firmaDuzenleKapat()">Vazgeç</button>
+          <button type="submit" class="yon-modal-kaydet-btn" id="firma-duzenle-kaydet-btn">Kaydet</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ── Onay kutusu (native confirm() yerine — Mağaza Sil işlemi için) ── -->
+  <div class="yon-onay-overlay" id="yon-onay-overlay">
+    <div class="yon-onay-modal">
+      <h3 id="yon-onay-baslik">Emin misiniz?</h3>
+      <p id="yon-onay-mesaj">—</p>
+      <div class="yon-onay-foot">
+        <button type="button" class="yon-onay-vazgec-btn" id="yon-onay-vazgec-btn">Vazgeç</button>
+        <button type="button" class="yon-onay-evet-btn" id="yon-onay-evet-btn">Evet, Sil</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+  menuyuRoleGoreDuzenle();
+
+  function authFetch(yol, secenekler) {
+    const secenek = secenekler || {};
+    secenek.headers = Object.assign(
+      { 'Content-Type': 'application/json' },
+      { Authorization: 'Bearer ' + oturumAccessTokenGetir() },
+      secenek.headers || {}
+    );
+    return fetch(AUTH_API_BASE + yol, secenek).then(function(res){
+      if (res.status === 401) {
+        // Access token geçersiz/süresi dolmuş → oturumu kapat, login'e dön.
+        if (typeof cikisYap === 'function') cikisYap();
+      }
+      return res;
+    });
+  }
+
+  function tarihFormatla(iso){
+    if (!iso) return '—';
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return '—';
+    return String(d.getDate()).padStart(2,'0') + '.' + String(d.getMonth()+1).padStart(2,'0') + '.' + d.getFullYear();
+  }
+
+  /* ═══════════════════ SEKME GEÇİŞİ ═══════════════════ */
+  function sekmeSec(sekme, btn){
+    document.querySelectorAll('.yon-tab-btn').forEach(b => b.classList.remove('aktif-tab'));
+    btn.classList.add('aktif-tab');
+    document.getElementById('magazalar-panel').classList.toggle('gizli', sekme !== 'magazalar');
+    document.getElementById('firmalar-panel').classList.toggle('gizli', sekme !== 'firmalar');
+  }
+
+  /* ═══════════════════ ORTAK VERİ: FİRMALAR & MARKETLER ═══════════════════
+     Gerçek backend'den okunur (kayitlar.html ile aynı endpoint'ler). */
+  let tumFirmalar = [];
+  let tumMarketler = [];
+
+  function firmaVeMarketleriYukle(){
+    return Promise.all([
+      authFetch('/api/companies').then(r => r.ok ? r.json() : []).catch(() => []),
+      authFetch('/api/markets').then(r => r.ok ? r.json() : []).catch(() => []),
+    ]).then(([firmalar, marketler]) => {
+      tumFirmalar = firmalar;
+      tumMarketler = marketler;
+    });
+  }
+
+  /* ═══════════════════ MAĞAZALAR (gerçek API, tam yönetim) ═══════════════════
+     NOT: Backend uç noktaları /api/companies ve /api/markets ile aynı temel
+     altında varsayılmıştır (POST/PUT/DELETE /api/markets[/:id]). Uç noktaların
+     gerçek isimleri farklıysa aşağıdaki 3 fonksiyonu güncellemeniz yeterli. */
+
+  function magazaKaydet(veri){
+    const govde = {
+    marketName: veri.ad,
+    address: veri.adres || null,
+    companyId: veri.companyId
+};
+    if (veri.id) {
+      return authFetch('/api/markets/' + veri.id, { method: 'PATCH', body: JSON.stringify(govde) })
+        .then(r => { if (!r.ok) throw new Error('Kaydedilemedi'); return r.json().catch(() => true); });
+    }
+    return authFetch('/api/markets', { method: 'POST', body: JSON.stringify(govde) })
+      .then(r => { if (!r.ok) throw new Error('Kaydedilemedi'); return r.json().catch(() => true); });
+  }
+
+  function magazaSil(id){
+    return authFetch('/api/markets/' + id, { method: 'DELETE' })
+      .then(r => { if (!r.ok) throw new Error('Silinemedi'); return true; });
+  }
+
+  let tumMagazaSatirlari = [];
+
+  function firmaAdiGetir(companyId){
+    const f = tumFirmalar.find(x => x.company_id === companyId);
+    return f ? f.company_name : '—';
+  }
+
+  function magazaSatiriOlustur(m){
+    const tr = document.createElement('tr');
+    tr.dataset.arama = (m.market_name + ' ' + (m.address || '') + ' ' + firmaAdiGetir(m.company_id)).toLowerCase();
+    tr.innerHTML = `
+      <td class="yon-ad">${m.market_name || '—'}</td>
+      <td>${firmaAdiGetir(m.company_id)}</td>
+      <td class="yon-alt">${m.address || '—'}</td>
+      <td>${(m.machine_count !== undefined && m.machine_count !== null) ? m.machine_count : '—'}</td>
+      <td>${tarihFormatla(m.created_at)}</td>
+      <td>
+        <button class="yon-duzelt-btn" onclick="magazaDuzenleAc(${m.market_id})">Düzelt</button>
+        <button class="yon-onayla-btn yon-sil-btn" onclick="magazaSilOnayla(${m.market_id})">Sil</button>
+      </td>`;
+    return tr;
+  }
+
+  function magazaListesiOlustur(){
+    tumMagazaSatirlari = tumMarketler;
+    const govde = document.getElementById('magaza-tablo-govde');
+    govde.innerHTML = '';
+    tumMagazaSatirlari.forEach(m => govde.appendChild(magazaSatiriOlustur(m)));
+    document.getElementById('magaza-toplam-badge').textContent = tumMagazaSatirlari.length + ' toplam';
+    magazaListesiFiltrele();
+  }
+
+  function magazaListesiFiltrele(){
+    const q = document.getElementById('magaza-arama').value.trim().toLowerCase();
+    const satirlar = document.querySelectorAll('#magaza-tablo-govde tr');
+    let gorunen = 0;
+    satirlar.forEach(satir => {
+      const goster = !q || satir.dataset.arama.includes(q);
+      satir.style.display = goster ? '' : 'none';
+      if (goster) gorunen++;
+    });
+    document.getElementById('magaza-bos-durum').classList.toggle('show', gorunen === 0);
+  }
+
+  let duzenlenenMagazaId = null;
+
+  function magazaEkleAc(){
+    duzenlenenMagazaId = null;
+    document.getElementById('magaza-duzenle-baslik').textContent = 'Yeni mağaza ekle';
+    document.getElementById('magaza-duzenle-sub').textContent = 'Yeni bir mağaza/market kaydı oluşturun';
+    document.getElementById('magaza-duzenle-form').reset();
+    document.getElementById('magaza-firma').innerHTML = '<option value="">— Firma seçin —</option>'
+      + tumFirmalar.map(f => `<option value="${f.company_id}">${f.company_name}</option>`).join('');
+    document.getElementById('magaza-duzenle-hata').classList.remove('show');
+    document.getElementById('magaza-duzenle-overlay').classList.add('show');
+    document.getElementById('magaza-ad').focus();
+  }
+
+  function magazaDuzenleAc(id){
+    const m = tumMarketler.find(x => x.market_id === id);
+    if (!m) return;
+    duzenlenenMagazaId = id;
+    document.getElementById('magaza-duzenle-baslik').textContent = 'Mağazayı düzenle';
+    document.getElementById('magaza-duzenle-sub').textContent = m.market_name;
+    document.getElementById('magaza-ad').value = m.market_name || '';
+    document.getElementById('magaza-firma').innerHTML = '<option value="">— Firma seçin —</option>'
+      + tumFirmalar.map(f => `<option value="${f.company_id}">${f.company_name}</option>`).join('');
+    document.getElementById('magaza-firma').value = m.company_id || '';
+    document.getElementById('magaza-adres').value = m.address || '';
+    document.getElementById('magaza-duzenle-hata').classList.remove('show');
+    document.getElementById('magaza-duzenle-overlay').classList.add('show');
+    document.getElementById('magaza-ad').focus();
+  }
+
+  function magazaDuzenleKapat(){
+    document.getElementById('magaza-duzenle-overlay').classList.remove('show');
+    duzenlenenMagazaId = null;
+  }
+
+  document.getElementById('magaza-duzenle-overlay').addEventListener('click', function(e){
+    if (e.target === this) magazaDuzenleKapat();
+  });
+
+  document.getElementById('magaza-duzenle-form').addEventListener('submit', function(e){
+    e.preventDefault();
+    const hata = document.getElementById('magaza-duzenle-hata');
+    const kaydetBtn = document.getElementById('magaza-duzenle-kaydet-btn');
+    const firmaDeger = document.getElementById('magaza-firma').value;
+
+    if (!firmaDeger) {
+      hata.textContent = 'Lütfen bir firma seçin.';
+      hata.classList.add('show');
+      return;
+    }
+    hata.classList.remove('show');
+    kaydetBtn.disabled = true;
+    kaydetBtn.textContent = 'Kaydediliyor…';
+
+    const veri = {
+      id: duzenlenenMagazaId,
+      ad: document.getElementById('magaza-ad').value.trim(),
+      adres: document.getElementById('magaza-adres').value.trim(),
+      companyId: Number(firmaDeger),
+    };
+
+    magazaKaydet(veri)
+      .then(() => firmaVeMarketleriYukle())
+      .then(() => {
+        magazaDuzenleKapat();
+        magazaListesiOlustur();
+        firmaListesiOlustur();
+      })
+      .catch(() => {
+        hata.textContent = 'Kaydedilemedi, tekrar deneyin.';
+        hata.classList.add('show');
+      })
+      .finally(() => {
+        kaydetBtn.disabled = false;
+        kaydetBtn.textContent = 'Kaydet';
+      });
+  });
+
+  /* ── Onay kutusu (paylaşılan) ── */
+  let onayCozucu = null;
+  function onayKutusuGoster(baslik, mesaj){
+    document.getElementById('yon-onay-baslik').textContent = baslik;
+    document.getElementById('yon-onay-mesaj').textContent = mesaj;
+    document.getElementById('yon-onay-overlay').classList.add('show');
+    return new Promise(resolve => { onayCozucu = resolve; });
+  }
+  function onayKutusuKapat(sonuc){
+    document.getElementById('yon-onay-overlay').classList.remove('show');
+    if (onayCozucu) { onayCozucu(sonuc); onayCozucu = null; }
+  }
+  document.getElementById('yon-onay-evet-btn').addEventListener('click', () => onayKutusuKapat(true));
+  document.getElementById('yon-onay-vazgec-btn').addEventListener('click', () => onayKutusuKapat(false));
+  document.getElementById('yon-onay-overlay').addEventListener('click', function(e){
+    if (e.target === this) onayKutusuKapat(false);
+  });
+
+  function magazaSilOnayla(id){
+    const m = tumMarketler.find(x => x.market_id === id);
+    onayKutusuGoster(
+      'Bu mağazayı silmek istediğinize emin misiniz?',
+      (m ? m.market_name + ' — ' : '') + 'Bu işlem geri alınamaz.'
+    ).then(onaylandi => {
+      if (!onaylandi) return;
+      magazaSil(id)
+        .then(() => firmaVeMarketleriYukle())
+        .then(() => { magazaListesiOlustur(); firmaListesiOlustur(); })
+        .catch(() => alert('Mağaza silinemedi, tekrar deneyin.'));
+    });
+  }
+
+  function magazalariCsvIndir(){
+    const basliklar = ['Mağaza Adı', 'Firma', 'Adres', 'Kayıt Tarihi'];
+    const satirlar = tumMagazaSatirlari.map(m => [
+      m.market_name || '', firmaAdiGetir(m.company_id), m.address || '', tarihFormatla(m.created_at)
+    ]);
+    csvIndir('magazalar.csv', basliklar, satirlar);
+  }
+
+  /* ═══════════════════ FİRMALAR (gerçek API, salt okunur) ═══════════════════ */
+  let tumFirmaSatirlari = [];
+
+  function firmaSatiriOlustur(f){
+    const marketSayisi = tumMarketler.filter(m => m.company_id === f.company_id).length;
+    const makineSayisi = "—";
+    const tr = document.createElement('tr');
+    tr.dataset.arama = (String(f.company_name || '') + ' ' + String(f.address || '')).toLowerCase();
+    tr.innerHTML = `
+      <td class="yon-ad">${f.company_name || '—'}</td>
+      <td class="yon-alt">${f.address || '—'}</td>
+      <td>${marketSayisi}</td>
+      <td>${tarihFormatla(f.created_at)}</td>
+      <td>
+        <button class="yon-duzelt-btn" onclick="firmaDuzenleAc(${f.company_id})">Düzelt</button>
+        <button class="yon-onayla-btn yon-sil-btn" onclick="firmaSilOnayla(${f.company_id})">Sil</button>
+      </td>`;
+    return tr;
+  }
+
+  function firmaListesiOlustur(){
+    tumFirmaSatirlari = tumFirmalar;
+    const govde = document.getElementById('firma-tablo-govde');
+    govde.innerHTML = '';
+    tumFirmaSatirlari.forEach(f => govde.appendChild(firmaSatiriOlustur(f)));
+    document.getElementById('firma-toplam-badge').textContent = tumFirmaSatirlari.length + ' toplam';
+    firmaListesiFiltrele();
+  }
+
+  function firmaListesiFiltrele(){
+    const q = document.getElementById('firma-arama').value.trim().toLowerCase();
+    const satirlar = document.querySelectorAll('#firma-tablo-govde tr');
+    let gorunen = 0;
+    satirlar.forEach(satir => {
+      const goster = !q || satir.dataset.arama.includes(q);
+      satir.style.display = goster ? '' : 'none';
+      if (goster) gorunen++;
+    });
+    document.getElementById('firma-bos-durum').classList.toggle('show', gorunen === 0);
+  }
+
+  /* ── Firma Ekle / Düzenle / Sil (gerçek API, tam yönetim) ── */
+  let duzenlenenFirmaId = null;
+
+  function firmaKaydet(veri){
+    const govde = { companyName: veri.ad, address: veri.adres || null };
+    if (veri.id) {
+      return authFetch('/api/companies/' + veri.id, { method: 'PATCH', body: JSON.stringify(govde) })
+        .then(r => { if (!r.ok) throw new Error('Kaydedilemedi'); return r.json().catch(() => true); });
+    }
+    return authFetch('/api/companies', { method: 'POST', body: JSON.stringify(govde) })
+      .then(r => { if (!r.ok) throw new Error('Kaydedilemedi'); return r.json().catch(() => true); });
+  }
+
+  function firmaSil(id){
+    return authFetch('/api/companies/' + id, { method: 'DELETE' })
+      .then(r => { if (!r.ok) throw new Error('Silinemedi'); return true; });
+  }
+
+  function firmaEkleAc(){
+    duzenlenenFirmaId = null;
+    document.getElementById('firma-duzenle-baslik').textContent = 'Yeni firma ekle';
+    document.getElementById('firma-duzenle-sub').textContent = 'Yeni bir firma kaydı oluşturun';
+    document.getElementById('firma-duzenle-form').reset();
+    document.getElementById('firma-adres').value = '';
+    document.getElementById('firma-tarih-alan').classList.add('gizli');
+    document.getElementById('firma-market-alan').classList.add('gizli');
+    document.getElementById('firma-duzenle-sil-btn').classList.add('gizli');
+    document.getElementById('firma-duzenle-hata').classList.remove('show');
+    document.getElementById('firma-duzenle-overlay').classList.add('show');
+    document.getElementById('firma-ad').focus();
+  }
+
+  function firmaDuzenleAc(companyId){
+    const f = tumFirmalar.find(x => x.company_id === companyId);
+    if (!f) return;
+    duzenlenenFirmaId = companyId;
+    document.getElementById('firma-duzenle-baslik').textContent = 'Firmayı düzenle';
+    document.getElementById('firma-duzenle-sub').textContent = f.company_name || '—';
+    document.getElementById('firma-ad').value = f.company_name || '';
+    document.getElementById('firma-adres').value = f.address || '';
+    document.getElementById('firma-duzenle-tarih').value = tarihFormatla(f.created_at);
+
+    const marketler = tumMarketler.filter(m => m.company_id === companyId);
+    const liste = document.getElementById('firma-duzenle-market-liste');
+    liste.innerHTML = marketler.length
+      ? marketler.map(m => `<li><span>${m.market_name}</span><span class="yon-alt">${m.address || ''}</span></li>`).join('')
+      : '<li class="yon-firma-market-bos">Bu firmaya bağlı market/mağaza kaydı yok.</li>';
+
+    document.getElementById('firma-tarih-alan').classList.remove('gizli');
+    document.getElementById('firma-market-alan').classList.remove('gizli');
+    document.getElementById('firma-duzenle-sil-btn').classList.remove('gizli');
+    document.getElementById('firma-duzenle-hata').classList.remove('show');
+    document.getElementById('firma-duzenle-overlay').classList.add('show');
+    document.getElementById('firma-ad').focus();
+  }
+
+  function firmaDuzenleKapat(){
+    document.getElementById('firma-duzenle-overlay').classList.remove('show');
+    duzenlenenFirmaId = null;
+  }
+  document.getElementById('firma-duzenle-overlay').addEventListener('click', function(e){
+    if (e.target === this) firmaDuzenleKapat();
+  });
+
+  document.getElementById('firma-duzenle-form').addEventListener('submit', function(e){
+    e.preventDefault();
+    const hata = document.getElementById('firma-duzenle-hata');
+    const kaydetBtn = document.getElementById('firma-duzenle-kaydet-btn');
+    const ad = document.getElementById('firma-ad').value.trim();
+    const adres = document.getElementById('firma-adres').value.trim();
+
+    if (!ad) {
+      hata.textContent = 'Lütfen firma adını girin.';
+      hata.classList.add('show');
+      return;
+    }
+    hata.classList.remove('show');
+    kaydetBtn.disabled = true;
+    kaydetBtn.textContent = 'Kaydediliyor…';
+
+    firmaKaydet({ id: duzenlenenFirmaId, ad: ad, adres: adres })
+      .then(() => firmaVeMarketleriYukle())
+      .then(() => {
+        firmaDuzenleKapat();
+        firmaListesiOlustur();
+        magazaListesiOlustur();
+      })
+      .catch(() => {
+        hata.textContent = 'Kaydedilemedi, tekrar deneyin.';
+        hata.classList.add('show');
+      })
+      .finally(() => {
+        kaydetBtn.disabled = false;
+        kaydetBtn.textContent = 'Kaydet';
+      });
+  });
+
+  function firmaSilOnayla(id){
+    const f = tumFirmalar.find(x => x.company_id === id);
+    if (!f) return;
+    const baglıMarketSayisi = tumMarketler.filter(m => m.company_id === id).length;
+    onayKutusuGoster(
+      'Bu firmayı silmek istediğinize emin misiniz?',
+      (f.company_name ? f.company_name + ' — ' : '')
+        + (baglıMarketSayisi
+            ? 'Bu firmaya bağlı ' + baglıMarketSayisi + ' mağaza kaydı var. '
+            : '')
+        + 'Bu işlem geri alınamaz.'
+    ).then(onaylandi => {
+      if (!onaylandi) return;
+      firmaSil(id)
+        .then(() => firmaVeMarketleriYukle())
+        .then(() => {
+          firmaDuzenleKapat();
+          firmaListesiOlustur();
+          magazaListesiOlustur();
+        })
+        .catch(() => alert('Firma silinemedi, tekrar deneyin.'));
+    });
+  }
+
+  function firmalariCsvIndir(){
+    const basliklar = ['Firma Adı', 'Adres', 'Market Sayısı', 'Makine Sayısı', 'Kayıt Tarihi'];
+    const satirlar = tumFirmaSatirlari.map(f => [
+      f.company_name || '',
+      f.address || '',
+      tumMarketler.filter(m => m.company_id === f.company_id).length,
+      "—",
+      tarihFormatla(f.created_at)
+    ]);
+    csvIndir('firmalar.csv', basliklar, satirlar);
+  }
+
+  /* ═══════════════════ ORTAK CSV YARDIMCISI ═══════════════════ */
+  function csvIndir(dosyaAdi, basliklar, satirlar){
+    const csvIcerik = [basliklar].concat(satirlar)
+      .map(satir => satir.map(h => '"' + String(h).replace(/"/g, '""') + '"').join(','))
+      .join('\n');
+    const blob = new Blob(['\uFEFF' + csvIcerik], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = dosyaAdi;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  /* ═══════════════════ İLK YÜKLEME ═══════════════════ */
+  document.addEventListener('DOMContentLoaded', function(){
+    firmaVeMarketleriYukle().then(() => {
+      magazaListesiOlustur();
+      firmaListesiOlustur();
+    });
+  });
+</script>
+</body>
+</html>

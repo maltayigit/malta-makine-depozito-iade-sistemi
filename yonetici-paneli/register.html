@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Malta Makine — Hesap Oluştur</title>
+<link rel="icon" type="image/svg+xml" href="assets/image/favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/style.css">
+<script src="assets/js/auth.js"></script>
+</head>
+<body class="auth-body">
+
+  <input type="checkbox" id="menu-toggle" class="menu-toggle-input">
+  <label for="menu-toggle" class="hamburger" aria-label="Marka panelini aç/kapat">
+    <span></span><span></span><span></span>
+  </label>
+  <label for="menu-toggle" class="overlay" aria-hidden="true"></label>
+
+  <div class="auth-shell">
+
+    <section class="auth-brand">
+      <div class="mark">
+      <div class="mark-glyph" aria-hidden="true">
+        <a href="login.html">
+        <img src="assets/image/logo.svg" alt="Malta logosu" class="mark-glyph-img">
+        </a>
+      </div>
+      <div class="mark-text">Malta Makine</div>
+    </div>
+      <div class="mark-sub">İade Kiosk Sistemleri</div>
+
+      <p class="auth-brand-line">Mağazanızı Malta Makine ağına katın,<br>ilk kioskunuzu 1 iş günü içinde kurun.</p>
+
+      <div class="ticket ticket-auth" aria-hidden="true">
+        
+      </div>
+
+      <div class="sidebar-foot auth-foot">
+        <div class="barcode" aria-hidden="true"></div>
+        <span>PANEL SÜRÜM 0.1</span>
+      </div>
+    </section>
+
+    <section class="auth-form-wrap">
+      <div class="auth-form-inner">
+        <p class="eyebrow">Yönetim Paneli</p>
+        <h1 class="auth-title">Hesap oluşturun.</h1>
+        <p class="auth-sub">Mağazanız için Malta Makine yönetim paneline kaydolun.</p>
+
+        <p class="auth-hata" id="auth-hata" style="display:none; color:#C0392B; background:#FCEAEA; border-radius:7px; padding:9px 12px; font-size:13px; margin-bottom:14px;"></p>
+        <p class="auth-basarili" id="auth-basarili" style="display:none; color:#1E7E34; background:#E9F7EF; border-radius:7px; padding:9px 12px; font-size:13px; margin-bottom:14px;"></p>
+
+        <form class="auth-form" id="register-form" autocomplete="on">
+          <div class="field">
+            <label for="fullname">Ad Soyad</label>
+            <input id="fullname" name="fullname" type="text" placeholder="Ad Soyad" required>
+          </div>
+
+          <div class="field">
+            <label for="store">Mağaza / AVM Adı</label>
+            <input id="store" name="store" type="text" placeholder="Örn. Nişantaşı Şubesi" required>
+          </div>
+
+          <div class="field">
+            <label for="email">E-posta</label>
+            <input id="email" name="email" type="email" placeholder="ad.soyad@magaza.com" required>
+          </div>
+
+          <div class="field">
+            <label for="password">Şifre</label>
+            <input id="password" name="password" type="password" placeholder="••••••••" required>
+          </div>
+
+          <div class="field">
+            <label for="password2">Şifre (tekrar)</label>
+            <input id="password2" name="password2" type="password" placeholder="••••••••" required>
+          </div>
+
+          <div class="field-row field-row-single">
+            <label class="checkbox">
+              <input type="checkbox" name="terms" required>
+              <span>Kullanım şartlarını ve KVKK metnini okudum.</span>
+            </label>
+          </div>
+
+          <button class="btn-primary btn-block" type="submit">Hesap oluştur</button>
+        </form>
+
+        <p class="auth-footnote">Zaten hesabınız var mı? <a href="login.html">Giriş yapın</a></p>
+      </div>
+    </section>
+
+  </div>
+
+<script>
+  // API adresi auth.js içindeki AUTH_API_BASE ile aynı (tek kaynak, tutarlı port).
+
+  // Zaten giriş yapılmışsa kayıt formunu göstermeden panele gönder.
+  if (typeof oturumdakiKullanici === 'function' && oturumdakiKullanici()) {
+    window.location.href = 'makineler.html';
+  }
+
+  document.getElementById('register-form').addEventListener('submit', async function (e) {
+    e.preventDefault();
+
+    const adSoyad  = document.getElementById('fullname').value.trim();
+    const magaza   = document.getElementById('store').value.trim();
+    const email    = document.getElementById('email').value.trim();
+    const sifre    = document.getElementById('password').value;
+    const sifre2   = document.getElementById('password2').value;
+    const hata     = document.getElementById('auth-hata');
+    const basariliMsg = document.getElementById('auth-basarili');
+    const submitBtn = e.target.querySelector('button[type="submit"]');
+
+    hata.style.display = 'none';
+    basariliMsg.style.display = 'none';
+
+    if (sifre !== sifre2) {
+      hata.textContent = 'Girdiğiniz şifreler birbiriyle uyuşmuyor.';
+      hata.style.display = 'block';
+      return;
+    }
+
+    if (sifre.length < 4) {
+      hata.textContent = 'Şifre en az 4 karakter olmalı.';
+      hata.style.display = 'block';
+      return;
+    }
+
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Gönderiliyor…';
+
+    try {
+      const res = await fetch(AUTH_API_BASE + '/api/registrations', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          fullName: adSoyad,
+          storeName: magaza,
+          email: email,
+          password: sifre,
+        }),
+      });
+
+      const data = await res.json().catch(() => ({}));
+
+      if (!res.ok) {
+        hata.textContent = data.message || 'Başvurunuz gönderilemedi, lütfen tekrar deneyin.';
+        hata.style.display = 'block';
+        return;
+      }
+
+      // Otomatik giriş yapılmaz; hesap yönetici onayına düşer.
+      document.getElementById('register-form').reset();
+      basariliMsg.textContent = data.message
+        || 'Başvurunuz alındı. Yönetici onayından sonra giriş yapabileceksiniz.';
+      basariliMsg.style.display = 'block';
+    } catch (err) {
+      hata.textContent = 'Sunucuya ulaşılamadı. İnternet bağlantınızı kontrol edin.';
+      hata.style.display = 'block';
+    } finally {
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Hesap oluştur';
+    }
+  });
+</script>
+
+</body>
+</html>

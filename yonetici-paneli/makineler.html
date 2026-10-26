@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Malta Makine — Makinelerim</title>
+<link rel="icon" type="image/svg+xml" href="assets/image/favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/style.css">
+<script src="assets/js/auth.js"></script>
+<script>sayfaKorumaKontrolEt(['yonetici','market','bakanlik','teknisyen']);</script>
+<script src="assets/js/makine-veri.js"></script>
+<script src="assets/js/doluluk-veri.js"></script>
+<script src="assets/js/acil-durum-veri.js"></script>
+
+<style>
+  /* Bu sayfaya özel ek kurallar — deneme.css'teki sınıfların üstüne yazmaz,
+     sadece makine listesi ekranına özgü birkaç yeni parçayı tamamlar.
+     Renkler doğrudan deneme.css'teki :root token'larından türetildi. */
+
+  /* Durum vurgusu için urun-card'ın kendi --acc / --acc-bg mekanizması
+     kullanılıyor — acc-plastik / acc-teneke / acc-cam ile birebir aynı yöntem.
+     Renkler, index.html'deki gerçek "Makine Durumu" kartıyla (makine-kart.acik/.kapali)
+     birebir aynı: yeşil = açık, kırmızı = kapalı. */
+  .urun-card.acc-acik   { --acc: #0F6E56; --acc-bg: rgba(15,110,86,0.13); }
+  .urun-card.acc-kapali { --acc: #C0392B; --acc-bg: rgba(192,57,43,0.13); }
+
+  .urun-card.makine-secim-kart {
+    cursor: pointer;
+    text-decoration: none;
+    color: inherit;
+  }
+  .urun-card.makine-secim-kart:focus-visible { outline: 2px solid var(--signal); outline-offset: 3px; }
+
+  .makine-kiosk-icon { width: 34px; height: 34px; }
+
+  /* Açık/Kapalı mini rozeti — index.html'deki makine-kart ile aynı renk dili */
+  .makine-durum-mini {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    align-self: flex-start;
+    padding: 5px 11px 5px 8px;
+    border-radius: 999px;
+    border: 1.5px solid;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    margin-bottom: 4px;
+  }
+  .makine-durum-mini svg { width: 14px; height: 14px; flex-shrink: 0; }
+  .makine-durum-mini.acik   { background: #E8F5F0; border-color: #0F6E56; color: #0F6E56; }
+  .makine-durum-mini.kapali { background: #FCEAEA; border-color: #C0392B; color: #C0392B; }
+
+  .makine-arama-row {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    align-items: center;
+    margin: 18px 0 24px;
+  }
+  .makine-arama-input {
+    flex: 1;
+    min-width: 220px;
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 14.5px;
+    color: var(--ink);
+    background: var(--paper-deep);
+    border: 1px solid rgba(32,34,36,0.16);
+    border-radius: 6px;
+    padding: 12px 14px;
+    transition: border-color .15s ease, background .15s ease;
+  }
+  .makine-arama-input:focus {
+    outline: none;
+    border-color: var(--steel-950);
+    background: var(--paper);
+  }
+  .makine-filtre-chip {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    border: 1.5px solid rgba(32,34,36,0.16);
+    border-radius: 999px;
+    padding: 9px 15px;
+    background: none;
+    color: var(--muted);
+    cursor: pointer;
+    transition: all .15s ease;
+  }
+  .makine-filtre-chip:hover { border-color: var(--steel-700); color: var(--ink); }
+  .makine-filtre-chip.aktif-filtre { color: var(--ink); border-color: var(--steel-950); font-weight: 600; background: var(--paper-deep); }
+
+  .makine-bos-durum {
+    text-align: center;
+    padding: 44px 0;
+    color: var(--muted);
+    font-size: 13.5px;
+  }
+  .makine-bos-durum:not(.show) { display: none; }
+
+  /* ── Arıza rozeti ve uyarıları ── */
+  .urun-card.ariza-var{
+    box-shadow: 0 0 0 2px rgba(192,57,43,0.35), 0 6px 20px rgba(192,57,43,0.12);
+  }
+  .makine-ariza-rozet{
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    align-self:flex-start;
+    padding:5px 11px 5px 8px;
+    border-radius:999px;
+    border:1.5px solid #C0392B;
+    background:#FCEAEA;
+    color:#C0392B;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px;
+    font-weight:700;
+    letter-spacing:0.04em;
+    margin-bottom:4px;
+    margin-left:6px;
+    animation: rozetNabiz 1.6s ease-in-out infinite;
+  }
+  .makine-ariza-rozet svg{ width:14px; height:14px; flex-shrink:0; }
+  .makine-ariza-not{
+    font-size:12.5px;
+    color:#C0392B;
+    background:#FCEAEA;
+    border-radius:7px;
+    padding:8px 10px;
+    margin:2px 0 4px;
+    line-height:1.5;
+  }
+
+  .ariza-badge{
+    background:#FCEAEA;
+    color:#C0392B;
+    font-size:11px;
+    font-weight:700;
+    padding:2px 8px;
+    border-radius:20px;
+    font-family:'IBM Plex Mono', monospace;
+  }
+
+  .ariza-banner{
+    display:flex;
+    align-items:flex-start;
+    gap:14px;
+    background:rgba(192,57,43,0.08);
+    border:1px solid rgba(192,57,43,0.35);
+    border-left:4px solid #C0392B;
+    border-radius:10px;
+    padding:16px 18px;
+    margin-bottom:24px;
+  }
+  .ariza-banner:not(.show){ display:none; }
+  .ariza-banner-icon{
+    width:34px; height:34px;
+    flex-shrink:0;
+    border-radius:50%;
+    background:#C0392B;
+    color:#fff;
+    display:flex; align-items:center; justify-content:center;
+    animation:alertNabiz 1.6s ease-in-out infinite;
+  }
+  .ariza-banner-icon svg{ width:17px; height:17px; }
+  .ariza-banner-body{ flex:1; min-width:0; }
+  .ariza-banner-title{
+    font-family:'Space Grotesk', sans-serif;
+    font-weight:700;
+    font-size:14.5px;
+    color:#C0392B;
+    margin:0 0 5px;
+  }
+  .ariza-banner-liste{
+    list-style:none;
+    margin:0;
+    padding:0;
+    display:flex;
+    flex-direction:column;
+    gap:3px;
+  }
+  .ariza-banner-liste li{
+    font-size:13px;
+    line-height:1.5;
+    color:#5A2A24;
+  }
+  .ariza-banner-liste strong{ color:#C0392B; }
+
+  /* ── Bildirim toast'u (deneme.css'teki .panel-bildirim ile aynı dil) ──
+     İkon artık sitedeki diğer arıza uyarılarıyla (ariza-banner-icon,
+     doluluk-alert-icon) birebir aynı: dairesel, beyaz SVG üçgen, nabız
+     animasyonlu. Kenarlık da aynı arıza kırmızısına çekildi. */
+  .panel-bildirim.ariza{ border-color: rgba(192,57,43,0.5); }
+  .panel-bildirim.ariza .panel-bildirim-ikon{
+    background:#C0392B;
+    border-radius:50%;
+    animation: alertNabiz 1.6s ease-in-out infinite;
+  }
+  .panel-bildirim.ariza .panel-bildirim-ikon svg{ width:17px; height:17px; }
+</style>
+</head>
+<body>
+
+  <input type="checkbox" id="menu-toggle" class="menu-toggle-input">
+  <label for="menu-toggle" class="hamburger" aria-label="Menüyü aç/kapat">
+    <span></span><span></span><span></span>
+  </label>
+  <label for="menu-toggle" class="overlay" aria-hidden="true"></label>
+
+  <aside class="sidebar" aria-label="Ana gezinme">
+    <div class="mark">
+      <div class="mark-glyph" aria-hidden="true">
+        <a href="makineler.html">
+        <img src="assets/image/logo.svg" alt="Malta logosu" class="mark-glyph-img">
+       </a>
+      </div>
+      <div class="mark-text">Malta Makine</div>
+    </div>
+    <div class="mark-sub">İade Kiosk Sistemleri</div>
+
+    <div class="panel-seam"></div>
+
+    <nav>
+      <div class="nav-group">
+        <p class="nav-label">Genel</p>
+        <ul class="nav-list">
+          <li class="nav-item active">
+            <a class="nav-link" href="makineler.html"><span class="led"></span>Makinelerim</a>
+          </li>
+          <li class="nav-item" data-rol="yonetici">
+            <a class="nav-link" href="makine-yonetimi.html"><span class="led"></span>Makine Yönetimi</a>
+          </li>
+          <li class="nav-item " data-rol="yonetici">
+            <a class="nav-link" href="magaza-yonetimi.html"><span class="led"></span>Mağaza Yönetimi</a>
+          </li>
+          <li class="nav-item" data-rol="yonetici">
+            <a class="nav-link" href="kayitlar.html"><span class="led"></span>Kullanıcı Kayıtları</a>
+          </li>
+          <li class="nav-item " data-rol="yonetici">
+            <a class="nav-link" href="log-kayitlari.html"><span class="led"></span>Giriş / Aktivite Logları</a>
+          </li>
+          <li class="nav-item " data-rol="yonetici,bakanlik,market,teknisyen">
+            <a class="nav-link" href="bildirilen-arizalar.html"><span class="led"></span>Bildirilen Arızalar</a>
+          </li>
+        </ul>
+      </div>
+    </nav>
+
+    <div class="nav-group">
+        <p class="nav-label"></p>
+        <ul class="nav-list">
+          <li class="nav-item">
+            <a class="nav-link" href="#" onclick="cikisYap(); return false;"><span class="led"></span>Çıkış</a>
+          </li>
+        </ul>
+      </div>
+
+    <div class="sidebar-foot">
+      <div class="barcode" aria-hidden="true"></div>
+      <span>PANEL SÜRÜM 0.1</span>
+    </div>
+  </aside>
+
+  <main>
+    <section id="ana-sayfa">
+      <div class="home-body">
+
+        <p class="eyebrow" style="margin-bottom:6px;">Malta Makine Ağı</p>
+        <h1 style="font-size:clamp(24px,3vw,32px); margin:0 0 10px;">Makinelerinizi Seçin</h1>
+        <p class="lede" style="margin:0 0 8px;">Yönetmek istediğiniz kioskı seçin, o makinenin bakım panosuna yönlendirilirsiniz.</p>
+
+        <div class="kapak-baslik" style="margin:26px 0 4px;">
+          <h3>Makineler</h3>
+          <span class="acik-badge" id="calisma-badge">0 çalışıyor</span>
+          <span class="ariza-badge" id="ariza-badge" style="display:none;">0 arızalı</span>
+          <span class="toplam-badge" id="toplam-makine-badge">0 makine</span>
+        </div>
+
+        <div class="ariza-banner" id="ariza-banner">
+          <div class="ariza-banner-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          </div>
+          <div class="ariza-banner-body">
+            <p class="ariza-banner-title" id="ariza-banner-baslik">1 makinede arıza bildirildi</p>
+            <ul class="ariza-banner-liste" id="ariza-banner-liste"></ul>
+          </div>
+        </div>
+
+        <div class="makine-arama-row">
+          <input type="text" id="makine-arama" class="makine-arama-input" placeholder="Makine adı, şube veya teknisyen ara…" oninput="makineListesiFiltrele()" data-bakanlik-izin="1">
+          <button class="makine-filtre-chip aktif-filtre" data-filtre="hepsi" onclick="makineFiltreSec('hepsi', this)" data-bakanlik-izin="1">Hepsi</button>
+          <button class="makine-filtre-chip" data-filtre="acik" onclick="makineFiltreSec('acik', this)" data-bakanlik-izin="1">Çalışıyor</button>
+          <button class="makine-filtre-chip" data-filtre="kapali" onclick="makineFiltreSec('kapali', this)" data-bakanlik-izin="1">Kapalı</button>
+          <button class="makine-filtre-chip" data-filtre="arizali" onclick="makineFiltreSec('arizali', this)" data-bakanlik-izin="1">Arızalı</button>
+        </div>
+
+        <div class="urun-grid" id="makine-grid"></div>
+        <p class="makine-bos-durum" id="makine-bos-durum">Aramanızla eşleşen bir makine bulunamadı.</p>
+
+      </div>
+    </section>
+  </main>
+
+<script>
+  // ── Makine kayıtları ───────────────────────────────────────────────────
+  // Liste artık sabit kodlanmış değil: "Makine Yönetimi" sayfasıyla (bkz.
+  // makine-yonetimi.html) ve "Arıza Bildir" sayfasıyla (ariza-bildir.html)
+  // ortak bir localStorage anahtarından okunuyor. DEPO_ANAHTARI,
+  // varsayilanMakineler, makineleriYukle(), makineleriKaydet() ve
+  // goruntulenecekMakineler() artık makine-veri.js içinde tanımlı (bkz.
+  // <head>), böylece iki sayfa da aynı veri modelini paylaşır.
+
+  const durumMetni = { acik: 'AÇIK', kapali: 'KAPALI' };
+
+  const durumIconSvg = {
+    acik: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>',
+    kapali: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>'
+  };
+
+  const kioskIconSvg = `<svg class="makine-kiosk-icon" viewBox="0 0 24 24" fill="none" stroke="var(--acc)" stroke-width="1.6">
+      <rect x="4" y="3" width="16" height="12" rx="1.5"/>
+      <path d="M9 20h6"/><path d="M12 15v5"/><rect x="7.5" y="6" width="9" height="5" rx="0.5"/>
+    </svg>`;
+
+  // Her makinenin AÇIK/KAPALI göstergesi, makine-veri.js'in backend'den
+  // (machine_power_state.is_powered_on) çektiği gerçek güç durumunu
+  // yansıtır — artık localStorage'a özel bir istisna yok; kendi
+  // tarayıcınızdaki makine dahil hepsi aynı kaynaktan (API) okunuyor.
+  function makineDurumu(m) {
+    return m.durum || 'kapali';
+  }
+
+  // Bu makinenin ('durumKaynagi: localStorage' — yani gerçekte içinde
+  // bulunduğumuz makine, #001) arıza durumunu, elle işaretlenmiş bir
+  // bayraktan değil, doğrudan merkezi acil durum sisteminden (acil-durum-veri.js)
+  // okur: doluluk kritik seviyeye ulaştığında, bir ünitede sıkışma
+  // olduğunda ya da kamera/motor gibi bir alt sistem arıza bildirdiğinde
+  // bu fonksiyonlar zaten acilDurumAlarmVer(...) çağırıyor — burada sadece
+  // o kayıtları okuyup kart üzerinde gösteriyoruz. Aktif "kritik" seviyeli
+  // bir alarm varsa makine "ARIZA VAR" olarak işaretlenir; alarm(lar)
+  // giderilince (sıkışma giderilir, doluluk boşaltılır, kamera tekrar
+  // bağlanır vb.) rozet de otomatik olarak kalkar.
+  //
+  // makineArizaBilgisi() ve makineGercekVeriyleZenginlestir() artık
+  // makine-veri.js içinde tanımlı (bkz. <head>).
+
+  function makineKartOlustur(m) {
+    const durum = makineDurumu(m);
+    const arizaVar = !!m.ariza;
+    const href = m.panel + '?makine=' + encodeURIComponent(m.id);
+    const kart = document.createElement('a');
+    kart.href = href;
+    kart.addEventListener('click', function () {
+  // 'aktifMakineId' — doluluk-veri.js (index.html/doluluk.html) aktif
+  // makineyi bu anahtardan okuyor; 'maltaMachineId' da geriye dönük
+  // uyumluluk için ayrıca yazılıyor (başka bir sayfa kullanıyorsa diye).
+  localStorage.setItem('aktifMakineId', String(m.id));
+  localStorage.setItem('maltaMachineId', String(m.id));
+});
+    // Gerçek <a href> kullanmak, sol tık dışında tarayıcının kendi
+    // davranışlarını (orta tık / cmd+tık ile yeni sekmede açma,
+    // sağ tık > yeni sekmede aç vb.) da otomatik olarak çalıştırır.
+    kart.className = 'urun-card makine-secim-kart acc-' + durum + (arizaVar ? ' ariza-var' : '');
+    kart.dataset.durum = durum;
+    kart.dataset.ariza = arizaVar ? 'var' : 'yok';
+    kart.dataset.arama = (m.ad + ' ' + m.sube + ' ' + m.teknisyen).toLowerCase();
+
+    const arizaRozetHtml = arizaVar
+      ? `<span class="makine-ariza-rozet"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg><span>ARIZA VAR</span></span>`
+      : '';
+    const arizaNotHtml = (arizaVar && m.arizaAciklama)
+      ? `<p class="makine-ariza-not">${m.arizaAciklama}${m.arizaTarihi ? ' · ' + m.arizaTarihi : ''}</p>`
+      : '';
+
+    kart.innerHTML = `
+      <span class="urun-index">MAKİNE / ${m.id}</span>
+      <div class="urun-header">
+        <div class="urun-icons">
+          <div class="icon-chip">
+            <span class="icon-chip-glyph">${kioskIconSvg}</span>
+            <span>${m.sube.toUpperCase()}</span>
+          </div>
+        </div>
+      </div>
+      <div class="urun-body">
+        <div class="makine-durum-mini ${durum}">${durumIconSvg[durum]}<span>${durumMetni[durum]}</span></div>${arizaRozetHtml}
+        <h3>${m.ad}</h3>
+        <p class="urun-aralik">${m.sube} · Sorumlu Teknisyen: ${m.teknisyen}</p>
+        ${arizaNotHtml}
+        <ul class="urun-list">
+          ${m.ozet.map(s => '<li>' + s + '</li>').join('')}
+        </ul>
+        <div class="urun-depozito">Bakım Panosu <strong>Görüntüle →</strong></div>
+      </div>`;
+    return kart;
+  }
+
+  let aktifFiltre = 'hepsi';
+
+  let bilinenArizaliIdler = null;
+
+  function makineListesiOlustur() {
+    const grid = document.getElementById('makine-grid');
+    grid.innerHTML = '';
+    const gorunurMakineler = goruntulenecekMakineler(makineler);
+    const zenginMakineler = gorunurMakineler.map(makineGercekVeriyleZenginlestir);
+    zenginMakineler.forEach(m => grid.appendChild(makineKartOlustur(m)));
+
+    const calisanSayisi = zenginMakineler.filter(m => makineDurumu(m) === 'acik').length;
+    const arizaliMakineler = zenginMakineler.filter(m => m.ariza);
+    document.getElementById('calisma-badge').textContent = calisanSayisi + ' çalışıyor';
+    document.getElementById('toplam-makine-badge').textContent = gorunurMakineler.length + ' makine';
+
+    // Mağaza (market) kullanıcısına henüz hiç makine atanmamışsa, arama
+    // sonucu boş sanılmaması için ayrı ve daha açıklayıcı bir metin göster.
+    const bosDurumEl = document.getElementById('makine-bos-durum');
+    const kullanici = oturumdakiKullanici();
+    if (kullanici && (kullanici.rol === 'market' || kullanici.rol === 'teknisyen') && gorunurMakineler.length === 0) {
+      bosDurumEl.textContent = 'Hesabınıza henüz bir makine atanmamış. Yöneticinizle iletişime geçin.';
+    } else {
+      bosDurumEl.textContent = 'Aramanızla eşleşen bir makine bulunamadı.';
+    }
+
+    const arizaBadge = document.getElementById('ariza-badge');
+    if (arizaliMakineler.length > 0) {
+      arizaBadge.style.display = '';
+      arizaBadge.textContent = arizaliMakineler.length + ' arızalı';
+    } else {
+      arizaBadge.style.display = 'none';
+    }
+
+    arizaBanneriGuncelle(arizaliMakineler);
+    arizaBildirimKontrolEt(arizaliMakineler);
+
+    makineListesiFiltrele();
+  }
+
+  function arizaBanneriGuncelle(arizaliMakineler) {
+    const banner = document.getElementById('ariza-banner');
+    banner.classList.toggle('show', arizaliMakineler.length > 0);
+    if (arizaliMakineler.length === 0) return;
+
+    document.getElementById('ariza-banner-baslik').textContent =
+      arizaliMakineler.length === 1
+        ? '1 makinede arıza bildirildi'
+        : arizaliMakineler.length + ' makinede arıza bildirildi';
+
+    const liste = document.getElementById('ariza-banner-liste');
+    liste.innerHTML = arizaliMakineler.map(m =>
+      `<li><strong>${m.ad}</strong> — ${m.sube}${m.arizaAciklama ? ': ' + m.arizaAciklama : ''}</li>`
+    ).join('');
+  }
+
+  // Yeni bildirilen bir arızayı (daha önce bu sekmede görülmemiş) fark edince
+  // sağ altta kısa bir bildirim (toast) gösterir — "bize bildirsin" isteği için.
+  function arizaBildirimKontrolEt(arizaliMakineler) {
+    const guncelIdler = arizaliMakineler.map(m => m.id);
+    if (bilinenArizaliIdler === null) {
+      // İlk yüklemede sessizce başlangıç durumunu kaydet, ama mevcut arızalar
+      // varsa yine de kullanıcıyı haberdar et.
+      bilinenArizaliIdler = guncelIdler;
+      if (guncelIdler.length > 0) {
+        bildirimGoster(
+          arizaliMakineler.length === 1
+            ? arizaliMakineler[0].ad + ' arızalı görünüyor.'
+            : arizaliMakineler.length + ' makinede arıza kayıtlı.'
+        );
+      }
+      return;
+    }
+    const yeniArizalar = arizaliMakineler.filter(m => !bilinenArizaliIdler.includes(m.id));
+    yeniArizalar.forEach(m => {
+      bildirimGoster(m.ad + ' için yeni arıza bildirildi' + (m.arizaAciklama ? ': ' + m.arizaAciklama : '.'));
+    });
+    bilinenArizaliIdler = guncelIdler;
+  }
+
+  function bildirimGoster(metin) {
+    let kutu = document.getElementById('ariza-toast');
+    if (!kutu) {
+      kutu = document.createElement('div');
+      kutu.id = 'ariza-toast';
+      kutu.className = 'panel-bildirim ariza';
+      kutu.innerHTML = `
+        <div class="panel-bildirim-ikon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div>
+        <div>
+          <div class="panel-bildirim-baslik">Arıza Bildirimi</div>
+          <div class="panel-bildirim-metin" id="ariza-toast-metin"></div>
+        </div>`;
+      document.body.appendChild(kutu);
+    }
+    document.getElementById('ariza-toast-metin').textContent = metin;
+    kutu.classList.add('show');
+    clearTimeout(window._arizaToastZaman);
+    window._arizaToastZaman = setTimeout(() => kutu.classList.remove('show'), 5000);
+  }
+
+  function makineFiltreSec(filtre, btn) {
+    aktifFiltre = filtre;
+    document.querySelectorAll('.makine-filtre-chip').forEach(c => c.classList.remove('aktif-filtre'));
+    btn.classList.add('aktif-filtre');
+    makineListesiFiltrele();
+  }
+
+  function makineListesiFiltrele() {
+    const q = document.getElementById('makine-arama').value.trim().toLowerCase();
+    const kartlar = document.querySelectorAll('#makine-grid .makine-secim-kart');
+    let gorunenSayisi = 0;
+
+    kartlar.forEach(kart => {
+      const aramaUyumlu = !q || kart.dataset.arama.includes(q);
+      const filtreUyumlu =
+        aktifFiltre === 'hepsi' ? true :
+        aktifFiltre === 'arizali' ? kart.dataset.ariza === 'var' :
+        kart.dataset.durum === aktifFiltre;
+      const goster = aramaUyumlu && filtreUyumlu;
+      kart.style.display = goster ? '' : 'none';
+      if (goster) gorunenSayisi++;
+    });
+
+    document.getElementById('makine-bos-durum').classList.toggle('show', gorunenSayisi === 0);
+  }
+
+  let makineler = [];
+async function makineVerisiniTazele() {
+  makineler = await makineleriYukle();
+  makineListesiOlustur();
+}
+document.addEventListener('DOMContentLoaded', makineVerisiniTazele);
+document.addEventListener('DOMContentLoaded', menuyuRoleGoreDuzenle);
+
+  // Başka bir sekmede makine 001 aç/kapat edilirse, ya da o makinenin gerçek
+  // alt sistemlerinden biri (doluluk, sıkışma, kamera vb.) merkezi acil durum
+  // paneline yeni bir alarm düşürüp giderirse, bu sayfadaki durum/arıza
+  // rozeti ve özet sayaçlar da güncellensin.
+  window.addEventListener('storage', (e) => {
+    // NOT: makineListesiOlustur() yalnızca elimizdeki `makineler` dizisini
+    // yeniden ÇİZER, yeniden ÇEKMEZ. Güç durumu artık backend'den geldiği
+    // için (localStorage'a özel bir istisna kalmadı) başka sekmede bir
+    // makine aç/kapat edildiğinde diziyi de tazelememiz gerekiyor.
+    if (e.key === 'makineAcik') makineVerisiniTazele();
+    if (typeof ACIL_KAYIT_KEY !== 'undefined' && e.key === ACIL_KAYIT_KEY) makineVerisiniTazele();
+  });
+
+  // 'storage' olayı yalnızca BAŞKA sekmelerdeki değişiklikte tetiklenir; bu
+  // sayfa açık kalıp arka planda beklerken (ör. aynı sekmede zaman geçmesiyle
+  // bir alarmın kendiliğinden giderilmesi gibi durumlar için) düzenli bir
+  // yedek tazeleme de yapılır — uygulamanın genelinde kullanılan 4-5sn'lik
+  // canlı güncelleme deseniyle tutarlı.
+  setInterval(function () {
+    // Önceden sadece yeniden çiziyordu (makineListesiOlustur), ama `makineler`
+    // dizisini localStorage'dan tekrar okumuyordu — bu yüzden aynı sekmede
+    // beklerken (başka sekmeye geçip geri dönmeden) 002-004 gibi makinelerin
+    // durumu/arızası veya makine-yönetimi.html'den yapılan değişiklikler
+    // arka planda görünmüyordu. 'storage' olayı da aynı sekmede tetiklenmez,
+    // sadece başka sekmelerde. Bu yüzden visibilitychange'deki gibi önce
+    // diziyi tazeleyip sonra çiziyoruz.
+    makineVerisiniTazele();
+  }, 5000);
+
+  // index.html'den "Makinelerim"e geri dönüldüğünde (aynı sekme, storage
+  // olayı tetiklenmez) durum güncel kalsın diye sayfa tekrar görünür
+  // olduğunda da tazeliyoruz.
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') {
+      makineVerisiniTazele();
+    }
+  });
+</script>
+</body>
+</html>

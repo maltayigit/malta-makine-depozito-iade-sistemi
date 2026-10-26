@@ -1,0 +1,1230 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Malta Makine — Makine Yönetimi</title>
+<link rel="icon" type="image/svg+xml" href="assets/image/favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/style.css">
+<script src="assets/js/auth.js"></script>
+<script>sayfaKorumaKontrolEt(['yonetici']);</script>
+<script src="assets/js/makine-veri.js"></script>
+
+<style>
+  /* Bu sayfaya özel ek kurallar — deneme.css'teki token ve bileşenlerin
+     üstüne yazmaz, sadece "Makine Yönetimi" ekranına özgü birkaç parçayı
+     tamamlar. Kartlar, rozetler ve modallar mevcut tasarım diliyle birebir
+     aynı yöntemle (var(--acc), warn-modal / confirm-modal yapısı) kuruldu. */
+
+  .yon-toolbar{
+    display:flex;
+    gap:12px;
+    flex-wrap:wrap;
+    align-items:center;
+    justify-content:space-between;
+    margin:18px 0 26px;
+  }
+  .yon-arama-input{
+    flex:1;
+    min-width:220px;
+    font-family:'IBM Plex Sans', sans-serif;
+    font-size:14.5px;
+    color:var(--ink);
+    background:var(--paper-deep);
+    border:1px solid rgba(32,34,36,0.16);
+    border-radius:6px;
+    padding:12px 14px;
+    transition:border-color .15s ease, background .15s ease;
+  }
+  .yon-arama-input:focus{
+    outline:none;
+    border-color:var(--steel-950);
+    background:var(--paper);
+  }
+  .yon-ekle-btn{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    background:var(--steel-950);
+    color:var(--paper);
+    border:none;
+    font-family:inherit;
+    font-size:14px;
+    font-weight:500;
+    padding:12px 20px;
+    border-radius:6px;
+    cursor:pointer;
+    white-space:nowrap;
+    transition:background .15s ease, transform .15s ease;
+  }
+  .yon-ekle-btn:hover{ background:var(--steel-800); transform:translateY(-1px); }
+  .yon-ekle-btn svg{ width:16px; height:16px; }
+
+  /* ── Makine listesi (yönetim kartı) ── */
+  .yon-liste{
+    display:flex;
+    flex-direction:column;
+    gap:12px;
+  }
+  .yon-kart{
+    display:flex;
+    align-items:center;
+    gap:16px;
+    background:var(--paper-deep);
+    border-radius:12px;
+    padding:16px 18px;
+    border-left:4px solid var(--acc);
+    transition:box-shadow .18s ease, transform .18s ease;
+  }
+  .yon-kart:hover{ box-shadow:0 8px 20px rgba(32,34,36,0.08); }
+  .yon-kart.acc-acik{ --acc:#0F6E56; }
+  .yon-kart.acc-kapali{ --acc:#C0392B; }
+
+  .yon-kart-ikon{
+    width:44px; height:44px;
+    border-radius:10px;
+    background:var(--steel-950);
+    color:var(--paper);
+    display:flex; align-items:center; justify-content:center;
+    flex-shrink:0;
+  }
+  .yon-kart-ikon svg{ width:22px; height:22px; }
+
+  .yon-kart-bilgi{ flex:1; min-width:0; }
+  .yon-kart-ust{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    flex-wrap:wrap;
+    margin-bottom:3px;
+  }
+  .yon-kart-ad{
+    font-family:'Space Grotesk', sans-serif;
+    font-weight:600;
+    font-size:15.5px;
+    color:var(--ink);
+  }
+  .yon-kart-id{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:10.5px;
+    color:var(--muted);
+    letter-spacing:0.04em;
+  }
+  .yon-kart-durum{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:10px;
+    font-weight:700;
+    letter-spacing:0.05em;
+    padding:2px 9px;
+    border-radius:999px;
+    text-transform:uppercase;
+  }
+  .yon-kart-durum.acik{ background:#E8F5F0; color:#0F6E56; }
+  .yon-kart-durum.kapali{ background:#FCEAEA; color:#C0392B; }
+  .yon-kart-alt{
+    font-size:13px;
+    color:var(--muted);
+  }
+
+  .yon-kart-actions{
+    display:flex;
+    gap:8px;
+    flex-shrink:0;
+  }
+  .yon-icon-btn{
+    width:38px; height:38px;
+    border-radius:8px;
+    border:1.5px solid var(--steel-700);
+    background:none;
+    color:var(--steel-950);
+    display:flex; align-items:center; justify-content:center;
+    cursor:pointer;
+    transition:background .15s ease, border-color .15s ease, color .15s ease;
+  }
+  .yon-icon-btn svg{ width:16px; height:16px; }
+  .yon-icon-btn:hover{ background:var(--paper); }
+  .yon-icon-btn.sil{ border-color:#C0392B; color:#C0392B; }
+  .yon-icon-btn.sil:hover{ background:#FCEAEA; }
+
+  .yon-bos-durum{
+    text-align:center;
+    padding:52px 0;
+    color:var(--muted);
+    font-size:13.5px;
+  }
+  .yon-bos-durum:not(.show){ display:none; }
+
+  /* ── Ekle / Düzenle modalı (warn-modal ile aynı dil) ── */
+  .form-overlay{
+    position:fixed;
+    inset:0;
+    background:rgba(20,21,23,0.55);
+    backdrop-filter:blur(2px);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:20px;
+    z-index:250;
+    opacity:0;
+    pointer-events:none;
+    transition:opacity .18s ease;
+    overflow-y:auto;
+  }
+  .form-overlay.show{ opacity:1; pointer-events:auto; }
+  .form-modal{
+    background:var(--paper);
+    border-radius:14px;
+    width:100%;
+    max-width:520px;
+    padding:28px 26px 24px;
+    box-shadow:0 20px 60px rgba(0,0,0,0.35);
+    transform:translateY(10px) scale(0.97);
+    transition:transform .2s ease;
+    border-top:4px solid var(--steel-950);
+    margin:auto;
+  }
+  .form-overlay.show .form-modal{ transform:translateY(0) scale(1); }
+
+  .form-head{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    margin-bottom:20px;
+  }
+  .form-title{
+    font-family:'Space Grotesk', sans-serif;
+    font-weight:700;
+    font-size:19px;
+    margin:0;
+    color:var(--ink);
+  }
+  .form-sub{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px;
+    letter-spacing:0.05em;
+    color:var(--signal);
+    text-transform:uppercase;
+    margin:3px 0 0;
+  }
+  .form-close-btn{
+    background:none;
+    border:1.5px solid var(--steel-700);
+    color:var(--steel-950);
+    border-radius:8px;
+    width:32px; height:32px;
+    cursor:pointer;
+    font-size:15px;
+    line-height:1;
+    flex-shrink:0;
+    transition:background .15s ease;
+  }
+  .form-close-btn:hover{ background:var(--paper-deep); }
+
+  .form-field{ margin-bottom:16px; }
+  .form-field label{
+    display:block;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px;
+    letter-spacing:0.06em;
+    text-transform:uppercase;
+    color:var(--muted);
+    margin-bottom:7px;
+  }
+  .form-field input[type="text"],
+  .form-field select,
+  .form-field textarea{
+    width:100%;
+    font-family:'IBM Plex Sans', sans-serif;
+    font-size:14.5px;
+    color:var(--ink);
+    background:var(--paper-deep);
+    border:1px solid rgba(32,34,36,0.16);
+    border-radius:6px;
+    padding:11px 13px;
+    transition:border-color .15s ease, background .15s ease;
+    resize:vertical;
+  }
+  .form-field input[type="text"]:focus,
+  .form-field select:focus,
+  .form-field textarea:focus{
+    outline:none;
+    border-color:var(--steel-950);
+    background:var(--paper);
+  }
+  .form-field small{
+    display:block;
+    margin-top:6px;
+    font-size:12px;
+    color:var(--muted);
+  }
+  .form-row-2{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:14px;
+  }
+  @media (max-width:520px){ .form-row-2{ grid-template-columns:1fr; } }
+
+  .form-durum-row{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    background:var(--paper-deep);
+    border-radius:8px;
+    padding:12px 14px;
+    margin-bottom:20px;
+  }
+  .form-durum-row .lbl{ font-size:13.5px; font-weight:500; color:var(--ink); }
+  .form-durum-row .alt{ font-size:12px; color:var(--muted); margin-top:1px; }
+
+  .form-actions{
+    display:flex;
+    justify-content:flex-end;
+    gap:10px;
+    margin-top:6px;
+  }
+  .form-btn-ghost{
+    background:none;
+    border:1.5px solid var(--steel-700);
+    color:var(--steel-950);
+    font-family:inherit;
+    font-size:14px;
+    font-weight:500;
+    padding:11px 18px;
+    border-radius:7px;
+    cursor:pointer;
+    transition:background .15s ease;
+  }
+  .form-btn-ghost:hover{ background:var(--paper-deep); }
+  .form-btn-primary{
+    background:var(--steel-950);
+    color:var(--paper);
+    border:none;
+    font-family:inherit;
+    font-size:14px;
+    font-weight:500;
+    padding:11px 20px;
+    border-radius:7px;
+    cursor:pointer;
+    transition:background .15s ease, transform .15s ease;
+  }
+  .form-btn-primary:hover{ background:var(--steel-800); transform:translateY(-1px); }
+
+  .toast-bilgi{
+    position:fixed;
+    right:24px;
+    bottom:24px;
+    z-index:9999;
+    display:flex;
+    align-items:center;
+    gap:12px;
+    padding:14px 18px;
+    border-radius:8px;
+    background:linear-gradient(180deg, #282C30 0%, #1E2124 100%);
+    color:#F1EEE6;
+    border:1px solid rgba(15,110,86,0.5);
+    box-shadow:0 18px 44px rgba(0,0,0,0.32);
+    transform:translateY(18px);
+    opacity:0;
+    pointer-events:none;
+    transition:opacity .22s ease, transform .22s ease;
+    font-size:13.5px;
+    max-width:min(360px, calc(100vw - 32px));
+  }
+  .toast-bilgi.show{ opacity:1; transform:translateY(0); }
+  .toast-bilgi .dot{ width:8px; height:8px; border-radius:50%; background:#0F6E56; flex-shrink:0; }
+
+  /* ── Arıza bildirimi ── */
+  .yon-kart.ariza-var{
+    box-shadow: 0 0 0 2px rgba(192,57,43,0.3);
+  }
+  .yon-kart-durum.ariza{
+    background:#FCEAEA; color:#C0392B;
+    animation: rozetNabiz 1.6s ease-in-out infinite;
+  }
+  .yon-kart-ariza-not{
+    font-size:12.5px;
+    color:#C0392B;
+    margin-top:3px;
+  }
+  .yon-icon-btn.ariza-aktif{
+    border-color:#C0392B;
+    color:#C0392B;
+    background:#FCEAEA;
+  }
+  .yon-filtre-row{
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
+  }
+  .yon-filtre-chip{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px;
+    letter-spacing:0.05em;
+    text-transform:uppercase;
+    border:1.5px solid rgba(32,34,36,0.16);
+    border-radius:999px;
+    padding:9px 15px;
+    background:none;
+    color:var(--muted);
+    cursor:pointer;
+    transition:all .15s ease;
+    white-space:nowrap;
+  }
+  .yon-filtre-chip:hover{ border-color:var(--steel-700); color:var(--ink); }
+  .yon-filtre-chip.aktif-filtre{ color:var(--ink); border-color:var(--steel-950); font-weight:600; background:var(--paper-deep); }
+
+  .form-durum-row.kirmizi{ background:#FCEAEA; }
+  .form-durum-row.kirmizi .lbl{ color:#C0392B; }
+</style>
+</head>
+<body>
+
+  <input type="checkbox" id="menu-toggle" class="menu-toggle-input">
+  <label for="menu-toggle" class="hamburger" aria-label="Menüyü aç/kapat">
+    <span></span><span></span><span></span>
+  </label>
+  <label for="menu-toggle" class="overlay" aria-hidden="true"></label>
+
+  <aside class="sidebar" aria-label="Ana gezinme">
+    <div class="mark">
+      <div class="mark-glyph" aria-hidden="true">
+        <a href="makineler.html">
+        <img src="assets/image/logo.svg" alt="Malta logosu" class="mark-glyph-img">
+       </a>
+      </div>
+      <div class="mark-text">Malta Makine</div>
+    </div>
+    <div class="mark-sub">İade Kiosk Sistemleri</div>
+
+    <div class="panel-seam"></div>
+
+    <nav>
+      <div class="nav-group">
+        <p class="nav-label">Genel</p>
+        <ul class="nav-list">
+          <li class="nav-item">
+            <a class="nav-link" href="makineler.html"><span class="led"></span>Makinelerim</a>
+          </li>
+          <li class="nav-item active" data-rol="yonetici">
+            <a class="nav-link" href="makine-yonetimi.html"><span class="led"></span>Makine Yönetimi</a>
+          </li>
+          <li class="nav-item " data-rol="yonetici">
+            <a class="nav-link" href="magaza-yonetimi.html"><span class="led"></span>Mağaza Yönetimi</a>
+          </li>
+          <li class="nav-item" data-rol="yonetici">
+            <a class="nav-link" href="kayitlar.html"><span class="led"></span>Kullanıcı Kayıtları</a>
+          </li>
+          <li class="nav-item " data-rol="yonetici">
+            <a class="nav-link" href="log-kayitlari.html"><span class="led"></span>Giriş / Aktivite Logları</a>
+          </li>
+          <li class="nav-item " data-rol="yonetici">
+            <a class="nav-link" href="bildirilen-arizalar.html"><span class="led"></span>Bildirilen Arızalar</a>
+          </li>
+        </ul>
+      </div>
+    </nav>
+
+    <div class="nav-group">
+        <p class="nav-label"></p>
+        <ul class="nav-list">
+          <li class="nav-item">
+            <a class="nav-link" href="#" onclick="cikisYap(); return false;"><span class="led"></span>Çıkış</a>
+          </li>
+        </ul>
+      </div>
+
+    <div class="sidebar-foot">
+      <div class="barcode" aria-hidden="true"></div>
+      <span>PANEL SÜRÜM 0.1</span>
+    </div>
+  </aside>
+
+  <main>
+    <section id="ana-sayfa">
+      <div class="home-body">
+
+        <p class="eyebrow" style="margin-bottom:6px;">Malta Makine Ağı</p>
+        <h1 style="font-size:clamp(24px,3vw,32px); margin:0 0 10px;">Makine Yönetimi</h1>
+        <p class="lede" style="margin:0 0 8px;">Makine ekleyin, bilgilerini düzenleyin veya listeden kaldırın. Değişiklikler "Makinelerim" sayfasına anında yansır.</p>
+
+        <div class="kapak-baslik" style="margin:26px 0 4px;">
+          <h3>Kayıtlı Makineler</h3>
+          <span class="toplam-badge" id="toplam-badge">0 makine</span>
+          <span class="ariza-badge" id="yon-ariza-badge" style="display:none; background:#FCEAEA; color:#C0392B; font-size:11px; font-weight:700; padding:2px 8px; border-radius:20px; font-family:'IBM Plex Mono', monospace;">0 arızalı</span>
+        </div>
+
+        <div class="yon-toolbar">
+          <input type="text" id="yon-arama" class="yon-arama-input" placeholder="Makine adı, mağaza veya teknisyen ara…" oninput="yonListesiFiltrele()">
+          <button class="yon-ekle-btn" onclick="formAc(null)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Yeni Makine Ekle
+          </button>
+        </div>
+
+        <div class="yon-filtre-row" style="margin:0 0 20px;">
+          <button class="yon-filtre-chip aktif-filtre" data-filtre="hepsi" onclick="yonFiltreSec('hepsi', this)">Hepsi</button>
+          <button class="yon-filtre-chip" data-filtre="arizali" onclick="yonFiltreSec('arizali', this)">Arızalı</button>
+          <button class="yon-filtre-chip" data-filtre="saglam" onclick="yonFiltreSec('saglam', this)">Arızasız</button>
+        </div>
+
+        <div class="yon-liste" id="yon-liste"></div>
+        <p class="yon-bos-durum" id="yon-bos-durum">Aramanızla eşleşen bir makine bulunamadı.</p>
+
+        <div class="guvenlik-notu" style="margin-top:32px;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          <span><strong>Not:</strong> Bu liste sunucudaki veritabanından (PostgreSQL) okunur; tüm cihaz ve tarayıcılarda aynı, paylaşımlı ve kalıcı kayıttır.</span>
+        </div>
+
+      </div>
+    </section>
+  </main>
+
+  <!-- ── Ekle / Düzenle Modalı ── -->
+  <div class="form-overlay" id="form-overlay">
+    <div class="form-modal">
+      <div class="form-head">
+        <div>
+          <h3 class="form-title" id="form-baslik">Yeni Makine Ekle</h3>
+          <p class="form-sub" id="form-alt">MAKİNE KAYDI</p>
+        </div>
+        <button class="form-close-btn" onclick="formKapat()" aria-label="Kapat">✕</button>
+      </div>
+
+      <form id="makine-form" onsubmit="formKaydet(event)">
+        <input type="hidden" id="f-orijinal-id">
+
+        <div class="form-row-2">
+          <div class="form-field">
+            <label for="f-id">Makine Numarası</label>
+            <input type="text" id="f-id" placeholder="örn. 005" required readonly style="background:var(--paper-deep); color:var(--muted); cursor:not-allowed;">
+            <small>Otomatik atanır, elle değiştirilemez.</small>
+          </div>
+          <div class="form-field">
+            <label for="f-panel">Bakım Panosu</label>
+            <select id="f-panel">
+              <option value="index.html">index.html</option>
+              <option value="makine.html">makine.html</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-field">
+          <label for="f-firma">Firma</label>
+          <select id="f-firma" required onchange="firmaDegisti()"></select>
+          <small>Makine, veritabanında bir firmaya bağlı olmak zorundadır.</small>
+        </div>
+
+        <div class="form-field">
+          <label for="f-ad-ek">Makine Adı</label>
+          <div style="display:flex; gap:8px; align-items:center;">
+            <input type="text" id="f-ad-onek" readonly style="width:150px; flex-shrink:0; font-family:'IBM Plex Sans', sans-serif; font-size:14.5px; color:var(--muted); background:var(--paper-deep); border:1px solid rgba(32,34,36,0.16); border-radius:6px; padding:11px 13px; cursor:not-allowed;">
+            <input type="text" id="f-ad-ek" placeholder="örn. Zemin Kat" style="flex:1;">
+          </div>
+          <small>Baştaki "#Makine 0XX" kısmı otomatik ve silinemez; isterseniz yanına ek bilgi yazabilirsiniz.</small>
+        </div>
+
+        <div class="form-row-2">
+          <div class="form-field">
+            <label for="f-magaza">Mağaza</label>
+            <select id="f-magaza" required></select>
+            <small>Makine, veritabanında kayıtlı bir mağazaya (markets) bağlanır.</small>
+          </div>
+          <div class="form-field">
+            <label for="f-teknisyen">Sorumlu Teknisyen</label>
+            <select id="f-teknisyen">
+              <option value="">Atanmadı</option>
+            </select>
+            <small>Seçilen kişi, servis personeli (SERVICE_PERSONNEL) rolündeki kullanıcılardan gelir.</small>
+          </div>
+        </div>
+
+        <div class="form-field">
+          <label for="f-ozet">Özet Bilgiler</label>
+          <textarea id="f-ozet" rows="3" placeholder="Her satıra bir bilgi yazın, örn:&#10;10 kapak · Plastik / Teneke / Cam üniteleri&#10;Son bakım: 05 Temmuz 2026"></textarea>
+          <small>Her satır, makine kartında ayrı bir madde olarak gösterilir.</small>
+        </div>
+
+        <div class="form-field">
+          <label for="f-sahip">Mağaza Sahibi</label>
+          <select id="f-sahip">
+            <option value="">Atanmadı (sadece yönetici görür)</option>
+          </select>
+          <small>Seçilen mağaza hesabı, "Makinelerim" sayfasında sadece bu makineyi görür.</small>
+        </div>
+
+        <div class="form-durum-row">
+          <div>
+            <div class="lbl">Başlangıç Durumu</div>
+            <div class="alt" id="f-durum-alt">Yeni eklenen makine kapalı olarak başlar</div>
+          </div>
+          <button type="button" class="toggle off" id="f-durum-toggle" onclick="formDurumDegistir()" aria-label="Durumu değiştir"></button>
+        </div>
+
+        <div class="form-actions">
+          <button type="button" class="form-btn-ghost" onclick="formKapat()">Vazgeç</button>
+          <button type="submit" class="form-btn-primary" id="form-kaydet-btn">Makineyi Kaydet</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ── Arıza Bildirimi Modalı ── -->
+  <div class="form-overlay" id="ariza-overlay">
+    <div class="form-modal" style="border-top-color:#C0392B;">
+      <div class="form-head">
+        <div>
+          <h3 class="form-title" id="ariza-baslik">Arıza Bildir</h3>
+          <p class="form-sub" id="ariza-alt" style="color:#C0392B;">ARIZA KAYDI</p>
+        </div>
+        <button class="form-close-btn" onclick="arizaFormKapat()" aria-label="Kapat">✕</button>
+      </div>
+
+      <form id="ariza-form" onsubmit="arizaKaydet(event)">
+        <input type="hidden" id="a-id">
+
+        <div class="form-durum-row kirmizi">
+          <div>
+            <div class="lbl" id="a-durum-lbl">Bu makinede arıza var mı?</div>
+            <div class="alt" id="a-durum-alt">Şu anda arıza kaydı yok</div>
+          </div>
+          <button type="button" class="toggle off" id="a-toggle" onclick="arizaToggleDegistir()" aria-label="Arıza durumunu değiştir"></button>
+        </div>
+
+        <div class="form-field" id="a-aciklama-alani">
+          <label for="a-aciklama">Arıza Açıklaması</label>
+          <textarea id="a-aciklama" rows="3" placeholder="örn. Plastik ünitesi kapak algılamıyor, teknisyen yönlendirildi."></textarea>
+          <small>Bu not, hem "Makinelerim" sayfasındaki kartta hem de üstteki arıza özetinde görünür.</small>
+        </div>
+
+        <div class="form-actions">
+          <button type="button" class="form-btn-ghost" onclick="arizaFormKapat()">Vazgeç</button>
+          <button type="submit" class="form-btn-primary" id="ariza-kaydet-btn" style="background:#C0392B;">Kaydet</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ── Silme Onay Modalı ── -->
+  <div class="confirm-overlay" id="confirm-overlay">
+    <div class="confirm-modal">
+      <div class="confirm-head">
+        <div class="confirm-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 6h18"/><path d="M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+        </div>
+        <div>
+          <h3 class="confirm-title">Makineyi Sil</h3>
+          <p class="confirm-sub">GERİ ALINAMAZ</p>
+        </div>
+      </div>
+      <p class="confirm-text" id="confirm-metin">Bu makineyi listeden kalıcı olarak kaldırmak istediğinize emin misiniz?</p>
+      <div class="confirm-actions">
+        <button class="confirm-btn-ghost" onclick="silIptal()">Vazgeç</button>
+        <button class="confirm-btn-danger" onclick="silOnayla()">Evet, Sil</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast-bilgi" id="toast">
+    <span class="dot"></span>
+    <span id="toast-metin">Kaydedildi.</span>
+  </div>
+
+<script>
+  // ============================================================
+  // GERÇEK BACKEND SÜRÜMÜ
+  // Bu sayfa artık localStorage yerine gerçek API'den (PostgreSQL) veri
+  // okuyup yazıyor. apiIstek() fonksiyonu assets/js/makine-veri.js
+  // içinde tanımlı (auth.js'teki AUTH_API_BASE / oturumAccessTokenGetir'i
+  // kullanıyor) — bu dosyadan ÖNCE yüklenmiş olmalı.
+  // ============================================================
+
+  // Backend'den gelen ham makine kaydını (machine_id, machine_code,
+  // display_name, ...) bu sayfanın geri kalanının kullandığı eski UI
+  // şekline (m.id, m.ad, m.magaza, m.teknisyen ...) dönüştürür.
+  // 'id' burada KOD (machine_code) — kullanıcıya gösterilen/düzenlenen
+  // "Makine Numarası"; API çağrıları için gerçek PK '_pk' alanında tutulur.
+  // Mağaza ve sorumlu teknisyen artık serbest metin değil, gerçek
+  // veritabanı ilişkileri (markets tablosu / service_personnel_machines)
+  // üzerinden geliyor: backend GET /api/machines bunları market_name ve
+  // technician_full_name olarak zaten JOIN'leyip döndürüyor.
+  function apiMakineyiUiyeCevir(m, arizaKaydi) {
+    return {
+      _pk: m.machine_id,
+      id: m.machine_code,
+      ad: m.display_name || ('Makine #' + m.machine_code),
+      magaza: m.market_name || '—',
+      teknisyen: m.technician_full_name || 'Atanmadı',
+      teknisyenUserId: m.technician_user_id || '',
+      ozet: m.summary_notes ? m.summary_notes.split('\n').map(s => s.trim()).filter(Boolean) : ['Kod: ' + m.machine_code],
+      panel: m.panel_page || 'index.html',
+      // 'durum' (status ACTIVE/PASSIVE) makinenin sistemde ETKİN olup
+      // olmadığını gösterir — bu, düzenleme formundaki "Makine
+      // açık/kapalı kaydedilecek" anahtarının kontrol ettiği alan
+      // (bkz. formKaydet -> PATCH /status). 'guc' ise machine_power_state
+      // tablosundaki GERÇEK fiziksel açık/kapalı durumudur (is_powered_on).
+      // Kart üzerindeki Açık/Kapalı rozeti daha önce yanlışlıkla 'durum'u
+      // (yani ACTIVE/PASSIVE'i) kullanıyordu — etkin ama fiziksel olarak
+      // KAPALI bir makine bile "Açık" görünüyordu. Rozet artık 'guc'u
+      // kullanıyor (bkz. yonKartOlustur).
+      durum: m.status === 'ACTIVE' ? 'acik' : 'kapali',
+      guc: m.is_powered_on ? 'acik' : 'kapali',
+      sahipUserId: m.owner_user_id || '',
+      sahipEmail: m.owner_email || '',
+      ariza: !!m.is_faulty,
+      arizaAciklama: arizaKaydi ? arizaKaydi.fault_description : '',
+      arizaTarihi: arizaKaydi ? tarihStrCevir(arizaKaydi.created_at) : '',
+      arizaId: arizaKaydi ? arizaKaydi.fault_id : null,
+      companyId: m.company_id,
+      marketId: m.market_id || ''
+    };
+  }
+
+  // Makineleri VE her birinin en güncel açık arıza kaydını birlikte çeker.
+  async function makineleriYukle() {
+    const [makineListesi, arizaListesi] = await Promise.all([
+      apiIstek('/api/machines'),
+      apiIstek('/api/faults?status=OPEN').catch(function () { return []; })
+    ]);
+    const arizaMakineye = {};
+    (arizaListesi || []).forEach(function (f) {
+      if (!arizaMakineye[f.machine_id]) arizaMakineye[f.machine_id] = f; // en güncel/ilk açık kayıt
+    });
+    return (makineListesi || []).map(function (m) {
+      return apiMakineyiUiyeCevir(m, arizaMakineye[m.machine_id]);
+    });
+  }
+
+  // Kullanıcıları TEK seferde çeker; hem 'MARKET' rolündekileri (Mağaza
+  // Sahibi seçimi) hem de 'SERVICE_PERSONNEL' rolündekileri (Sorumlu
+  // Teknisyen seçimi) buradan türetir — iki ayrı API çağrısı yerine.
+  let marketKullanicilariCache = [];
+  let teknisyenlerCache = [];
+  async function kullanicilariYukle() {
+    try {
+      const tumu = await apiIstek('/api/users') || [];
+      marketKullanicilariCache = tumu.filter(u => u.role_code === 'MARKET');
+      teknisyenlerCache = tumu.filter(u => u.role_code === 'SERVICE_PERSONNEL');
+    } catch (e) {
+      marketKullanicilariCache = [];
+      teknisyenlerCache = [];
+    }
+  }
+
+  // Firmaları (SUPER_ADMIN için "Firma" seçimi gerekir; yeni makine
+  // company_id'ye bağlanmak zorunda) backend'den çeker.
+  let firmalarCache = [];
+  async function firmalariYukle() {
+    try {
+      firmalarCache = await apiIstek('/api/companies') || [];
+    } catch (e) {
+      firmalarCache = [];
+    }
+    return firmalarCache;
+  }
+
+  // Mağazaları (markets tablosu; makinenin bağlanacağı gerçek mağaza
+  // kaydı) backend'den çeker. COMPANY rolünde backend zaten sadece kendi
+  // firmasının mağazalarını döndürür; SUPER_ADMIN için tüm mağazalar
+  // gelir ve seçilen "Firma"ya göre istemci tarafında filtrelenir.
+  let marketlerCache = [];
+  async function marketleriYukle() {
+    try {
+      marketlerCache = await apiIstek('/api/markets') || [];
+    } catch (e) {
+      marketlerCache = [];
+    }
+    return marketlerCache;
+  }
+
+  let makineler = [];
+  let silinecekId = null;
+
+  const kioskIconSvg = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+      <rect x="4" y="3" width="16" height="12" rx="1.5"/>
+      <path d="M9 20h6"/><path d="M12 15v5"/><rect x="7.5" y="6" width="9" height="5" rx="0.5"/>
+    </svg>`;
+
+  function toastGoster(metin) {
+    document.getElementById('toast-metin').textContent = metin;
+    const t = document.getElementById('toast');
+    t.classList.add('show');
+    clearTimeout(window._toastZaman);
+    window._toastZaman = setTimeout(() => t.classList.remove('show'), 2600);
+  }
+
+  function yonKartOlustur(m) {
+    // Kart üzerindeki Açık/Kapalı rozeti GERÇEK fiziksel güç durumunu (guc)
+    // yansıtır — makinenin sistemde etkin/pasif (durum) olmasıyla karıştırılmamalı.
+    const durum = m.guc || 'kapali';
+    const arizaVar = !!m.ariza;
+    const kart = document.createElement('div');
+    kart.className = 'yon-kart acc-' + durum + (arizaVar ? ' ariza-var' : '');
+    kart.dataset.arama = (m.ad + ' ' + m.magaza + ' ' + m.teknisyen + ' ' + m.id + ' ' + (m.sahipEmail || '')).toLowerCase();
+    kart.dataset.ariza = arizaVar ? 'var' : 'yok';
+
+    const arizaRozetHtml = arizaVar
+      ? `<span class="yon-kart-durum ariza">⚠ Arıza Var</span>`
+      : '';
+    const arizaNotHtml = (arizaVar && m.arizaAciklama)
+      ? `<div class="yon-kart-ariza-not">${m.arizaAciklama}${m.arizaTarihi ? ' · ' + m.arizaTarihi : ''}</div>`
+      : '';
+
+    const sahipMetni = m.sahipEmail ? m.sahipEmail : 'Atanmadı';
+
+    kart.innerHTML = `
+      <div class="yon-kart-ikon">${kioskIconSvg}</div>
+      <div class="yon-kart-bilgi">
+        <div class="yon-kart-ust">
+          <span class="yon-kart-ad">${m.ad}</span>
+          <span class="yon-kart-id">/${m.id}</span>
+          <span class="yon-kart-durum ${durum}">${durum === 'acik' ? 'Açık' : 'Kapalı'}</span>
+          ${arizaRozetHtml}
+        </div>
+        <div class="yon-kart-alt">${m.magaza} · Sorumlu Teknisyen: ${m.teknisyen} · Panel: ${m.panel} · Mağaza Sahibi: ${sahipMetni}</div>
+        ${arizaNotHtml}
+      </div>
+      <div class="yon-kart-actions">
+        <button class="yon-icon-btn${arizaVar ? ' ariza-aktif' : ''}" title="${arizaVar ? 'Arızayı Güncelle' : 'Arıza Bildir'}" onclick="arizaFormAc('${m.id}')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        </button>
+        <button class="yon-icon-btn" title="Düzenle" onclick="formAc('${m.id}')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+        </button>
+        <button class="yon-icon-btn sil" title="Sil" onclick="silIste('${m.id}')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+        </button>
+      </div>`;
+    return kart;
+  }
+
+  let yonAktifFiltre = 'hepsi';
+
+  async function yonVerisiniTazele() {
+    makineler = await makineleriYukle();
+    yonListesiOlustur();
+  }
+
+  function yonListesiOlustur() {
+    const kapsayici = document.getElementById('yon-liste');
+    kapsayici.innerHTML = '';
+    makineler.forEach(m => kapsayici.appendChild(yonKartOlustur(m)));
+    document.getElementById('toplam-badge').textContent = makineler.length + ' makine';
+
+    const arizaliSayisi = makineler.filter(m => m.ariza).length;
+    const arizaBadge = document.getElementById('yon-ariza-badge');
+    if (arizaliSayisi > 0) {
+      arizaBadge.style.display = '';
+      arizaBadge.textContent = arizaliSayisi + ' arızalı';
+    } else {
+      arizaBadge.style.display = 'none';
+    }
+
+    yonListesiFiltrele();
+  }
+
+  function yonFiltreSec(filtre, btn) {
+    yonAktifFiltre = filtre;
+    document.querySelectorAll('.yon-filtre-chip').forEach(c => c.classList.remove('aktif-filtre'));
+    btn.classList.add('aktif-filtre');
+    yonListesiFiltrele();
+  }
+
+  function yonListesiFiltrele() {
+    const q = document.getElementById('yon-arama').value.trim().toLowerCase();
+    const kartlar = document.querySelectorAll('#yon-liste .yon-kart');
+    let gorunen = 0;
+    kartlar.forEach(k => {
+      const aramaUyumlu = !q || k.dataset.arama.includes(q);
+      const filtreUyumlu =
+        yonAktifFiltre === 'hepsi' ? true :
+        yonAktifFiltre === 'arizali' ? k.dataset.ariza === 'var' :
+        k.dataset.ariza === 'yok';
+      const goster = aramaUyumlu && filtreUyumlu;
+      k.style.display = goster ? '' : 'none';
+      if (goster) gorunen++;
+    });
+    document.getElementById('yon-bos-durum').classList.toggle('show', gorunen === 0);
+  }
+
+  // ── Sonraki uygun makine numarasını üret (örn. 005) ──
+  function sonrakiId() {
+    const sayilar = makineler
+      .map(m => parseInt(m.id, 10))
+      .filter(n => !isNaN(n));
+    const maks = sayilar.length ? Math.max(...sayilar) : 0;
+    return String(maks + 1).padStart(3, '0');
+  }
+
+  // ── Ekle / Düzenle Modalı ──
+  // Mağaza Sahibi seçimini, o an sistemde kayıtlı olan 'market' rolündeki
+  // kullanıcılarla (hem sabit demo hesap hem de register.html'den sonradan
+  // kaydolanlar) tazeler. Böylece yeni bir mağaza kaydolduğunda listede
+  // otomatik olarak görünür.
+  function sahipSeciminiDoldur(seciliUserId) {
+    const secim = document.getElementById('f-sahip');
+    secim.innerHTML = '<option value="">Atanmadı (sadece yönetici görür)</option>';
+    marketKullanicilariCache.forEach(u => {
+      const opt = document.createElement('option');
+      opt.value = u.user_id;
+      opt.textContent = (u.full_name || u.username) + ' (' + u.email + ')';
+      secim.appendChild(opt);
+    });
+    secim.value = seciliUserId || '';
+  }
+
+  // Firma <select>'ini backend'den doldurur. SUPER_ADMIN her firmayı görür ve
+  // seçmek zorundadır (yeni makine bir firmaya bağlanmak zorunda); COMPANY
+  // rolü zaten yalnızca kendi firmasını görür, bu yüzden alan otomatik/sabit olur.
+  function firmaSeciminiDoldur(seciliCompanyId) {
+    const secim = document.getElementById('f-firma');
+    if (!secim) return;
+    secim.innerHTML = '';
+    firmalarCache.forEach(c => {
+      const opt = document.createElement('option');
+      opt.value = c.company_id;
+      opt.textContent = c.company_name;
+      secim.appendChild(opt);
+    });
+    secim.value = seciliCompanyId || (firmalarCache[0] && firmalarCache[0].company_id) || '';
+  }
+
+  // Mağaza <select>'ini backend'den (markets tablosu) doldurur. Seçilen
+  // "Firma"ya ait mağazalarla sınırlandırılır — bir makine yalnızca kendi
+  // firmasının mağazalarından birine bağlanabilir.
+  function magazaSeciminiDoldur(seciliMarketId, companyId) {
+    const secim = document.getElementById('f-magaza');
+    if (!secim) return;
+    const filtreli = companyId
+      ? marketlerCache.filter(mk => String(mk.company_id) === String(companyId))
+      : marketlerCache;
+    secim.innerHTML = '<option value="">Seçiniz…</option>';
+    filtreli.forEach(mk => {
+      const opt = document.createElement('option');
+      opt.value = mk.market_id;
+      opt.textContent = mk.market_name;
+      secim.appendChild(opt);
+    });
+    secim.value = seciliMarketId || '';
+  }
+
+  // Sorumlu Teknisyen <select>'ini, SERVICE_PERSONNEL rolündeki
+  // kullanıcılarla doldurur (service_personnel_machines ilişkisi için).
+  function teknisyenSeciminiDoldur(seciliUserId) {
+    const secim = document.getElementById('f-teknisyen');
+    if (!secim) return;
+    secim.innerHTML = '<option value="">Atanmadı</option>';
+    teknisyenlerCache.forEach(u => {
+      const opt = document.createElement('option');
+      opt.value = u.user_id;
+      opt.textContent = u.full_name || u.username;
+      secim.appendChild(opt);
+    });
+    secim.value = seciliUserId || '';
+  }
+
+  // Firma seçimi değiştiğinde (SUPER_ADMIN çoklu firma görebildiği için)
+  // Mağaza listesini o firmaya ait mağazalarla yeniden doldurur.
+  function firmaDegisti() {
+    const firmaId = document.getElementById('f-firma').value;
+    magazaSeciminiDoldur('', firmaId);
+  }
+
+  async function formAc(id) {
+    const form = document.getElementById('makine-form');
+    form.reset();
+    document.getElementById('f-orijinal-id').value = '';
+    document.getElementById('f-durum-toggle').classList.remove('on');
+    document.getElementById('f-durum-toggle').classList.add('off');
+    document.getElementById('f-durum-alt').textContent = 'Yeni eklenen makine kapalı olarak başlar';
+
+    // Firma / mağaza / mağaza sahibi / teknisyen listelerini her açılışta
+    // tazele (yeni kayıt olmuş olabilir)
+    await Promise.all([kullanicilariYukle(), firmalariYukle(), marketleriYukle(), yonVerisiniTazele()]);
+    sahipSeciminiDoldur('');
+    firmaSeciminiDoldur('');
+    magazaSeciminiDoldur('', document.getElementById('f-firma').value);
+    teknisyenSeciminiDoldur('');
+
+    const toggleBtn = document.getElementById('f-durum-toggle');
+    toggleBtn.disabled = false;
+    toggleBtn.style.opacity = '';
+    toggleBtn.style.cursor = '';
+
+    if (id === null) {
+      document.getElementById('form-baslik').textContent = 'Yeni Makine Ekle';
+      document.getElementById('form-alt').textContent = 'MAKİNE KAYDI';
+      document.getElementById('form-kaydet-btn').textContent = 'Makineyi Kaydet';
+      document.getElementById('f-id').value = sonrakiId();
+      document.getElementById('f-id').setAttribute('readonly', 'readonly');
+      document.getElementById('f-ad-onek').value = '#Makine ' + sonrakiId();
+      document.getElementById('f-ad-ek').value = '';
+    } else {
+      const m = makineler.find(x => x.id === id);
+      if (!m) return;
+      document.getElementById('form-baslik').textContent = 'Makineyi Düzenle';
+      document.getElementById('form-alt').textContent = 'MAKİNE / ' + m.id;
+      document.getElementById('form-kaydet-btn').textContent = 'Değişiklikleri Kaydet';
+      document.getElementById('f-orijinal-id').value = m.id;
+      document.getElementById('f-id').value = m.id;
+      // Kayıtlı bir makinenin numarası (machine_code) backend'de UNIQUE olduğu
+      // ve başka tablolarla ilişkili olduğu için düzenlemede değiştirilemez.
+      document.getElementById('f-id').setAttribute('readonly', 'readonly');
+      document.getElementById('f-ad-onek').value = '#Makine ' + m.id;
+      document.getElementById('f-ad-ek').value = (m.ad && m.ad.indexOf('#Makine ' + m.id) === 0)
+        ? m.ad.slice(('#Makine ' + m.id).length).trim()
+        : (m.ad || '');
+      document.getElementById('f-panel').value = m.panel || 'index.html';
+      document.getElementById('f-ozet').value = (m.ozet || []).join('\n');
+      sahipSeciminiDoldur(m.sahipUserId || '');
+      firmaSeciminiDoldur(m.companyId || '');
+      magazaSeciminiDoldur(m.marketId || '', m.companyId || '');
+      teknisyenSeciminiDoldur(m.teknisyenUserId || '');
+
+      const acik = (m.durum || 'kapali') === 'acik';
+      toggleBtn.classList.toggle('on', acik);
+      toggleBtn.classList.toggle('off', !acik);
+      document.getElementById('f-durum-alt').textContent = acik ? 'Makine şu anda açık olarak işaretli' : 'Makine şu anda kapalı olarak işaretli';
+    }
+
+    document.getElementById('form-overlay').classList.add('show');
+  }
+
+  function formKapat() {
+    document.getElementById('form-overlay').classList.remove('show');
+  }
+
+  function formDurumDegistir() {
+    const btn = document.getElementById('f-durum-toggle');
+    if (btn.disabled) return;
+    const acikOlacak = !btn.classList.contains('on');
+    btn.classList.toggle('on', acikOlacak);
+    btn.classList.toggle('off', !acikOlacak);
+    document.getElementById('f-durum-alt').textContent = acikOlacak ? 'Makine açık olarak kaydedilecek' : 'Makine kapalı olarak kaydedilecek';
+  }
+
+  async function formKaydet(e) {
+    e.preventDefault();
+
+    const orijinalId = document.getElementById('f-orijinal-id').value;
+    const yeniId = document.getElementById('f-id').value.trim();
+    const adOnek = document.getElementById('f-ad-onek').value;
+    const adEk = document.getElementById('f-ad-ek').value.trim();
+    const ad = adEk ? (adOnek + ' ' + adEk) : adOnek;
+    const magazaId = document.getElementById('f-magaza').value;
+    const teknisyenUserId = document.getElementById('f-teknisyen').value;
+    const panel = document.getElementById('f-panel').value;
+    const firmaId = document.getElementById('f-firma').value;
+    const ozet = document.getElementById('f-ozet').value
+      .split('\n')
+      .map(s => s.trim())
+      .filter(Boolean);
+    const sahipUserId = document.getElementById('f-sahip').value;
+    const durumAcik = document.getElementById('f-durum-toggle').classList.contains('on');
+
+    if (!yeniId || !ad || !magazaId) {
+      if (!magazaId) toastGoster('Lütfen bir mağaza seçin.');
+      return;
+    }
+    if (!orijinalId && !firmaId) {
+      toastGoster('Lütfen bir firma seçin.');
+      return;
+    }
+
+    // Aynı numarayı taşıyan başka bir makine var mı kontrol et
+    const cakisan = makineler.find(m => m.id === yeniId && m.id !== orijinalId);
+    if (cakisan) {
+      toastGoster('"' + yeniId + '" numaralı bir makine zaten kayıtlı.');
+      return;
+    }
+
+    // Mağaza ve sorumlu teknisyen artık serbest metin değil; sırasıyla
+    // markets tablosuna (marketId) ve service_personnel_machines
+    // ilişkisine (technicianUserId) bağlanan gerçek veritabanı kayıtları.
+    const gövde = {
+      displayName: ad,
+      marketId: Number(magazaId),
+      technicianUserId: teknisyenUserId ? Number(teknisyenUserId) : null,
+      panelPage: panel,
+      summaryNotes: ozet.join('\n'),
+      ownerUserId: sahipUserId ? Number(sahipUserId) : null
+    };
+
+    try {
+      if (orijinalId) {
+        // Düzenleme
+        const mevcut = makineler.find(m => m.id === orijinalId);
+        if (!mevcut) return;
+        await apiIstek('/api/machines/' + mevcut._pk, { method: 'PATCH', body: JSON.stringify(gövde) });
+        if (durumAcik !== (mevcut.durum === 'acik')) {
+          await apiIstek('/api/machines/' + mevcut._pk + '/status', {
+            method: 'PATCH',
+            body: JSON.stringify({ status: durumAcik ? 'ACTIVE' : 'PASSIVE' })
+          });
+        }
+        toastGoster('Makine güncellendi.');
+      } else {
+        // Yeni ekleme — "Makine Numarası" arayüzde otomatik önerilse de,
+        // backend'deki gerçek makine listesi sayfalama vb. nedenlerle
+        // istemcideki listeyle tam örtüşmeyebilir. Bu yüzden 409 (numara
+        // zaten kayıtlı) hatası alırsak kullanıcıyı tekrar tekrar "Kaydet"e
+        // bastırmak yerine, burada sessizce bir sonraki numarayı deneyip
+        // arka planda otomatik olarak boş bir numara buluyoruz.
+        let kodDenemesi = yeniId;
+        let sayisalMi = !isNaN(parseInt(yeniId, 10));
+        let sonHata = null;
+        let basarili = false;
+        const MAKS_DENEME = 50;
+        for (let i = 0; i < MAKS_DENEME; i++) {
+          const adDenemesi = adEk ? ('#Makine ' + kodDenemesi + ' ' + adEk) : ('#Makine ' + kodDenemesi);
+          try {
+            await apiIstek('/api/machines', {
+              method: 'POST',
+              body: JSON.stringify(Object.assign({}, gövde, { displayName: adDenemesi, machineCode: kodDenemesi, companyId: Number(firmaId) }))
+            });
+            basarili = true;
+            break;
+          } catch (err) {
+            sonHata = err;
+            if (err.status === 409 && sayisalMi) {
+              kodDenemesi = String(parseInt(kodDenemesi, 10) + 1).padStart(3, '0');
+              continue;
+            }
+            break;
+          }
+        }
+        if (!basarili) throw sonHata;
+        toastGoster(kodDenemesi === yeniId ? 'Yeni makine eklendi.' : 'Yeni makine eklendi (numara: ' + kodDenemesi + ').');
+      }
+    } catch (err) {
+      const backendMesaji = err && err.body && err.body.message;
+      toastGoster('Kaydedilemedi: ' + (backendMesaji || err.message || 'bilinmeyen hata'));
+      return;
+    }
+
+    await yonVerisiniTazele();
+    formKapat();
+  }
+
+  // ── Silme akışı ──
+  function silIste(id) {
+    const m = makineler.find(x => x.id === id);
+    if (!m) return;
+    silinecekId = id;
+    document.getElementById('confirm-metin').textContent =
+      '"' + m.ad + '" (' + m.magaza + ') makinesini listeden kalıcı olarak kaldırmak istediğinize emin misiniz?';
+    document.getElementById('confirm-overlay').classList.add('show');
+  }
+
+  function silIptal() {
+    silinecekId = null;
+    document.getElementById('confirm-overlay').classList.remove('show');
+  }
+
+  async function silOnayla() {
+    if (!silinecekId) return;
+    const m = makineler.find(x => x.id === silinecekId);
+    document.getElementById('confirm-overlay').classList.remove('show');
+    if (!m) { silinecekId = null; return; }
+    try {
+      await apiIstek('/api/machines/' + m._pk, { method: 'DELETE' });
+      await yonVerisiniTazele();
+      toastGoster('Makine silindi.');
+    } catch (err) {
+      toastGoster('Silinemedi: ' + (err.message || 'bilinmeyen hata'));
+    }
+    silinecekId = null;
+  }
+
+  // ── Arıza Bildirimi Modalı ──
+  function bugununTarihi() {
+    const d = new Date();
+    return String(d.getDate()).padStart(2,'0') + '.' + String(d.getMonth()+1).padStart(2,'0') + '.' + d.getFullYear();
+  }
+
+  function arizaFormAc(id) {
+    const m = makineler.find(x => x.id === id);
+    if (!m) return;
+    document.getElementById('a-id').value = id;
+    document.getElementById('ariza-baslik').textContent = m.ariza ? 'Arızayı Güncelle' : 'Arıza Bildir';
+    document.getElementById('ariza-alt').textContent = 'MAKİNE / ' + m.id;
+    document.getElementById('a-aciklama').value = m.arizaAciklama || '';
+
+    const toggle = document.getElementById('a-toggle');
+    toggle.classList.toggle('on', !!m.ariza);
+    toggle.classList.toggle('off', !m.ariza);
+    document.getElementById('a-durum-alt').textContent = m.ariza
+      ? 'Arıza kayıtlı' + (m.arizaTarihi ? ' · ' + m.arizaTarihi : '')
+      : 'Şu anda arıza kaydı yok';
+
+    document.getElementById('ariza-overlay').classList.add('show');
+  }
+
+  function arizaFormKapat() {
+    document.getElementById('ariza-overlay').classList.remove('show');
+  }
+
+  function arizaToggleDegistir() {
+    const btn = document.getElementById('a-toggle');
+    const arizaOlacak = !btn.classList.contains('on');
+    btn.classList.toggle('on', arizaOlacak);
+    btn.classList.toggle('off', !arizaOlacak);
+    document.getElementById('a-durum-alt').textContent = arizaOlacak
+      ? 'Arıza var olarak işaretlenecek'
+      : 'Arıza giderildi olarak işaretlenecek';
+  }
+
+  async function arizaKaydet(e) {
+    e.preventDefault();
+    const id = document.getElementById('a-id').value;
+    const m = makineler.find(x => x.id === id);
+    if (!m) return;
+
+    const arizaVar = document.getElementById('a-toggle').classList.contains('on');
+    const aciklama = document.getElementById('a-aciklama').value.trim();
+
+    try {
+      if (arizaVar) {
+        // Yeni bir açık arıza kaydı düşer (mevcut açık kayıt varsa backend
+        // yine de yeni bir satır ekler; "Bildirilen Arızalar" ekranında
+        // hepsi görünür, en güncel olan bu sayfada gösterilir).
+        await arizaBildir(m._pk, aciklama);
+      } else if (m.arizaId) {
+        // Mevcut açık arıza kaydını "çözüldü" olarak işaretler.
+        await arizaCozulduBildir(m.arizaId);
+      }
+      await yonVerisiniTazele();
+      arizaFormKapat();
+      toastGoster(arizaVar ? 'Arıza bildirildi — "Makinelerim" sayfasında görünecek.' : 'Arıza kaydı temizlendi.');
+    } catch (err) {
+      toastGoster('Kaydedilemedi: ' + (err.message || 'bilinmeyen hata'));
+    }
+  }
+
+  // Overlay'lerin dışına tıklanınca kapansın
+  document.getElementById('form-overlay').addEventListener('click', (e) => {
+    if (e.target.id === 'form-overlay') formKapat();
+  });
+  document.getElementById('confirm-overlay').addEventListener('click', (e) => {
+    if (e.target.id === 'confirm-overlay') silIptal();
+  });
+  document.getElementById('ariza-overlay').addEventListener('click', (e) => {
+    if (e.target.id === 'ariza-overlay') arizaFormKapat();
+  });
+
+  // Başka bir sekmede/panelde değişiklik olmuş olabilir (yeni makine, arıza
+  // bildirimi vb.) — makineler.html'deki ile aynı desen: düzenli tazeleme +
+  // sekme tekrar görünür olduğunda tazeleme. localStorage yerine artık
+  // backend'den okunuyor.
+  setInterval(yonVerisiniTazele, 5000);
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') yonVerisiniTazele();
+  });
+
+  document.addEventListener('DOMContentLoaded', yonVerisiniTazele);
+</script>
+</body>
+</html>

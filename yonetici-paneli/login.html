@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Malta Makine — Yönetim Paneline Giriş</title>
+<link rel="icon" type="image/svg+xml" href="assets/image/favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/style.css">
+<script src="assets/js/auth.js"></script>
+<style>
+  .password-wrap{ position:relative; }
+  .password-wrap input[type="password"],
+  .password-wrap input[type="text"]{
+    padding-right:44px !important;
+  }
+  .password-toggle{
+    position:absolute;
+    top:50%;
+    right:6px;
+    transform:translateY(-50%);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    width:32px;
+    height:32px;
+    padding:0;
+    border:none;
+    background:none;
+    color:var(--muted);
+    cursor:pointer;
+    border-radius:6px;
+    transition:color .15s ease, background .15s ease;
+  }
+  .password-toggle:hover{ color:var(--ink); background:rgba(32,34,36,0.06); }
+  .password-toggle:focus-visible{ outline:2px solid var(--steel-950); outline-offset:1px; }
+</style>
+</head>
+<body class="auth-body">
+
+  <input type="checkbox" id="menu-toggle" class="menu-toggle-input">
+  <label for="menu-toggle" class="hamburger" aria-label="Marka panelini aç/kapat">
+    <span></span><span></span><span></span>
+  </label>
+  <label for="menu-toggle" class="overlay" aria-hidden="true"></label>
+
+  <div class="auth-shell">
+
+    <section class="auth-brand">
+      <div class="mark">
+        <div class="mark-glyph" aria-hidden="true">
+          <a href="login.html">
+        <img src="assets/image/logo.svg" alt="Malta logosu" class="mark-glyph-img">
+        </a>
+      </div>
+      <div class="mark-text">Malta Makine</div>
+    </div>
+      <div class="mark-sub">İade Kiosk Sistemleri</div>
+
+      <p class="auth-brand-line">Mağazalarınızdaki tüm Malta Makine kiosklarını<br>tek panelden izleyin, iadeleri anlık takip edin.</p>
+
+      <div class="ticket ticket-auth" aria-hidden="true">
+        
+      </div>
+
+      <div class="sidebar-foot auth-foot">
+        <div class="barcode" aria-hidden="true"></div>
+        <span>PANEL SÜRÜM 0.1</span>
+      </div>
+    </section>
+
+    <section class="auth-form-wrap">
+      <div class="auth-form-inner">
+        <p class="eyebrow">Yönetim Paneli</p>
+        <h1 class="auth-title">Hoş geldiniz.</h1>
+        <p class="auth-sub">Mağaza yöneticisi hesabınızla giriş yapın.</p>
+
+        <p class="auth-hata" id="auth-hata" style="display:none; color:#C0392B; background:#FCEAEA; border-radius:7px; padding:9px 12px; font-size:13px; margin-bottom:14px;">E-posta veya şifre hatalı.</p>
+
+        <form class="auth-form" id="login-form" autocomplete="on">
+          <div class="field">
+            <label for="email">E-posta</label>
+            <input id="email" name="email" type="email" placeholder="ad.soyad@magaza.com" required>
+          </div>
+
+          <div class="field">
+            <label for="password">Şifre</label>
+            <div class="password-wrap">
+              <input id="password" name="password" type="password" placeholder="••••••••" required>
+              <button type="button" class="password-toggle" id="password-toggle" aria-label="Şifreyi göster" aria-pressed="false">
+                <svg class="eye-open" width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7Z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+                  <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.6"/>
+                </svg>
+                <svg class="eye-closed" width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="display:none;">
+                  <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7Z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+                  <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.6"/>
+                  <line x1="2" y1="22" x2="22" y2="2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <div class="field-row">
+            <label class="checkbox">
+              <input type="checkbox" name="remember">
+              <span>Beni hatırla</span>
+            </label>
+            <a class="link-muted" href="forgot-password.html">Şifremi unuttum</a>
+          </div>
+
+          <button class="btn-primary btn-block" type="submit">Giriş yap</button>
+
+          <div class="auth-divider"><span>veya</span></div>
+
+          
+        </form>
+
+        <p class="auth-footnote">Hesabınız yok mu? <a href="register.html">Kayıt olun</a></p>
+      </div>
+    </section>
+
+  </div>
+
+<script>
+  // Zaten giriş yapılmışsa formu göstermeden direkt panele gönder.
+  if (typeof oturumdakiKullanici === 'function' && oturumdakiKullanici()) {
+    window.location.href = 'makineler.html';
+  }
+
+  // Şifreyi göster/gizle
+  const sifreInput = document.getElementById('password');
+  const sifreToggleBtn = document.getElementById('password-toggle');
+  const gozAcik = sifreToggleBtn.querySelector('.eye-open');
+  const gozKapali = sifreToggleBtn.querySelector('.eye-closed');
+
+  sifreToggleBtn.addEventListener('click', function () {
+    const gosteriliyor = sifreInput.type === 'text';
+    sifreInput.type = gosteriliyor ? 'password' : 'text';
+    gozAcik.style.display = gosteriliyor ? '' : 'none';
+    gozKapali.style.display = gosteriliyor ? 'none' : '';
+    sifreToggleBtn.setAttribute('aria-pressed', String(!gosteriliyor));
+    sifreToggleBtn.setAttribute('aria-label', gosteriliyor ? 'Şifreyi göster' : 'Şifreyi gizle');
+  });
+
+  document.getElementById('login-form').addEventListener('submit', async function (e) {
+    e.preventDefault();
+
+    const kullaniciAdi = document.getElementById('email').value.trim();
+    const sifre = document.getElementById('password').value;
+    const hata = document.getElementById('auth-hata');
+
+    const basarili = await girisYap(kullaniciAdi, sifre);
+
+    if (basarili) {
+      hata.style.display = 'none';
+      window.location.href = 'makineler.html';
+    } else {
+      hata.style.display = 'block';
+    }
+  });
+</script>
+
+</body>
+</html>

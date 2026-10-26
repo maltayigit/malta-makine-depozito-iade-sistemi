@@ -1,0 +1,763 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Malta Makine — Giriş / Aktivite Logları</title>
+<link rel="icon" type="image/svg+xml" href="assets/image/favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/style.css">
+<script src="assets/js/auth.js"></script>
+<script>sayfaKorumaKontrolEt(['yonetici']);</script>
+<style>
+  /* Bu sayfaya özel ek stiller — sitenin kağıt/çelik diline (style.css) uyumlu,
+     sadece bu sayfaya özgü filtre çubuğu ve detay modalı ölçüleri için. */
+
+  .logf-bar{
+    display:flex;
+    flex-wrap:wrap;
+    gap:10px;
+    align-items:center;
+    background:var(--paper-deep);
+    border-radius:14px;
+    padding:14px;
+    margin-bottom:18px;
+  }
+  .logf-bar input[type="text"],
+  .logf-bar input[type="date"],
+  .logf-bar select{
+    font-family:'IBM Plex Sans', sans-serif;
+    font-size:13px;
+    color:var(--ink);
+    background:var(--paper);
+    border:1px solid rgba(32,34,36,0.16);
+    border-radius:7px;
+    padding:9px 12px;
+    transition:border-color .15s ease;
+  }
+  .logf-bar input:focus, .logf-bar select:focus{
+    outline:none;
+    border-color:var(--steel-950);
+  }
+  .logf-bar input[type="text"]{ flex:1 1 220px; min-width:180px; }
+  .logf-bar select{ flex:0 0 auto; }
+  .logf-bar .logf-actions{ display:flex; gap:8px; margin-left:auto; }
+  .logf-btn{
+    font-family:'IBM Plex Sans', sans-serif;
+    font-size:13px;
+    font-weight:600;
+    padding:9px 16px;
+    border-radius:8px;
+    border:1.5px solid var(--steel-950);
+    background:var(--steel-950);
+    color:var(--paper);
+    cursor:pointer;
+    transition:background .15s ease, transform .15s ease;
+    white-space:nowrap;
+  }
+  .logf-btn:hover{ background:var(--steel-800); transform:translateY(-1px); }
+  .logf-btn.ghost{
+    background:none;
+    border-color:var(--steel-700);
+    color:var(--steel-950);
+  }
+  .logf-btn.ghost:hover{ background:rgba(32,34,36,0.06); transform:none; }
+  .logf-btn.danger{
+    background:none;
+    border-color:#b3372c;
+    color:#b3372c;
+  }
+  .logf-btn.danger:hover{ background:#b3372c; color:#fff; transform:none; }
+
+  .log-table-card{
+    background:var(--paper-deep);
+    border-radius:14px;
+    padding:6px;
+  }
+  .log-table-wrap{ overflow-x:auto; border-radius:10px; }
+  .log-table-wrap table{ min-width:640px; background:var(--paper); }
+  .log-table-wrap thead th{ background:var(--paper); }
+
+  .log-pager{
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    gap:14px;
+    margin-top:18px;
+  }
+  .log-pager button{
+    font-family:'IBM Plex Sans', sans-serif;
+    font-size:13px;
+    font-weight:600;
+    padding:8px 16px;
+    border-radius:8px;
+    border:1.5px solid var(--steel-700);
+    background:none;
+    color:var(--steel-950);
+    cursor:pointer;
+    transition:background .15s ease;
+  }
+  .log-pager button:hover:not(:disabled){ background:var(--paper-deep); }
+  .log-pager button:disabled{ opacity:.4; cursor:default; }
+  .log-pager span{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12px;
+    color:var(--muted);
+  }
+
+  .log-row{ cursor:pointer; }
+
+  /* Detay modalı — log-overlay/log-modal dilini kullanır, daha dar */
+  .log-detail-modal{ max-width:460px; }
+  .log-detail-body{ padding:4px 24px 8px; }
+  .log-detail-list{ list-style:none; margin:0; padding:0; }
+  .log-detail-row{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:12px;
+    padding:13px 4px;
+    border-bottom:1px solid rgba(32,34,36,0.1);
+    font-size:14px;
+  }
+  .log-detail-row:last-child{ border-bottom:none; }
+  .log-detail-k{ color:var(--muted); flex-shrink:0; }
+  .log-detail-v{
+    text-align:right;
+    word-break:break-word;
+    max-width:64%;
+    color:var(--ink);
+    font-weight:500;
+  }
+  .log-detail-v.mono{
+    font-family:'IBM Plex Mono', monospace;
+    font-weight:400;
+    font-size:12.5px;
+  }
+
+  /* Aktif Oturumlar bölümü — log tablosuyla aynı dil, ayrı bir kart olarak */
+  .sessions-section{ margin-top:34px; }
+  .sessions-head{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    margin-bottom:14px;
+    flex-wrap:wrap;
+  }
+  .sessions-head h2{
+    font-size:18px;
+    margin:0;
+  }
+  .sessions-head p{
+    margin:2px 0 0;
+    font-size:12.5px;
+    color:var(--muted);
+  }
+  .session-end-btn{
+    font-family:'IBM Plex Sans', sans-serif;
+    font-size:12.5px;
+    font-weight:600;
+    padding:6px 12px;
+    border-radius:7px;
+    border:1.5px solid #b3372c;
+    background:none;
+    color:#b3372c;
+    cursor:pointer;
+    white-space:nowrap;
+    transition:background .15s ease, color .15s ease;
+  }
+  .session-end-btn:hover:not(:disabled){ background:#b3372c; color:#fff; }
+  .session-end-btn:disabled{ opacity:.5; cursor:default; }
+  .session-self-tag{
+    font-family:'IBM Plex Sans', sans-serif;
+    font-size:11.5px;
+    color:var(--muted);
+  }
+</style>
+</head>
+<body>
+
+  <input type="checkbox" id="menu-toggle" class="menu-toggle-input">
+  <label for="menu-toggle" class="hamburger" aria-label="Menüyü aç/kapat">
+    <span></span><span></span><span></span>
+  </label>
+  <label for="menu-toggle" class="overlay" aria-hidden="true"></label>
+
+  <aside class="sidebar" aria-label="Ana gezinme">
+    <div class="mark">
+      <div class="mark-glyph" aria-hidden="true">
+        <a href="makineler.html">
+        <img src="assets/image/logo.svg" alt="Malta logosu" class="mark-glyph-img">
+       </a>
+      </div>
+      <div class="mark-text">Malta Makine</div>
+    </div>
+    <div class="mark-sub">İade Kiosk Sistemleri</div>
+
+    <div class="panel-seam"></div>
+
+    <nav>
+      <div class="nav-group">
+        <p class="nav-label">Genel</p>
+        <ul class="nav-list">
+          <li class="nav-item active">
+            <a class="nav-link" href="makineler.html"><span class="led"></span>Makinelerim</a>
+          </li>
+          <li class="nav-item" data-rol="yonetici">
+            <a class="nav-link" href="makine-yonetimi.html"><span class="led"></span>Makine Yönetimi</a>
+          </li>
+          <li class="nav-item " data-rol="yonetici">
+            <a class="nav-link" href="magaza-yonetimi.html"><span class="led"></span>Mağaza Yönetimi</a>
+          </li>
+          <li class="nav-item" data-rol="yonetici">
+            <a class="nav-link" href="kayitlar.html"><span class="led"></span>Kullanıcı Kayıtları</a>
+          </li>
+          <li class="nav-item " data-rol="yonetici">
+            <a class="nav-link" href="log-kayitlari.html"><span class="led"></span>Giriş / Aktivite Logları</a>
+          </li>
+          <li class="nav-item " data-rol="yonetici">
+            <a class="nav-link" href="bildirilen-arizalar.html"><span class="led"></span>Bildirilen Arızalar</a>
+          </li>
+        </ul>
+      </div>
+    </nav>
+
+    <div class="nav-group">
+        <p class="nav-label"></p>
+        <ul class="nav-list">
+          <li class="nav-item">
+            <a class="nav-link" href="#" onclick="cikisYap(); return false;"><span class="led"></span>Çıkış</a>
+          </li>
+        </ul>
+      </div>
+
+    <div class="sidebar-foot">
+      <div class="barcode" aria-hidden="true"></div>
+      <span>PANEL SÜRÜM 0.1</span>
+    </div>
+  </aside>
+
+  <main>
+    <section id="ana-sayfa">
+      <div class="screen">
+        <div class="doluluk-top">
+          <div>
+            <p class="eyebrow" style="margin-bottom:6px;">Sistem · Güvenlik</p>
+            <h1 style="font-size:clamp(24px,3vw,32px); margin:0;">Giriş / Aktivite Logları</h1>
+          </div>
+          <span class="toplam-badge" id="log-total">— kayıt</span>
+        </div>
+
+        <div class="home-body">
+
+          <div class="logf-bar">
+            <input type="text" id="f-username" placeholder="Kullanıcı adı / e-posta ara">
+            <select id="f-actionType">
+              <option value="">Tüm işlemler</option>
+              <option value="LOGIN">Giriş başarılı</option>
+              <option value="LOGIN_FAILED">Giriş başarısız (şifre hatalı)</option>
+              <option value="LOGIN_USER_NOT_FOUND">Kullanıcı bulunamadı</option>
+              <option value="LOGIN_BLOCKED_LOCKED">Kilitliyken giriş denemesi</option>
+              <option value="ACCOUNT_LOCKED">Hesap kilitlendi</option>
+              <option value="LOGOUT">Çıkış</option>
+              <option value="PASSWORD_CHANGE">Şifre değişikliği</option>
+              <option value="REFRESH_TOKEN_REUSE_DETECTED">Şüpheli oturum (token yeniden kullanımı)</option>
+            </select>
+            <input type="date" id="f-from">
+            <input type="date" id="f-to">
+            <div class="logf-actions">
+              <button class="logf-btn" id="btn-filter">Filtrele</button>
+              <button class="logf-btn ghost" id="btn-reset">Temizle</button>
+              <button class="logf-btn danger" id="btn-delete">Logları Sil</button>
+            </div>
+          </div>
+
+          <div class="log-table-card">
+            <div class="log-table-wrap">
+              <table class="log-table">
+                <thead>
+                  <tr>
+                    <th>Tarih</th>
+                    <th>Kullanıcı</th>
+                    <th>İşlem</th>
+                    <th>Oturum Süresi</th>
+                    <th>IP Adresi</th>
+                    <th>Tarayıcı</th>
+                  </tr>
+                </thead>
+                <tbody id="log-tbody"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="log-pager">
+            <button id="btn-prev">‹ Önceki</button>
+            <span id="pager-label">Sayfa 1</span>
+            <button id="btn-next">Sonraki ›</button>
+          </div>
+
+          <div class="sessions-section">
+            <div class="sessions-head">
+              <div>
+                <h2>Aktif Oturumlar</h2>
+                <p>Şu anda geçerli olan (süresi dolmamış, iptal edilmemiş) oturumlar. Gerekirse birini uzaktan sonlandırabilirsin.</p>
+              </div>
+              <span class="toplam-badge" id="sessions-total">— oturum</span>
+              <button class="logf-btn danger" id="btn-end-all-sessions" style="margin-left:12px;">Tüm Oturumları Sonlandır</button>
+            </div>
+            <label style="display:flex; align-items:center; gap:7px; font-size:13px; color:var(--muted); margin-bottom:12px; cursor:pointer; user-select:none;">
+              <input type="checkbox" id="sessions-only-online" style="width:auto;">
+              Sadece şu an gerçekten aktif olanları göster (son 60 sn içinde sistemde işlem yapmış)
+            </label>
+            <div class="log-table-card">
+              <div class="log-table-wrap">
+                <table class="log-table">
+                  <thead>
+                    <tr>
+                      <th>Kullanıcı</th>
+                      <th>Rol</th>
+                      <th>Durum</th>
+                      <th>Son Görülme</th>
+                      <th>Başladığı Tarih</th>
+                      <th>Sona Ereceği Tarih</th>
+                      <th>IP Adresi</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody id="sessions-tbody"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <div class="guvenlik-notu">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            <span><strong>Not:</strong> Bu kayıtlar sistem güvenliği için tutulur. Bir satıra tıklayarak IP, tarayıcı ve oturum ayrıntılarını görebilirsiniz.</span>
+          </div>
+
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Log Detay Modalı — sitenin log-overlay/log-modal diliyle aynı -->
+  <div class="log-overlay" id="detail-overlay">
+    <div class="log-modal log-detail-modal" role="dialog" aria-labelledby="detail-title">
+      <div class="log-head">
+        <div>
+          <h3 id="detail-title">Log Detayı</h3>
+          <p class="log-sub">Seçili işlemin ayrıntıları</p>
+        </div>
+        <button class="log-close-btn" id="detail-close-btn" aria-label="Kapat">✕</button>
+      </div>
+      <div class="log-detail-body">
+        <ul class="log-detail-list" id="detail-body"></ul>
+      </div>
+    </div>
+  </div>
+
+</body>
+<script>
+
+  // Mevcut sayfanın URL'sine göre doğru sekmeyi otomatik "aktif" yap
+  (function aktifSekmeAyarla(){
+    var mevcutDosya = window.location.pathname.split('/').pop() || 'index.html';
+    var eslesenLink = null;
+
+    document.querySelectorAll('.nav-link').forEach(function(link){
+      var href = link.getAttribute('href');
+      if (!href || href === '#') return;
+      var hedefDosya = href.split('/').pop();
+      if (hedefDosya === mevcutDosya) {
+        eslesenLink = link;
+      }
+    });
+
+    document.querySelectorAll('.nav-item').forEach(function(item){
+      item.classList.remove('active');
+    });
+    if (eslesenLink) {
+      eslesenLink.closest('.nav-item').classList.add('active');
+    }
+  })();
+
+  // Mobil çekmece açıksa, bir menüye tıklandığında otomatik kapansın
+  document.querySelectorAll('.nav-link').forEach(function(link){
+    link.addEventListener('click', function(){
+      var toggle = document.getElementById('menu-toggle');
+      if (toggle) toggle.checked = false;
+    });
+  });
+
+  const ACTION_LABELS = {
+    LOGIN: ['Giriş başarılı', 'normal'],
+    LOGIN_FAILED: ['Giriş başarısız', 'kritik'],
+    LOGIN_USER_NOT_FOUND: ['Kullanıcı bulunamadı', 'kritik'],
+    LOGIN_BLOCKED_LOCKED: ['Kilitliyken denendi', 'uyari'],
+    ACCOUNT_LOCKED: ['Hesap kilitlendi', 'uyari'],
+    LOGOUT: ['Çıkış', 'beklemede'],
+    PASSWORD_CHANGE: ['Şifre değişikliği', 'beklemede'],
+    REFRESH_TOKEN_REUSE_DETECTED: ['Şüpheli oturum', 'kritik'],
+    SESSION_FORCE_LOGOUT: ['Oturum sonlandırıldı (admin)', 'uyari'],
+    LOG_PURGE: ['Log kayıtları silindi', 'kritik'],
+  };
+
+  let sayfa = 1;
+  const sayfaBoyutu = 25;
+  let sonToplam = 0;
+
+  // API, statik dosyaları sunan WAMP/Apache'den (localhost:80) FARKLI bir
+  // portta (Node/Express) çalışıyor. auth.js dosyası (bu sayfadan önce yüklü)
+  // zaten AUTH_API_BASE sabitini tanımlıyor — port bilgisini tek yerden
+  // yönetmek için onu kullanıyoruz, burada tekrar tanımlamıyoruz.
+  const API_BASE = typeof AUTH_API_BASE !== 'undefined' ? AUTH_API_BASE : 'http://localhost:4000';
+
+  // auth.js'te 'apiIstek' diye bir fonksiyon yok (girisYap/cikisYap var, o kadar) —
+  // bu yüzden aşağıdaki fallback fetch her zaman kullanılıyor.
+  async function logIstek(yol) {
+    if (typeof apiIstek === 'function') {
+      return apiIstek(yol);
+    }
+    const token = localStorage.getItem('oturumAccessToken');
+    const res = await fetch(API_BASE + yol, {
+      headers: token ? { Authorization: 'Bearer ' + token } : {},
+    });
+    if (res.status === 401) {
+      // Access token geçersiz/süresi dolmuş → oturumu kapat, login'e dön.
+      if (typeof cikisYap === 'function') cikisYap();
+      throw new Error('Oturum geçersiz, tekrar giriş yapmanız gerekiyor.');
+    }
+    if (!res.ok) throw new Error('İstek başarısız: ' + res.status);
+    return res.json();
+  }
+
+  function tarihFormatla(iso) {
+    const d = new Date(iso);
+    return d.toLocaleString('tr-TR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  }
+
+  function sureFormatla(saniye) {
+    if (saniye == null) return '—';
+    if (saniye < 60) return saniye + ' sn';
+    const dk = Math.floor(saniye / 60);
+    const kalanSaniye = saniye % 60;
+    if (dk < 60) return dk + ' dk ' + kalanSaniye + ' sn';
+    const saat = Math.floor(dk / 60);
+    const kalanDk = dk % 60;
+    return saat + ' sa ' + kalanDk + ' dk';
+  }
+
+  function tarayiciOzet(ua) {
+    if (!ua) return '—';
+    // Uzun user-agent metnini tabloda kısaltıp tam halini detay ekranında gösteriyoruz.
+    if (ua.length <= 34) return ua;
+    return ua.slice(0, 34) + '…';
+  }
+
+  function sorguParametreleri() {
+    const p = new URLSearchParams();
+    const kullanici = document.getElementById('f-username').value.trim();
+    const actionType = document.getElementById('f-actionType').value;
+    const from = document.getElementById('f-from').value;
+    const to = document.getElementById('f-to').value;
+    if (kullanici) p.set('username', kullanici); // backend tarafında username filtresi yoksa görmezden gelinir
+    if (actionType) p.set('actionType', actionType);
+    // Bu sayfa sadece giriş/çıkış/oturum olaylarını göstermeli. activity_logs
+    // tablosu makine/arıza gibi başka olayları da tuttuğu için, auth.routes.js'in
+    // her zaman entityType: 'User' ile logladığı olaylara sabit filtre koyuyoruz.
+    p.set('entityType', 'User');
+    if (from) p.set('dateFrom', from + 'T00:00:00');
+    if (to) p.set('dateTo', to + 'T23:59:59');
+    p.set('page', sayfa);
+    p.set('pageSize', sayfaBoyutu);
+    return p.toString();
+  }
+
+  async function loglariGetir() {
+    const tbody = document.getElementById('log-tbody');
+    tbody.innerHTML = '<tr><td colspan="6" class="log-bos">Yükleniyor…</td></tr>';
+
+    try {
+      const veri = await logIstek('/api/activity-logs?' + sorguParametreleri());
+      const kayitlar = veri.items || [];
+      sonToplam = veri.total ?? kayitlar.length;
+
+      document.getElementById('log-total').textContent = sonToplam + ' kayıt';
+      document.getElementById('pager-label').textContent = 'Sayfa ' + sayfa;
+      document.getElementById('btn-prev').disabled = sayfa <= 1;
+      document.getElementById('btn-next').disabled = sayfa * sayfaBoyutu >= sonToplam;
+
+      if (!kayitlar.length) {
+        tbody.innerHTML = '<tr><td colspan="6" class="log-bos">Kayıt bulunamadı.</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = kayitlar.map((k, i) => {
+        const etiket = ACTION_LABELS[k.action_type] || [k.action_type, 'beklemede'];
+        let detaylar = {};
+        try { detaylar = k.details ? JSON.parse(k.details) : {}; } catch (e) { /* boş bırak */ }
+        const oturumSuresi = detaylar.sessionDurationSeconds != null ? sureFormatla(detaylar.sessionDurationSeconds) : '—';
+        return `
+          <tr class="log-row" data-idx="${i}">
+            <td class="log-no">${tarihFormatla(k.created_at)}</td>
+            <td>${k.full_name || k.username || detaylar.attemptedUsername || '—'}</td>
+            <td><span class="doluluk-status ${etiket[1]}">${etiket[0]}</span></td>
+            <td class="log-no">${oturumSuresi}</td>
+            <td class="log-no">${k.ip_address || '—'}</td>
+            <td class="log-no">${tarayiciOzet(k.user_agent)}</td>
+          </tr>`;
+      }).join('');
+
+      // Detay modalı için kayıtları satıra bağlıyoruz.
+      Array.from(tbody.querySelectorAll('tr')).forEach((tr, i) => {
+        tr.addEventListener('click', () => detayGoster(kayitlar[i]));
+      });
+    } catch (err) {
+      tbody.innerHTML = '<tr><td colspan="6" class="log-bos">Loglar yüklenemedi: ' + err.message + '</td></tr>';
+    }
+  }
+
+  function detayGoster(kayit) {
+    const etiket = ACTION_LABELS[kayit.action_type] || [kayit.action_type, 'beklemede'];
+    let detaylar = {};
+    try { detaylar = kayit.details ? JSON.parse(kayit.details) : {}; } catch (e) { /* boş bırak */ }
+
+    const satirlar = [
+      ['Tarih', tarihFormatla(kayit.created_at), false],
+      ['İşlem', etiket[0], false],
+      ['Kullanıcı', kayit.full_name || kayit.username || detaylar.attemptedUsername || '—', false],
+      ['Rol', kayit.role_code || '—', false],
+      ['IP Adresi', kayit.ip_address || '—', true],
+      ['Tarayıcı (User-Agent)', kayit.user_agent || '—', true],
+    ];
+
+    if (kayit.action_type === 'LOGOUT' && detaylar.sessionDurationSeconds != null) {
+      satirlar.push(['Oturum Süresi', sureFormatla(detaylar.sessionDurationSeconds), false]);
+    }
+    if (detaylar.attemptCount != null) satirlar.push(['Deneme Sayısı', detaylar.attemptCount, false]);
+    if (detaylar.locked != null) satirlar.push(['Kilitlendi mi', detaylar.locked ? 'Evet' : 'Hayır', false]);
+    if (detaylar.lockedUntil) satirlar.push(['Kilit Bitiş', tarihFormatla(detaylar.lockedUntil), false]);
+    if (detaylar.lockMinutes != null) satirlar.push(['Kilit Süresi', detaylar.lockMinutes + ' dk', false]);
+
+    document.getElementById('detail-body').innerHTML = satirlar
+      .map(([k, v, mono]) => `<li class="log-detail-row"><span class="log-detail-k">${k}</span><span class="log-detail-v${mono ? ' mono' : ''}">${v}</span></li>`)
+      .join('');
+    document.getElementById('detail-overlay').classList.add('show');
+  }
+
+  document.getElementById('detail-close-btn').addEventListener('click', () => {
+    document.getElementById('detail-overlay').classList.remove('show');
+  });
+  document.getElementById('detail-overlay').addEventListener('click', (e) => {
+    if (e.target.id === 'detail-overlay') document.getElementById('detail-overlay').classList.remove('show');
+  });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') document.getElementById('detail-overlay').classList.remove('show');
+  });
+
+  const ROLE_LABELS = {
+    SUPER_ADMIN: 'Süper Yönetici',
+    COMPANY: 'Firma',
+    MARKET: 'Mağaza',
+    SERVICE_PERSONNEL: 'Servis Personeli',
+    GOV_AGENCY: 'Kamu Kurumu',
+  };
+
+  async function oturumlariGetir() {
+    const tbody = document.getElementById('sessions-tbody');
+    tbody.innerHTML = '<tr><td colspan="8" class="log-bos">Yükleniyor…</td></tr>';
+
+    const sadeceCevrimici = document.getElementById('sessions-only-online').checked;
+    const p = new URLSearchParams();
+    if (sadeceCevrimici) p.set('onlyOnline', 'true');
+
+    try {
+      const veri = await logIstek('/api/sessions/active?' + p.toString());
+      const oturumlar = veri.items || [];
+      document.getElementById('sessions-total').textContent = (veri.total ?? oturumlar.length) + ' oturum';
+
+      if (!oturumlar.length) {
+        tbody.innerHTML = '<tr><td colspan="8" class="log-bos">' + (sadeceCevrimici ? 'Şu an gerçekten aktif oturum yok.' : 'Aktif oturum bulunamadı.') + '</td></tr>';
+        return;
+      }
+
+      const benimId = (typeof oturumdakiKullanici === 'function' && oturumdakiKullanici())
+        ? oturumdakiKullanici().userId
+        : null;
+
+      tbody.innerHTML = oturumlar.map((o) => {
+        const kendisi = benimId != null && String(o.user_id) === String(benimId);
+        const rolMetin = ROLE_LABELS[o.role_code] || o.role_code || '—';
+        const durumRozeti = o.is_online
+          ? '<span class="doluluk-status normal">Çevrimiçi</span>'
+          : '<span class="doluluk-status beklemede">Boşta</span>';
+        const sonGorulme = o.last_seen_at ? tarihFormatla(o.last_seen_at) : '—';
+        const aksiyon = kendisi
+          ? '<span class="session-self-tag">Bu oturum</span>'
+          : `<button class="session-end-btn" data-token-id="${o.token_id}">Sonlandır</button>`;
+        return `
+          <tr>
+            <td>${o.full_name || o.username || '—'}</td>
+            <td class="log-no">${rolMetin}</td>
+            <td>${durumRozeti}</td>
+            <td class="log-no">${sonGorulme}</td>
+            <td class="log-no">${tarihFormatla(o.session_started_at)}</td>
+            <td class="log-no">${tarihFormatla(o.expires_at)}</td>
+            <td class="log-no">${o.ip_address || '—'}</td>
+            <td>${aksiyon}</td>
+          </tr>`;
+      }).join('');
+
+      tbody.querySelectorAll('.session-end-btn').forEach((btn) => {
+        btn.addEventListener('click', () => oturumSonlandir(btn.getAttribute('data-token-id'), btn));
+      });
+    } catch (err) {
+      tbody.innerHTML = '<tr><td colspan="8" class="log-bos">Oturumlar yüklenemedi: ' + err.message + '</td></tr>';
+    }
+  }
+  document.getElementById('sessions-only-online').addEventListener('change', oturumlariGetir);
+
+  async function tumOturumlariSonlandir() {
+    const sadeceCevrimici = document.getElementById('sessions-only-online').checked;
+    const kapsamMesaji = sadeceCevrimici
+      ? 'şu an gerçekten aktif olan (çevrimiçi) tüm oturumlar'
+      : 'süresi dolmamış TÜM oturumlar';
+    if (!confirm(
+      'Kendi oturumun hariç, ' + kapsamMesaji + ' sonlandırılacak ve ilgili kullanıcılar bir sonraki istekte otomatik olarak çıkışa yönlendirilecek. Devam edilsin mi?'
+    )) return;
+
+    const btn = document.getElementById('btn-end-all-sessions');
+    btn.disabled = true;
+    const eskiMetin = btn.textContent;
+    btn.textContent = 'Sonlandırılıyor…';
+
+    const p = new URLSearchParams();
+    if (sadeceCevrimici) p.set('onlyOnline', 'true');
+
+    try {
+      const token = localStorage.getItem('oturumAccessToken');
+      const res = await fetch(API_BASE + '/api/sessions?' + p.toString(), {
+        method: 'DELETE',
+        headers: token ? { Authorization: 'Bearer ' + token } : {},
+      });
+      if (res.status === 401) {
+        if (typeof cikisYap === 'function') cikisYap();
+        throw new Error('Oturum geçersiz, tekrar giriş yapmanız gerekiyor.');
+      }
+      if (!res.ok) throw new Error('İstek başarısız: ' + res.status);
+      const veri = await res.json();
+      await oturumlariGetir();
+      await loglariGetir();
+      alert((veri.endedCount ?? 0) + ' oturum sonlandırıldı.');
+    } catch (err) {
+      alert('Oturumlar sonlandırılamadı: ' + err.message);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = eskiMetin;
+    }
+  }
+  document.getElementById('btn-end-all-sessions').addEventListener('click', tumOturumlariSonlandir);
+
+  async function oturumSonlandir(tokenId, btn) {
+    if (!confirm('Bu oturumu sonlandırmak istediğine emin misin? Kullanıcı bir sonraki istekte otomatik olarak çıkışa yönlendirilecek.')) return;
+    btn.disabled = true;
+    btn.textContent = 'Sonlandırılıyor…';
+    try {
+      const token = localStorage.getItem('oturumAccessToken');
+      const res = await fetch(API_BASE + '/api/sessions/' + tokenId, {
+        method: 'DELETE',
+        headers: token ? { Authorization: 'Bearer ' + token } : {},
+      });
+      if (res.status === 401) {
+        if (typeof cikisYap === 'function') cikisYap();
+        throw new Error('Oturum geçersiz, tekrar giriş yapmanız gerekiyor.');
+      }
+      if (!res.ok) throw new Error('İstek başarısız: ' + res.status);
+      // Force-logout işlemi kendi log kaydını da yarattığı için log tablosunu da tazeliyoruz.
+      await oturumlariGetir();
+      await loglariGetir();
+    } catch (err) {
+      alert('Oturum sonlandırılamadı: ' + err.message);
+      btn.disabled = false;
+      btn.textContent = 'Sonlandır';
+    }
+  }
+
+  async function loglariSil() {
+    const kullanici = document.getElementById('f-username').value.trim();
+    const actionType = document.getElementById('f-actionType').value;
+    const from = document.getElementById('f-from').value;
+    const to = document.getElementById('f-to').value;
+
+    const filtreAktif = !!(kullanici || actionType || from || to);
+
+    const p = new URLSearchParams();
+    if (kullanici) p.set('username', kullanici);
+    if (actionType) p.set('actionType', actionType);
+    if (from) p.set('dateFrom', from + 'T00:00:00');
+    if (to) p.set('dateTo', to + 'T23:59:59');
+    p.set('entityType', 'User');
+    if (!filtreAktif) p.set('confirmAll', 'true');
+
+    const mesaj = filtreAktif
+      ? 'Şu anda uygulanan filtrelere uyan giriş/aktivite logları KALICI olarak silinecek. Bu işlem geri alınamaz. Devam edilsin mi?'
+      : 'Hiçbir filtre seçili değil — TÜM giriş/aktivite logları KALICI olarak silinecek. Bu işlem geri alınamaz. Devam edilsin mi?';
+    if (!confirm(mesaj)) return;
+
+    const btn = document.getElementById('btn-delete');
+    btn.disabled = true;
+    const eskiMetin = btn.textContent;
+    btn.textContent = 'Siliniyor…';
+
+    try {
+      const token = localStorage.getItem('oturumAccessToken');
+      const res = await fetch(API_BASE + '/api/activity-logs?' + p.toString(), {
+        method: 'DELETE',
+        headers: token ? { Authorization: 'Bearer ' + token } : {},
+      });
+      if (res.status === 401) {
+        if (typeof cikisYap === 'function') cikisYap();
+        throw new Error('Oturum geçersiz, tekrar giriş yapmanız gerekiyor.');
+      }
+      if (!res.ok) {
+        let mesaj2 = 'İstek başarısız: ' + res.status;
+        try { const hata = await res.json(); if (hata && hata.message) mesaj2 = hata.message; } catch (e) { /* yoksay */ }
+        throw new Error(mesaj2);
+      }
+      const veri = await res.json();
+      sayfa = 1;
+      await loglariGetir();
+      alert((veri.deletedCount ?? 0) + ' log kaydı silindi.');
+    } catch (err) {
+      alert('Loglar silinemedi: ' + err.message);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = eskiMetin;
+    }
+  }
+  document.getElementById('btn-delete').addEventListener('click', loglariSil);
+
+  document.getElementById('btn-filter').addEventListener('click', () => { sayfa = 1; loglariGetir(); });
+  document.getElementById('btn-reset').addEventListener('click', () => {
+    document.getElementById('f-username').value = '';
+    document.getElementById('f-actionType').value = '';
+    document.getElementById('f-from').value = '';
+    document.getElementById('f-to').value = '';
+    sayfa = 1;
+    loglariGetir();
+  });
+  document.getElementById('btn-prev').addEventListener('click', () => { if (sayfa > 1) { sayfa--; loglariGetir(); } });
+  document.getElementById('btn-next').addEventListener('click', () => { if (sayfa * sayfaBoyutu < sonToplam) { sayfa++; loglariGetir(); } });
+
+  // Girişte oturum kontrolü (diğer panel sayfalarındaki desenle tutarlı).
+  if (typeof oturumdakiKullanici === 'function' && !oturumdakiKullanici()) {
+    window.location.href = 'login.html';
+  }
+
+  loglariGetir();
+  oturumlariGetir();
+</script>
+</html>

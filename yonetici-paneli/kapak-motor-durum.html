@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Malta Makine — Kapak Motor Durumu</title>
+<link rel="icon" type="image/svg+xml" href="assets/image/favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/style.css">
+<script src="assets/js/auth.js"></script>
+<script>sayfaKorumaKontrolEt(['yonetici','market']);</script>
+<script src="assets/js/kapak-motor-veri.js"></script>
+<script src="assets/js/kapak-uyari.js"></script>
+
+<style>
+  .km-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 16px;
+    margin-bottom: 36px;
+  }
+  .km-card {
+    border: 1.5px solid rgba(32,34,36,0.14);
+    border-radius: 14px;
+    padding: 16px 18px;
+    background: #fff;
+    transition: border-color .18s, background .18s;
+  }
+  .km-card.acik { border-color: #0F6E56; background: #E8F5F0; }
+  .km-card.kapali { border-color: rgba(32,34,36,0.14); background: #fff; }
+  .km-card-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 10px;
+  }
+  .km-name {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 600;
+    font-size: 15px;
+  }
+  .km-icon {
+    width: 34px; height: 34px; border-radius: 9px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .km-card.acik .km-icon { background: #0F6E5622; color: #0F6E56; }
+  .km-card.kapali .km-icon { background: rgba(107,111,115,0.14); color: var(--muted); }
+  .km-icon svg { width: 18px; height: 18px; }
+  .km-meta {
+    margin-top: 12px;
+    font-size: 12.5px;
+    color: var(--muted);
+    font-family: 'IBM Plex Mono', monospace;
+  }
+  .km-meta strong { color: inherit; font-weight: 500; }
+  .km-card.acik .km-meta strong { color: #0F6E56; }
+  .km-actions { margin-top: 14px; }
+  .km-actions .unite-btn { padding: 7px 14px; font-size: 12.5px; }
+
+  /* ── Kapak Motor Kayıtları modalı (doluluk.html'deki Atık Kayıtları
+     modalıyla aynı sistemi kullanır: log-overlay / log-modal / log-table
+     ortak sınıfları). Burada sadece modal içindeki filtre satırının
+     stili tanımlanır. ─────────────────────────────────────────────── */
+  .km-log-filters {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 14px;
+  }
+  .km-log-filters select {
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 13px;
+    padding: 7px 10px;
+    border: 1.5px solid rgba(32,34,36,0.16);
+    border-radius: 8px;
+    background: #fff;
+    color: var(--ink);
+  }
+  .km-log-count { font-size: 12.5px; color: var(--muted); font-family: 'IBM Plex Mono', monospace; margin-left: auto; }
+</style>
+
+</head>
+<body>
+
+  <input type="checkbox" id="menu-toggle" class="menu-toggle-input">
+  <label for="menu-toggle" class="hamburger" aria-label="Menüyü aç/kapat">
+    <span></span><span></span><span></span>
+  </label>
+  <label for="menu-toggle" class="overlay" aria-hidden="true"></label>
+
+  <aside class="sidebar" aria-label="Ana gezinme">
+    <div class="mark">
+      <div class="mark-glyph" aria-hidden="true">
+        <a href="index.html">
+        <img src="assets/image/logo.svg" alt="Malta logosu" class="mark-glyph-img">
+       </a>
+      </div>
+      <div class="mark-text">Malta Makine</div>
+    </div>
+    <div class="mark-sub">İade Kiosk Sistemleri</div>
+
+    <div class="panel-seam"></div>
+
+    <nav>
+      <div class="nav-group">
+        <p class="nav-label">Ürün</p>
+        <ul class="nav-list">
+          <li class="nav-item" data-rol="yonetici,market">
+            <a class="nav-link" href="index.html"><span class="led"></span>Bakım</a>
+          </li>
+          <li class="nav-item" data-rol="yonetici,market">
+            <a class="nav-link" href="makine.html"><span class="led"></span>Kapaklar</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="doluluk.html"><span class="led"></span>Doluluk Bilgi</a>
+          </li>
+          <li class="nav-item" data-rol="yonetici,market">
+            <a class="nav-link" href="motor-durum.html"><span class="led"></span>Motor Durum Özeti</a>
+          </li>
+          <li class="nav-item active" data-rol="yonetici">
+            <a class="nav-link" href="kapak-motor-durum.html"><span class="led"></span>Kapak Motor Durumu</a>
+          </li>
+          <li class="nav-item" data-rol="yonetici,market">
+            <a class="nav-link" href="fan.html"><span class="led"></span>Fan Durum</a>
+          </li>
+          <li class="nav-item" data-rol="yonetici">
+            <a class="nav-link" href="kamera-durum.html"><span class="led"></span>Kamera Durum</a>
+          </li>
+          <li class="nav-item" data-rol="yonetici,market">
+            <a class="nav-link" href="ekran-durumu.html"><span class="led"></span>Ekran Durum Paneli</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="acil-durum.html"><span class="led"></span>Acil Durum & Alarm</a>
+          </li>
+        </ul>
+      </div>
+
+      <div class="nav-group">
+        <p class="nav-label">Motorlar</p>
+        <ul class="nav-list">
+          <li class="nav-item">
+            <a class="nav-link" href="unite.html?unite=ezme1_05l"><span class="led"></span>(0.5L) 1. Plastik Ezme Durum</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="unite.html?unite=ezme2_05l"><span class="led"></span>(0.5L) 2. Plastik Ezme Durum</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="unite.html?unite=ezme1_13l"><span class="led"></span>(1-3L) 1. Plastik Ezme Durum</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="unite.html?unite=ezme2_13l"><span class="led"></span>(1-3L) 2. Plastik Ezme Durum</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="unite.html?unite=ezme3"><span class="led"></span>Teneke/Alüminyum Ezme Durum</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="cam-kirma.html"><span class="led"></span>1. Cam Kırma Durum</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="cam-kirma2.html"><span class="led"></span>2. Cam Kırma Durum</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="unite.html?unite=suKaristirma"><span class="led"></span>Atık Su Tankı Karıştırma Durum</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="unite.html?unite=atikSuPompa"><span class="led"></span>Atık Su Pompa Durum</a>
+          </li>
+        </ul>
+      </div>
+
+        <div class="nav-group">
+        <p class="nav-label">İletişim</p>
+        <ul class="nav-list">
+          <li class="nav-item">
+            <a class="nav-link" href="ariza-bildir.html"><span class="led"></span>Arıza Bildir</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="contact.html"><span class="led"></span>Bizimle İletişime Geçin</a>
+          </li>
+        </ul>
+      </div>
+    </nav>
+
+    <div class="nav-group">
+        <p class="nav-label"></p>
+        <ul class="nav-list">
+          <li class="nav-item">
+            <a class="nav-link" href="makineler.html"><span class="led"></span>Çıkış</a>
+          </li>
+        </ul>
+      </div>
+
+    <div class="sidebar-foot">
+      <div class="barcode" aria-hidden="true"></div>
+      <span>PANEL SÜRÜM 0.1</span>
+    </div>
+  </aside>
+
+  <main>
+    <section id="kapak-motor-durum-ozeti">
+
+      <div class="doluluk-top">
+        <div>
+          <p class="eyebrow" style="margin-bottom:6px;">Kapak Motor Durumu · Malta</p>
+          <h1 style="font-size:clamp(24px,3vw,32px); margin:0;">Kapak Açma / Kapama Motorları</h1>
+        </div>
+        <div style="display:flex; align-items:center; gap:14px; flex-wrap:wrap;">
+          <button class="unite-btn kayit" onclick="kmLogAc()">Kayıtlar</button>
+          <div class="doluluk-updated">
+            <span class="dot"></span>
+            <span id="km-son-guncelleme">Son güncelleme: —</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Özet kartları -->
+      <div class="doluluk-summary">
+        <div class="summary-card">
+          <div class="s-label">Açık Kapak</div>
+          <div class="s-value" id="km-ozet-acik">—<span>/ 8</span></div>
+        </div>
+        <div class="summary-card">
+          <div class="s-label">Kapalı Kapak</div>
+          <div class="s-value" id="km-ozet-kapali">—<span>/ 8</span></div>
+        </div>
+        <div class="summary-card">
+          <div class="s-label">Son İşlem Yapan Kapak</div>
+          <div class="s-value" id="km-ozet-son-islem" style="font-size:15px;">—</div>
+        </div>
+      </div>
+
+      <div class="row">
+        <h2>Kapak Motorları</h2>
+        <span>Gerçek Zamanlı İzleme · 8 Kapak</span>
+      </div>
+
+      <div class="km-grid" id="km-grid"></div>
+
+    </section>
+  </main>
+
+  <!-- Kapak Motor Kayıtları Modalı (doluluk.html'deki Atık Kayıtları modalıyla aynı sistem) -->
+  <div class="log-overlay" id="km-log-overlay">
+    <div class="log-modal" role="dialog" aria-labelledby="km-log-title">
+      <div class="log-head">
+        <div>
+          <h3 id="km-log-title">Kapak Motor Kayıtları</h3>
+          <p class="log-sub">Kapak · İşlem · Tip · Zaman bilgisiyle geçmiş</p>
+        </div>
+        <button class="log-close-btn" onclick="kmLogKapat()" aria-label="Kapat">✕</button>
+      </div>
+      <div class="log-body">
+        <div class="km-log-filters">
+          <select id="km-log-filtre-kapak">
+            <option value="">Tüm kapaklar</option>
+          </select>
+          <select id="km-log-filtre-tip">
+            <option value="">Tüm tipler</option>
+            <option value="manuel">Manuel</option>
+            <option value="otomatik">Otomatik</option>
+          </select>
+          <select id="km-log-filtre-islem">
+            <option value="">Açıldı / Kapandı</option>
+            <option value="Açıldı">Açıldı</option>
+            <option value="Kapandı">Kapandı</option>
+          </select>
+          <span class="km-log-count" id="km-log-sayac">0 kayıt</span>
+        </div>
+        <table class="log-table">
+          <thead>
+            <tr>
+              <th class="log-no-col">#</th>
+              <th>Tarih / Saat</th>
+              <th>Kapak</th>
+              <th>İşlem</th>
+              <th>Tip</th>
+              <th>Makine Durumu</th>
+            </tr>
+          </thead>
+          <tbody id="km-log-govde"></tbody>
+        </table>
+      </div>
+      <div class="log-foot">
+        <button class="log-temizle-btn" type="button" onclick="kmLogTemizleTikla()">Logu Temizle</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Log Temizle onay modalı (sitenin mevcut confirm-overlay diliyle) -->
+  <div class="confirm-overlay" id="km-log-confirm-overlay">
+    <div class="confirm-modal" role="alertdialog" aria-labelledby="km-log-confirm-title" aria-describedby="km-log-confirm-text">
+      <div class="confirm-head">
+        <div class="confirm-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+        </div>
+        <div>
+          <p class="confirm-sub">Onay Gerekli</p>
+          <h3 class="confirm-title" id="km-log-confirm-title">Logu Temizle</h3>
+        </div>
+      </div>
+      <p class="confirm-text" id="km-log-confirm-text">Kapak motor logundaki tüm kayıtlar kalıcı olarak silinecek. Bu işlem geri alınamaz.</p>
+      <div class="confirm-actions">
+        <button class="confirm-btn-ghost" type="button" onclick="kmLogTemizleIptal()">Vazgeç</button>
+        <button class="confirm-btn-danger" type="button" onclick="kmLogTemizleOnayla()">Evet, Temizle</button>
+      </div>
+    </div>
+  </div>
+
+</body>
+<script>
+
+  // Mevcut sayfanın URL'sine göre doğru sekmeyi otomatik "aktif" yap
+  (function aktifSekmeAyarla(){
+    var mevcutDosya = window.location.pathname.split('/').pop() || 'index.html';
+    var eslesenLink = null;
+
+    document.querySelectorAll('.nav-link').forEach(function(link){
+      var href = link.getAttribute('href');
+      if (!href || href === '#') return;
+      var hedefDosya = href.split('/').pop();
+      if (hedefDosya === mevcutDosya) {
+        eslesenLink = link;
+      }
+    });
+
+    document.querySelectorAll('.nav-item').forEach(function(item){
+      item.classList.remove('active');
+    });
+    if (eslesenLink) {
+      eslesenLink.closest('.nav-item').classList.add('active');
+    }
+  })();
+
+  // Mobil çekmece açıksa, bir menüye tıklandığında otomatik kapansın
+  document.querySelectorAll('.nav-link').forEach(function(link){
+    link.addEventListener('click', function(){
+      var toggle = document.getElementById('menu-toggle');
+      if (toggle) toggle.checked = false;
+    });
+  });
+
+  const kapiIkon = '<path d="M5 21V5a2 2 0 012-2h6l4 3v15"/><path d="M5 21h14"/><circle cx="13.5" cy="12" r="1"/>';
+
+  function kmGuncelle(){
+    const grid = document.getElementById('km-grid');
+    const liste = kapakMotorlariYukle();
+
+    let acikSayisi = 0;
+    let sonIslemYapan = null;
+    let sonZaman = null; // en son işlemin timestamp'i (ms)
+
+    liste.forEach(function(k){
+      if (k.acik) acikSayisi++;
+      const ts = k.sonIslemTs || 0;
+      if (sonZaman === null || ts >= sonZaman){
+        sonZaman = ts;
+        sonIslemYapan = k;
+      }
+    });
+
+    grid.innerHTML = liste.map(function(k){
+      const meta = kapakMotorListesi.find(function(m){ return m.id === k.id; });
+      const durumSinif = k.acik ? 'acik' : 'kapali';
+      const durumAd = k.acik ? 'AÇIK' : 'KAPALI';
+      return `
+        <div class="km-card ${durumSinif}" data-id="${k.id}">
+          <div class="km-card-head">
+            <div class="km-name">
+              <span class="km-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">${kapiIkon}</svg>
+              </span>
+              ${meta ? meta.isim : k.id}
+            </div>
+            <span class="doluluk-status ${k.acik ? 'calisiyor' : 'beklemede'}">${durumAd}</span>
+          </div>
+          <div class="km-meta">
+            Son işlem: <strong>${k.sonIslem}</strong> · ${k.sonIslemZamani}
+          </div>
+          <div class="km-actions">
+            <button class="unite-btn kayit" onclick="kmManuelDegistir('${k.id}')">Aç / Kapat (Test)</button>
+          </div>
+        </div>`;
+    }).join('');
+
+    document.getElementById('km-ozet-acik').innerHTML = acikSayisi + '<span>/ 8</span>';
+    document.getElementById('km-ozet-kapali').innerHTML = (liste.length - acikSayisi) + '<span>/ 8</span>';
+    document.getElementById('km-ozet-son-islem').textContent = sonIslemYapan
+      ? (kapakMotorListesi.find(function(m){ return m.id === sonIslemYapan.id; }) || {}).isim + ' — ' + sonIslemYapan.sonIslem
+      : '—';
+
+    document.getElementById('km-son-guncelleme').textContent = 'Son güncelleme: ' + kapakMotorSaatStr(new Date());
+  }
+
+  function kmManuelDegistir(id){
+    kapakMotorDurumDegistir(id);
+    kmGuncelle();
+    kmLogGuncelle();
+  }
+
+  /* ── Kapak Motor Logu ─────────────────────────────────────── */
+  (function kmLogFiltreDoldur(){
+    const sel = document.getElementById('km-log-filtre-kapak');
+    kapakMotorListesi.forEach(function(m){
+      const opt = document.createElement('option');
+      opt.value = m.id;
+      opt.textContent = m.isim;
+      sel.appendChild(opt);
+    });
+  })();
+
+  function kmLogGuncelle(){
+    const govde = document.getElementById('km-log-govde');
+    const sayac = document.getElementById('km-log-sayac');
+    if (!govde) return;
+
+    const kapakFiltre = document.getElementById('km-log-filtre-kapak').value;
+    const tipFiltre = document.getElementById('km-log-filtre-tip').value;
+    const islemFiltre = document.getElementById('km-log-filtre-islem').value;
+
+    let kayitlar = kapakMotorLogOku().slice().sort(function(a, b){ return b.ts - a.ts; });
+
+    if (kapakFiltre) kayitlar = kayitlar.filter(function(k){ return k.kapakId === kapakFiltre; });
+    if (tipFiltre) kayitlar = kayitlar.filter(function(k){ return k.tip === tipFiltre; });
+    if (islemFiltre) kayitlar = kayitlar.filter(function(k){ return k.islem === islemFiltre; });
+
+    sayac.textContent = kayitlar.length + ' kayıt';
+
+    if (!kayitlar.length){
+      govde.innerHTML = '<tr><td colspan="6" class="log-bos">Henüz kayıtlı bir kapak motor işlemi yok.</td></tr>';
+      return;
+    }
+
+    let sira = 1;
+    govde.innerHTML = kayitlar.map(function(k){
+      const islemBadge = k.islem === 'Açıldı'
+        ? '<span class="log-acik-badge">Açıldı</span>'
+        : '<span class="log-acik-badge" style="background:rgba(107,111,115,0.14);color:var(--muted);">Kapandı</span>';
+      const tipBadge = k.tip === 'manuel'
+        ? '<span class="log-acik-badge" style="background:#FEF3E2;color:#B45309;">Manuel</span>'
+        : '<span class="log-acik-badge" style="background:#E6EEFE;color:#2563EB;">Otomatik</span>';
+      return `
+        <tr class="log-row">
+          <td class="log-no">${sira++}</td>
+          <td>${k.zaman}</td>
+          <td>${k.kapakIsim}</td>
+          <td>${islemBadge}</td>
+          <td>${tipBadge}</td>
+          <td>${k.makineDurumu}</td>
+        </tr>`;
+    }).join('');
+  }
+
+  ['km-log-filtre-kapak', 'km-log-filtre-tip', 'km-log-filtre-islem'].forEach(function(id){
+    document.getElementById(id).addEventListener('change', kmLogGuncelle);
+  });
+
+  function kmLogAc(){
+    kmLogGuncelle();
+    const overlay = document.getElementById('km-log-overlay');
+    if (overlay) overlay.classList.add('show');
+  }
+
+  function kmLogKapat(){
+    const overlay = document.getElementById('km-log-overlay');
+    if (overlay) overlay.classList.remove('show');
+  }
+
+  function kmLogTemizleTikla(){
+    const overlay = document.getElementById('km-log-confirm-overlay');
+    if (overlay) overlay.classList.add('show');
+  }
+
+  function kmLogTemizleIptal(){
+    const overlay = document.getElementById('km-log-confirm-overlay');
+    if (overlay) overlay.classList.remove('show');
+  }
+
+  function kmLogTemizleOnayla(){
+    kapakMotorLogTemizle();
+    kmLogGuncelle();
+    kmLogTemizleIptal();
+  }
+
+  document.addEventListener('DOMContentLoaded', function(){
+    menuyuRoleGoreDuzenle();
+    const kmLogOverlayEl = document.getElementById('km-log-overlay');
+    if (kmLogOverlayEl){
+      kmLogOverlayEl.addEventListener('click', function(e){
+        if (e.target === this) kmLogKapat();
+      });
+    }
+    const kmConfirmOverlayEl = document.getElementById('km-log-confirm-overlay');
+    if (kmConfirmOverlayEl){
+      kmConfirmOverlayEl.addEventListener('click', function(e){
+        if (e.target === this) kmLogTemizleIptal();
+      });
+    }
+  });
+
+  document.addEventListener('keydown', function(e){
+    if (e.key !== 'Escape') return;
+    const confirmEl = document.getElementById('km-log-confirm-overlay');
+    if (confirmEl && confirmEl.classList.contains('show')){
+      kmLogTemizleIptal();
+      return;
+    }
+    kmLogKapat();
+  });
+
+  window.addEventListener('storage', function(e){
+    if (e.key === KAPAK_MOTOR_DEPO_KEY) kmGuncelle();
+    // Ana makine başka bir sekmeden (index.html) AÇILDI/KAPANDI ise
+    // kapak motorlarını otomatik olarak makine durumuna hizala.
+    if (e.key === 'makineAcik'){
+      kapakMotorMakineSenkronKontrolEt();
+      kmGuncelle();
+      kmLogGuncelle();
+    }
+    if (e.key === KAPAK_MOTOR_LOG_KEY) kmLogGuncelle();
+  });
+
+  document.addEventListener('DOMContentLoaded', function(){
+    // Sayfa ilk açıldığında, makine o an zaten AÇIK/KAPALI ise
+    // kapak motorlarını buna göre hizala (ör. makine açıkken bu
+    // sayfaya girildiyse kapaklar da AÇIK görünmeli).
+    kapakMotorMakineSenkronKontrolEt();
+    kmGuncelle();
+    kmLogGuncelle();
+  });
+
+  // 'storage' eventi SADECE başka bir sekme/pencerede değişiklik
+  // olduğunda tetiklenir, bu sekmenin kendi yazımlarını yakalamaz.
+  // index.html'deki aynı desene uyarak burada da periyodik olarak
+  // makine durumunu kontrol ediyoruz; böylece makine bu sayfa açıkken
+  // farklı bir sekmeden aç/kapa yapılsa bile kapaklar gecikmeden senkron kalır.
+  setInterval(function(){
+    if (kapakMotorMakineSenkronKontrolEt()){
+      kmGuncelle();
+      kmLogGuncelle();
+    }
+  }, 2000);
+</script>
+</html>

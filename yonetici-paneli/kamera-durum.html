@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Malta Makine — Kamera Durum</title>
+<link rel="icon" type="image/svg+xml" href="assets/image/favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/style.css">
+<script src="assets/js/auth.js"></script>
+<script>sayfaKorumaKontrolEt(['yonetici']);</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/hls.js/1.5.13/hls.min.js"></script>
+<script src="assets/js/doluluk-veri.js"></script>
+<script src="assets/js/ezme-veri.js"></script>
+<script src="assets/js/kamera-veri.js"></script>
+<script src="assets/js/kapak-uyari.js"></script>
+<style>
+  .kamera-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 20px;
+    margin-bottom: 36px;
+  }
+  .kamera-card {
+    background: var(--panel, #fff);
+    border: 1px solid rgba(0,0,0,.08);
+    border-radius: 14px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+  .kamera-feed-wrap {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    background: #10151c;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+  .kamera-feed-wrap img.kamera-feed,
+  .kamera-feed-wrap video.kamera-feed {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .kamera-feed-bos,
+  .kamera-feed-offline,
+  .kamera-feed-rtsp {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    color: #aeb8c4;
+    font-size: 12.5px;
+    text-align: center;
+    padding: 16px;
+  }
+  .kamera-feed-bos svg, .kamera-feed-offline svg, .kamera-feed-rtsp svg {
+    width: 28px; height: 28px; opacity: .7;
+  }
+  .kamera-canli-etiket {
+    position: absolute;
+    top: 10px; left: 10px;
+    display: flex; align-items: center; gap: 6px;
+    background: rgba(0,0,0,.55);
+    color: #fff;
+    font-size: 11px;
+    font-family: 'IBM Plex Mono', monospace;
+    letter-spacing: .04em;
+    padding: 4px 9px;
+    border-radius: 20px;
+  }
+  .kamera-canli-etiket .nokta {
+    width: 7px; height: 7px; border-radius: 50%; background: #e74c3c;
+    animation: kamera-yanip-sonme 1.4s ease-in-out infinite;
+  }
+  .kamera-canli-etiket.pasif .nokta { background: #7f8c9a; animation: none; }
+  @keyframes kamera-yanip-sonme {
+    0%, 100% { opacity: 1; } 50% { opacity: .25; }
+  }
+  .kamera-body {
+    padding: 14px 16px 16px;
+  }
+  .kamera-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 6px;
+  }
+  .kamera-isim { font-weight: 600; font-size: 14.5px; }
+  .kamera-konum { font-size: 12px; opacity: .65; margin-top: 2px; }
+  .kamera-metrikler {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px 14px;
+    margin-top: 12px;
+  }
+  .kamera-metrik { font-size: 12px; }
+  .kamera-metrik .k-label { opacity: .6; margin-bottom: 2px; }
+  .kamera-metrik .k-deger { font-weight: 600; font-size: 13px; }
+  .kamera-bar-track {
+    margin-top: 4px;
+    height: 5px;
+    border-radius: 3px;
+    background: rgba(0,0,0,.08);
+    overflow: hidden;
+  }
+  .kamera-bar-fill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width .4s ease;
+  }
+</style>
+
+</head>
+<body>
+
+  <input type="checkbox" id="menu-toggle" class="menu-toggle-input">
+  <label for="menu-toggle" class="hamburger" aria-label="Menüyü aç/kapat">
+    <span></span><span></span><span></span>
+  </label>
+  <label for="menu-toggle" class="overlay" aria-hidden="true"></label>
+
+  <aside class="sidebar" aria-label="Ana gezinme">
+    <div class="mark">
+      <div class="mark-glyph" aria-hidden="true">
+        <a href="index.html">
+        <img src="assets/image/logo.svg" alt="Malta logosu" class="mark-glyph-img">
+       </a>
+      </div>
+      <div class="mark-text">Malta Makine</div>
+    </div>
+    <div class="mark-sub">İade Kiosk Sistemleri</div>
+
+    <div class="panel-seam"></div>
+
+    <nav>
+      <div class="nav-group">
+        <p class="nav-label">Ürün</p>
+        <ul class="nav-list">
+          <li class="nav-item">
+            <a class="nav-link" href="index.html"><span class="led"></span>Bakım</a>
+          </li>
+          <li class="nav-item" data-rol="yonetici,market">
+            <a class="nav-link" href="makine.html"><span class="led"></span>Kapaklar</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="doluluk.html"><span class="led"></span>Doluluk Bilgi</a>
+          </li>
+          <li class="nav-item" data-rol="yonetici,market">
+            <a class="nav-link" href="motor-durum.html"><span class="led"></span>Motor Durum Özeti</a>
+          </li>
+          <li class="nav-item" data-rol="yonetici">
+            <a class="nav-link" href="kapak-motor-durum.html"><span class="led"></span>Kapak Motor Durumu</a>
+          </li>
+          <li class="nav-item" data-rol="yonetici,market">
+            <a class="nav-link" href="fan.html"><span class="led"></span>Fan Durum</a>
+          </li>
+          <li class="nav-item" data-rol="yonetici">
+            <a class="nav-link" href="kamera-durum.html"><span class="led"></span>Kamera Durum</a>
+          </li>
+          <li class="nav-item" data-rol="yonetici,market">
+            <a class="nav-link" href="ekran-durumu.html"><span class="led"></span>Ekran Durum Paneli</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="acil-durum.html"><span class="led"></span>Acil Durum & Alarm</a>
+          </li>
+        </ul>
+      </div>
+ 
+      <div class="nav-group">
+        <p class="nav-label">Motorlar</p>
+        <ul class="nav-list">
+          <li class="nav-item">
+            <a class="nav-link" href="unite.html?unite=ezme1_05l"><span class="led"></span>(0.5L) 1. Plastik Ezme Durum</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="unite.html?unite=ezme2_05l"><span class="led"></span>(0.5L) 2. Plastik Ezme Durum</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="unite.html?unite=ezme1_13l"><span class="led"></span>(1-3L) 1. Plastik Ezme Durum</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="unite.html?unite=ezme2_13l"><span class="led"></span>(1-3L) 2. Plastik Ezme Durum</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="unite.html?unite=ezme3"><span class="led"></span>Teneke/Alüminyum Ezme Durum</a>
+          </li>
+         <li class="nav-item">
+            <a class="nav-link" href="cam-kirma.html"><span class="led"></span>1. Cam Kırma Durum</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="cam-kirma2.html"><span class="led"></span>2. Cam Kırma Durum</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="unite.html?unite=suKaristirma"><span class="led"></span>Atık Su Tankı Karıştırma Durum</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="unite.html?unite=atikSuPompa"><span class="led"></span>Atık Su Pompa Durum</a>
+          </li>
+        </ul>
+      </div>
+
+        <div class="nav-group">
+        <p class="nav-label">İletişim</p>
+        <ul class="nav-list">
+          <li class="nav-item">
+            <a class="nav-link" href="ariza-bildir.html"><span class="led"></span>Arıza Bildir</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="contact.html"><span class="led"></span>Bizimle İletişime Geçin</a>
+          </li>
+        </ul>
+      </div>
+    </nav>
+
+    <div class="nav-group">
+        <p class="nav-label"></p>
+        <ul class="nav-list">
+          <li class="nav-item">
+            <a class="nav-link" href="makineler.html"><span class="led"></span>Çıkış</a>
+          </li>
+        </ul>
+      </div>
+
+    <div class="sidebar-foot">
+      <div class="barcode" aria-hidden="true"></div>
+      <span>PANEL SÜRÜM 0.1</span>
+    </div>
+  </aside>
+
+  <main>
+    <section id="kamera-durum">
+
+      <div class="doluluk-top">
+        <div>
+          <p class="eyebrow" style="margin-bottom:6px;">Kamera Durum · Malta</p>
+          <h1 style="font-size:clamp(24px,3vw,32px); margin:0;">Kamera İzleme</h1>
+        </div>
+        <div style="text-align:right;">
+          <div class="doluluk-updated">
+            <span class="dot"></span>
+            <span id="son-guncelleme">Son güncelleme: —</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Kamera bağlantı / depolama uyarısı -->
+      <div id="kamera-alert-wrap"></div>
+
+      <!-- Özet kartları -->
+      <div class="doluluk-summary">
+        <div class="summary-card">
+          <div class="s-label">Çevrimiçi Kamera</div>
+          <div class="s-value" id="ozet-cevrimici">—<span id="ozet-toplam">/ 0</span></div>
+        </div>
+        <div class="summary-card">
+          <div class="s-label">Kayıt Yapan Kamera</div>
+          <div class="s-value" id="ozet-kayit">—</div>
+        </div>
+        <div class="summary-card">
+          <div class="s-label">Ortalama Depolama</div>
+          <div class="s-value" id="ozet-depolama">—<span>%</span></div>
+        </div>
+      </div>
+
+      <div class="row">
+        <h2>Kameralar</h2>
+        <span>Gerçek Zamanlı İzleme</span>
+      </div>
+
+      <div class="kamera-grid" id="kamera-grid"></div>
+
+    </section>
+  </main>
+
+<script>
+  // Mevcut sayfanın URL'sine göre doğru sekmeyi otomatik "aktif" yap
+  (function aktifSekmeAyarla(){
+    var mevcutDosya = window.location.pathname.split('/').pop() || 'index.html';
+    var eslesenLink = null;
+
+    document.querySelectorAll('.nav-link').forEach(function(link){
+      var href = link.getAttribute('href');
+      if (!href || href === '#') return;
+      var hedefDosya = href.split('/').pop();
+      if (hedefDosya === mevcutDosya) {
+        eslesenLink = link;
+      }
+    });
+
+    document.querySelectorAll('.nav-item').forEach(function(item){
+      item.classList.remove('active');
+    });
+    if (eslesenLink) {
+      eslesenLink.closest('.nav-item').classList.add('active');
+    }
+  })();
+
+  // Mobil çekmece açıksa, bir menüye tıklandığında otomatik kapansın
+  document.querySelectorAll('.nav-link').forEach(function(link){
+    link.addEventListener('click', function(){
+      var toggle = document.getElementById('menu-toggle');
+      if (toggle) toggle.checked = false;
+    });
+  });
+
+  // Makine açıkken panelden çıkışı engelle
+  (function makineAcikkenCikisiEngelle(){
+    function makineCalisiyorMu(){
+      return JSON.parse(localStorage.getItem('makineAcik') || 'false');
+    }
+
+    function cikisUyarisiGoster(){
+      alert('Makine açıkken siteden çıkamazsınız. Lütfen önce makineyi kapatın.');
+    }
+
+    document.querySelectorAll('a[href="login.html"]').forEach(function(link){
+      link.addEventListener('click', function(e){
+        if (!makineCalisiyorMu()) return;
+        e.preventDefault();
+        e.stopPropagation();
+        cikisUyarisiGoster();
+      });
+    });
+  })();
+
+  function ikonKamera(){
+    return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>';
+  }
+  function ikonBaglantiYok(){
+    return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="1" y1="1" x2="23" y2="23"/><path d="M16.72 11.06A10.94 10.94 0 0119 12.55"/><path d="M5 12.55a10.94 10.94 0 015.17-2.39"/><path d="M10.71 5.05A16 16 0 0122.58 9"/><path d="M1.42 9a15.91 15.91 0 014.7-2.88"/><path d="M8.53 16.11a6 6 0 016.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>';
+  }
+  function ikonUyari(){
+    return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 9v4M12 17h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>';
+  }
+
+  /* Akış alanının içeriğini kameranın türüne ve durumuna göre üretir. */
+  function kameraFeedHtml(kamera, durum){
+    if (!durum.online){
+      return '<div class="kamera-feed-offline">' + ikonBaglantiYok() + '<span>Kamera bağlantısı yok</span></div>';
+    }
+    if (!kamera.streamUrl){
+      return '<div class="kamera-feed-bos">' + ikonKamera() + '<span>Yayın adresi henüz tanımlanmadı</span></div>';
+    }
+    if (kamera.streamTuru === 'mjpeg'){
+      return '<img class="kamera-feed" src="' + kamera.streamUrl + '" alt="' + kamera.isim + '" onerror="this.replaceWith(Object.assign(document.createElement(\'div\'),{className:\'kamera-feed-offline\',innerHTML:\'' + ikonBaglantiYok().replace(/'/g, "\\'") + '<span>Görüntüye ulaşılamıyor</span>\'}))">';
+    }
+    if (kamera.streamTuru === 'hls'){
+      return '<video class="kamera-feed" id="video-' + kamera.id + '" autoplay muted playsinline></video>';
+    }
+    if (kamera.streamTuru === 'rtsp'){
+      if (kamera.snapshotUrl){
+        return '<img class="kamera-feed" src="' + kamera.snapshotUrl + '" alt="' + kamera.isim + '">';
+      }
+      return '<div class="kamera-feed-rtsp">' + ikonUyari() + '<span>RTSP akışı tarayıcıda doğrudan oynatılamaz.<br>Bir dönüştürücü/proxy (ör. MediaMTX, go2rtc) gerekir.</span></div>';
+    }
+    return '<div class="kamera-feed-bos">' + ikonKamera() + '<span>Tanımsız yayın türü</span></div>';
+  }
+
+  function kameraGuncelle(){
+    const grid = document.getElementById('kamera-grid');
+    let cevrimici = 0;
+    let kayitYapan = 0;
+    let depolamaToplam = 0;
+    let sorunluKameralar = [];
+
+    grid.innerHTML = kameraListesi.map(function(kamera){
+      const durum = birimDurumuYukle(kamera.sayacKey, varsayilanKameraDurumu());
+      const sinyalSt = sinyalDurumu(durum.sinyal);
+
+      if (durum.online) cevrimici++;
+      if (durum.kayitYapiyor) kayitYapan++;
+      depolamaToplam += durum.depolamaYuzde;
+
+      if (!durum.online) sorunluKameralar.push(kamera.isim + ' (bağlantı yok)');
+      else if (durum.depolamaYuzde >= 90) sorunluKameralar.push(kamera.isim + ' (depolama doluyor)');
+
+      const renkDepolama = durum.depolamaYuzde >= 90 ? '#e74c3c' : (durum.depolamaYuzde >= 70 ? '#e6a23c' : '#0F6E56');
+
+      return `
+        <div class="kamera-card" data-id="${kamera.id}">
+          <div class="kamera-feed-wrap">
+            ${kameraFeedHtml(kamera, durum)}
+            <span class="kamera-canli-etiket ${durum.online ? '' : 'pasif'}">
+              <span class="nokta"></span>${durum.online ? 'CANLI' : 'ÇEVRİMDIŞI'}
+            </span>
+          </div>
+          <div class="kamera-body">
+            <div class="kamera-head">
+              <div>
+                <div class="kamera-isim">${kamera.isim}</div>
+                <div class="kamera-konum">${kamera.konum}</div>
+              </div>
+              <span class="doluluk-status ${durum.online ? 'calisiyor' : 'sikisma'}">${durum.online ? 'Çevrimiçi' : 'Çevrimdışı'}</span>
+            </div>
+            <div class="kamera-metrikler">
+              <div class="kamera-metrik">
+                <div class="k-label">Kayıt</div>
+                <div class="k-deger">${durum.kayitYapiyor ? '● Kayıt yapıyor' : '— Kayıt yok'}</div>
+              </div>
+              <div class="kamera-metrik">
+                <div class="k-label">Sinyal</div>
+                <div class="k-deger">${sinyalSt.ad} (%${durum.sinyal})</div>
+              </div>
+              <div class="kamera-metrik" style="grid-column: 1 / -1;">
+                <div class="k-label">Depolama Doluluğu</div>
+                <div class="k-deger">%${durum.depolamaYuzde}</div>
+                <div class="kamera-bar-track">
+                  <div class="kamera-bar-fill" style="width:${durum.depolamaYuzde}%; background:${renkDepolama};"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>`;
+    }).join('');
+
+    // HLS akışları varsa hls.js ile bağla
+    kameraListesi.forEach(function(kamera){
+      if (kamera.streamTuru !== 'hls' || !kamera.streamUrl) return;
+      const durum = birimDurumuYukle(kamera.sayacKey, varsayilanKameraDurumu());
+      if (!durum.online) return;
+      const video = document.getElementById('video-' + kamera.id);
+      if (!video) return;
+      if (typeof Hls !== 'undefined' && Hls.isSupported()){
+        const hls = new Hls();
+        hls.loadSource(kamera.streamUrl);
+        hls.attachMedia(video);
+      } else if (video.canPlayType('application/vnd.apple.mpegurl')){
+        video.src = kamera.streamUrl;
+      }
+    });
+
+    document.getElementById('ozet-cevrimici').innerHTML = cevrimici + '<span>/ ' + kameraListesi.length + '</span>';
+    document.getElementById('ozet-kayit').textContent = kayitYapan + ' / ' + kameraListesi.length;
+    document.getElementById('ozet-depolama').innerHTML = Math.round(depolamaToplam / kameraListesi.length) + '<span>%</span>';
+    document.getElementById('son-guncelleme').textContent = 'Son güncelleme: ' + saatStr();
+
+    const alertWrap = document.getElementById('kamera-alert-wrap');
+    if (sorunluKameralar.length){
+      alertWrap.innerHTML =
+        '<div class="doluluk-alert" role="alert">' +
+          '<span class="doluluk-alert-icon" aria-hidden="true">' + ikonUyari() + '</span>' +
+          '<div class="doluluk-alert-body">' +
+            '<p class="doluluk-alert-title">Kamera Uyarısı</p>' +
+            '<p class="doluluk-alert-text"><strong>' + sorunluKameralar.join(', ') + '</strong></p>' +
+          '</div>' +
+        '</div>';
+    } else {
+      alertWrap.innerHTML = '';
+    }
+  }
+
+  window.addEventListener('storage', function(e){
+    const ilgiliAnahtarlar = kameraListesi.map(function(k){ return k.sayacKey; });
+    if (ilgiliAnahtarlar.indexOf(e.key) !== -1) kameraGuncelle();
+  });
+
+  document.addEventListener('DOMContentLoaded', function(){
+    menuyuRoleGoreDuzenle();
+    kameraGuncelle();
+    setInterval(function(){
+      simulateKameraTick();
+      kameraGuncelle();
+    }, 5000);
+  });
+</script>
+
+</body>
+</html>

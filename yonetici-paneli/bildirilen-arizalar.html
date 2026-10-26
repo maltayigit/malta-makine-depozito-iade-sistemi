@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Malta Makine — Bildirilen Arızalar</title>
+<link rel="icon" type="image/svg+xml" href="assets/image/favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/style.css">
+<script src="assets/js/auth.js"></script>
+<script>sayfaKorumaKontrolEt(['yonetici','bakanlik','market','teknisyen']);</script>
+<style>
+  .ariza-ozet-row {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    align-items: center;
+    margin: 22px 0 6px;
+  }
+
+  .ariza-filtre-chip {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    border: 1.5px solid rgba(32,34,36,0.16);
+    border-radius: 999px;
+    padding: 9px 15px;
+    background: none;
+    color: var(--muted);
+    cursor: pointer;
+    transition: all .15s ease;
+  }
+  .ariza-filtre-chip:hover { border-color: var(--steel-700); color: var(--ink); }
+  .ariza-filtre-chip.aktif-filtre { color: var(--ink); border-color: var(--steel-950); font-weight: 600; background: var(--paper-deep); }
+
+  .ariza-liste {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    margin-top: 20px;
+  }
+
+  .ariza-kart {
+    background: var(--paper-deep);
+    border: 1px solid rgba(32,34,36,0.10);
+    border-left: 4px solid #C0392B;
+    border-radius: 10px;
+    padding: 20px 22px;
+    box-shadow: 0 4px 14px rgba(32,34,36,0.05);
+  }
+  .ariza-kart.oncelik-orta { border-left-color: var(--signal); }
+  .ariza-kart.oncelik-dusuk { border-left-color: rgba(32,34,36,0.28); }
+
+  .ariza-kart-ust {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 14px;
+    flex-wrap: wrap;
+    margin-bottom: 10px;
+  }
+
+  .ariza-kart-baslik h3 {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 16.5px;
+    margin: 0 0 3px;
+  }
+  .ariza-kart-baslik p {
+    margin: 0;
+    font-size: 12.5px;
+    color: var(--muted);
+  }
+
+  .ariza-etiketler {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .ariza-etiket {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    padding: 4px 10px;
+    border-radius: 999px;
+    white-space: nowrap;
+  }
+  .ariza-etiket.oncelik-kritik { background: #FCEAEA; color: #C0392B; }
+  .ariza-etiket.oncelik-orta   { background: rgba(184,110,11,0.13); color: #8A5A00; }
+  .ariza-etiket.oncelik-dusuk  { background: rgba(32,34,36,0.08); color: var(--muted); }
+  .ariza-etiket.kategori       { background: rgba(32,34,36,0.06); color: var(--ink); }
+
+  .ariza-kart-metin {
+    font-size: 14px;
+    line-height: 1.6;
+    color: var(--ink);
+    margin: 4px 0 12px;
+  }
+
+  .ariza-kart-alt {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    border-top: 1px solid rgba(32,34,36,0.08);
+    padding-top: 12px;
+  }
+
+  .ariza-kart-meta {
+    font-size: 12px;
+    color: var(--muted);
+    font-family: 'IBM Plex Mono', monospace;
+  }
+
+  .btn-cozuldu {
+    background: transparent;
+    color: #0F6E56;
+    border: 1.5px solid #0F6E56;
+    font-family: inherit;
+    font-size: 12.5px;
+    font-weight: 600;
+    padding: 8px 14px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background .15s ease, color .15s ease;
+  }
+  .btn-cozuldu:hover { background: #0F6E56; color: #fff; }
+
+  .ariza-bos-durum {
+    text-align: center;
+    padding: 60px 0;
+    color: var(--muted);
+  }
+  .ariza-bos-durum svg { width: 34px; height: 34px; margin-bottom: 10px; opacity: 0.5; }
+  .ariza-bos-durum p { margin: 0; font-size: 14px; }
+  .ariza-bos-durum:not(.show) { display: none; }
+  .ariza-liste:not(.show) { display: none; }
+</style>
+</head>
+<body>
+
+  <input type="checkbox" id="menu-toggle" class="menu-toggle-input">
+  <label for="menu-toggle" class="hamburger" aria-label="Menüyü aç/kapat">
+    <span></span><span></span><span></span>
+  </label>
+  <label for="menu-toggle" class="overlay" aria-hidden="true"></label>
+
+  <aside class="sidebar" aria-label="Ana gezinme">
+    <div class="mark">
+      <div class="mark-glyph" aria-hidden="true">
+        <a href="makineler.html">
+          <img src="assets/image/logo.svg" alt="Malta logosu" class="mark-glyph-img">
+        </a>
+      </div>
+      <div class="mark-text">Malta Makine</div>
+    </div>
+    <div class="mark-sub">İade Kiosk Sistemleri</div>
+
+    <div class="panel-seam"></div>
+
+    <nav>
+      <div class="nav-group">
+        <p class="nav-label">Genel</p>
+        <ul class="nav-list">
+          <li class="nav-item">
+            <a class="nav-link" href="makineler.html"><span class="led"></span>Makinelerim</a>
+          </li>
+          <li class="nav-item" data-rol="yonetici">
+            <a class="nav-link" href="makine-yonetimi.html"><span class="led"></span>Makine Yönetimi</a>
+          </li>
+          <li class="nav-item " data-rol="yonetici">
+            <a class="nav-link" href="magaza-yonetimi.html"><span class="led"></span>Mağaza Yönetimi</a>
+          </li>
+          <li class="nav-item " data-rol="yonetici">
+            <a class="nav-link" href="kayitlar.html"><span class="led"></span>Kullanıcı Kayıtları</a>
+          </li>
+          <li class="nav-item " data-rol="yonetici">
+            <a class="nav-link" href="log-kayitlari.html"><span class="led"></span>Giriş / Aktivite Logları</a>
+          </li>
+          <li class="nav-item active" data-rol="yonetici,bakanlik,market,teknisyen">
+            <a class="nav-link" href="bildirilen-arizalar.html"><span class="led"></span>Bildirilen Arızalar</a>
+          </li>
+        </ul>
+      </div>
+    </nav>
+
+    <div class="nav-group">
+      <ul class="nav-list">
+        <li class="nav-item">
+          <a class="nav-link" href="makineler.html"><span class="led"></span>Çıkış</a>
+        </li>
+      </ul>
+    </div>
+
+    <div class="sidebar-foot">
+      <div class="barcode" aria-hidden="true"></div>
+      <span>PANEL SÜRÜM 0.1</span>
+    </div>
+  </aside>
+
+  <main>
+    <section id="bildirilen-arizalar">
+      <span class="eyebrow">TEKNİK DESTEK PANELİ</span>
+      <h1>Bildirilen Arızalar</h1>
+      <p class="lede">Mağazalardan gelen tüm arıza bildirimlerini burada takip edebilir, giderilenleri çözüldü olarak işaretleyebilirsiniz.</p>
+
+      <div class="divider-full"></div>
+
+      <div class="ariza-ozet-row">
+        <button class="ariza-filtre-chip aktif-filtre" data-filtre="hepsi" onclick="arizaFiltreSec('hepsi', this)" data-bakanlik-izin="1">Hepsi</button>
+        <button class="ariza-filtre-chip" data-filtre="kritik" onclick="arizaFiltreSec('kritik', this)" data-bakanlik-izin="1">Kritik</button>
+        <button class="ariza-filtre-chip" data-filtre="orta" onclick="arizaFiltreSec('orta', this)" data-bakanlik-izin="1">Orta</button>
+        <button class="ariza-filtre-chip" data-filtre="dusuk" onclick="arizaFiltreSec('dusuk', this)" data-bakanlik-izin="1">Düşük</button>
+      </div>
+
+      <div class="ariza-liste" id="ariza-liste"></div>
+
+      <div class="ariza-bos-durum" id="ariza-bos-durum">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><polyline points="20 6 9 17 4 12"/></svg>
+        <p>Şu anda bildirilmiş bir arıza yok. Her şey yolunda görünüyor.</p>
+      </div>
+    </section>
+  </main>
+
+  <div class="confirm-overlay" id="ariza-onay-overlay" onclick="if(event.target===this) arizaOnayKapat()">
+    <div class="confirm-modal">
+      <div class="confirm-head">
+        <div class="confirm-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 9v4M12 17h.01M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"/></svg>
+        </div>
+        <div>
+          <p class="confirm-title">Arızayı çözüldü işaretle</p>
+          <p class="confirm-sub">Bu işlem geri alınamaz</p>
+        </div>
+      </div>
+      <p class="confirm-text">Bu arıza kaydını çözüldü olarak işaretlemek üzeresiniz. Onaylarsanız kayıt listeden kaldırılacak. Devam etmek istiyor musunuz?</p>
+      <div class="confirm-actions">
+        <button class="confirm-btn-ghost" onclick="arizaOnayKapat()">Vazgeç</button>
+        <button class="confirm-btn-danger" onclick="arizaOnayOnayla()">Evet, Çözüldü İşaretle</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+  const kategoriMetni = {
+    kapak: 'Kapak Mekanizması / Sensörler',
+    ezme: 'Ezme Ünitesi Sıkışması',
+    cam: 'Cam Kırma Ünitesi Hatası',
+    doluluk: 'Doluluk Bildirim Hatası',
+    ekran: 'Dokunmatik Ekran / Yazılım',
+    diger: 'Diğer'
+  };
+  const oncelikMetni = { kritik: 'Kritik', orta: 'Orta', dusuk: 'Düşük' };
+
+  // fault_records tablosunda tek bir fault_description alanı var; kategori/
+  // öncelik/bildiren/iletişim bilgileri ariza-bildir.html tarafından bu
+  // metnin İÇİNE gömülüyor: "[Kategori | Öncelik: X] detay — Bildiren: ...
+  // (Tel: ..., E-posta: ...)". Listeleme tarafında bu metni geri ayrıştırıp
+  // eski demo kartlarındaki gibi ayrı etiket/alanlar olarak gösteriyoruz.
+  const oncelikKoduMetinden = { 'Düşük': 'dusuk', 'Orta': 'orta', 'Kritik (Sistemi Durduruyor)': 'kritik' };
+  const kategoriKoduMetinden = Object.fromEntries(Object.entries(kategoriMetni).map(([k, v]) => [v, k]));
+  const ARIZA_ACIKLAMA_DESENI =
+    /^\[(.+?) \| Öncelik: (.+?)\] ([\s\S]*?) — Bildiren: (.+?) \(Tel: (.*?), E-posta: (.*?)\)$/;
+
+  function arizaAciklamaCoz(aciklama) {
+    const m = ARIZA_ACIKLAMA_DESENI.exec(aciklama || '');
+    if (!m) {
+      // Eski/elle girilmiş kayıtlar bu formatta olmayabilir; ham metni göster.
+      return { kategori: null, oncelik: 'orta', aciklama: aciklama || 'Açıklama girilmemiş.', bildiren: '', telefon: '', eposta: '' };
+    }
+    const [, kategoriEtiket, oncelikEtiket, detay, bildiren, telefon, eposta] = m;
+    return {
+      kategori: kategoriKoduMetinden[kategoriEtiket] || null,
+      kategoriEtiket,
+      oncelik: oncelikKoduMetinden[oncelikEtiket] || 'orta',
+      aciklama: detay,
+      bildiren,
+      telefon,
+      eposta,
+    };
+  }
+
+  let aktifFiltre = 'hepsi';
+  let arizaMakineHaritasi = {};
+
+  function arizaTarihiSayiya(tarih) {
+    if (!tarih) return 0;
+
+    // ISO formatı (2026-07-16T15:30:00)
+    const iso = Date.parse(tarih);
+    if (!isNaN(iso)) return iso;
+
+    // Türkçe format: 16.07.2026 15:30
+    const eslesme = tarih.match(
+        /^(\d{1,2})[./-](\d{1,2})[./-](\d{4})(?:\s+(\d{1,2}):(\d{2}))?$/
+    );
+
+    if (eslesme) {
+        const [, gun, ay, yil, saat = 0, dakika = 0] = eslesme;
+        return new Date(
+            Number(yil),
+            Number(ay) - 1,
+            Number(gun),
+            Number(saat),
+            Number(dakika)
+        ).getTime();
+    }
+
+    return 0;
+}
+
+  // =====================================================================
+  // Backend entegrasyonu — ariza-bildir.html ile AYNI sözleşme:
+  //   - API adresi: AUTH_API_BASE ('http://localhost:4000')
+  //   - Erişim tokenı: oturumAccessTokenGetir() -> localStorage['oturumAccessToken']
+  //   - Oturum süresi dolarsa login.html'e yönlendirilir
+  // Bu sayfa daha önce assets/js/makine-veri.js + assets/js/acil-durum-veri.js
+  // içindeki localStorage tabanlı demo fonksiyonlarını (makineleriYukle,
+  // oturumdakiKullanici, arizaCozulduBildir...) kullanıyordu. Bunlar backend'e
+  // hiç bağlı değildi: ariza-bildir.html üzerinden POST /api/faults ile
+  // gerçek veritabanına kaydedilen arızalar bu listede HİÇ görünmüyordu ve
+  // "Çözüldü İşaretle" tanımsız bir fonksiyonu (arizaCozulduBildir) çağırıp
+  // sayfayı hataya düşürüyordu. Aşağıdaki fonksiyonlar gerçek
+  // GET /api/faults ve PATCH /api/faults/:id uçlarını kullanır.
+  // =====================================================================
+
+  async function arizaApiCagir(path, options) {
+    const token = oturumAccessTokenGetir();
+    const res = await fetch(AUTH_API_BASE + path, {
+      ...options,
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: 'Bearer ' + token } : {}),
+        ...(options && options.headers ? options.headers : {}),
+      },
+    });
+
+    if (res.status === 401) {
+      if (typeof cikisYap === 'function') cikisYap();
+      throw new Error('Oturum süresi dolmuş.');
+    }
+
+    let data = null;
+    try { data = await res.json(); } catch (e) { /* boş gövde (ör. 204) olabilir */ }
+
+    if (!res.ok) {
+      const mesaj = (data && data.message) || 'İstek başarısız oldu (' + res.status + ').';
+      throw new Error(mesaj);
+    }
+    return data;
+  }
+
+  async function tumArizaKayitlariGetir() {
+    const [makineler, arizalar] = await Promise.all([
+      arizaApiCagir('/api/machines', { method: 'GET' }),
+      arizaApiCagir('/api/faults', { method: 'GET' }),
+    ]);
+
+    arizaMakineHaritasi = {};
+    (makineler || []).forEach(function (m) { arizaMakineHaritasi[m.machine_id] = m; });
+
+    const sonuc = (arizalar || [])
+      .filter(function (fr) { return fr.status !== 'RESOLVED'; })
+      .map(function (fr) {
+        const cozum = arizaAciklamaCoz(fr.fault_description);
+        const makine = arizaMakineHaritasi[fr.machine_id];
+        return {
+          faultId: fr.fault_id,
+          ad: (makine && makine.machine_code) || fr.machine_code || ('Makine #' + fr.machine_id),
+          sube: (makine && makine.market_name) || (makine && makine.company_name) || '',
+          tarih: fr.created_at,
+          kayit: cozum,
+        };
+      });
+
+    sonuc.sort(function (a, b) { return arizaTarihiSayiya(b.tarih) - arizaTarihiSayiya(a.tarih); });
+    return sonuc;
+  }
+
+  function arizaKartiOlustur(giris) {
+    const kayit = giris.kayit;
+    const oncelik = kayit.oncelik || 'orta';
+    const kart = document.createElement('div');
+    kart.className = 'ariza-kart oncelik-' + oncelik;
+    kart.dataset.oncelik = oncelik;
+
+    const kategoriHtml = kayit.kategori
+      ? `<span class="ariza-etiket kategori">${kategoriMetni[kayit.kategori] || kayit.kategoriEtiket}</span>`
+      : (kayit.kategoriEtiket ? `<span class="ariza-etiket kategori">${kayit.kategoriEtiket}</span>` : '');
+    const oncelikHtml = `<span class="ariza-etiket oncelik-${oncelik}">${oncelikMetni[oncelik] || 'Orta'}</span>`;
+
+    const cozBtnHtml = `<button class="btn-cozuldu" onclick="arizaCozulduIsaretle(${giris.faultId})">Çözüldü İşaretle</button>`;
+
+    const metaParcalari = [];
+    if (kayit.bildiren) metaParcalari.push('Bildiren: ' + kayit.bildiren);
+    if (kayit.telefon) metaParcalari.push('Tel: ' + kayit.telefon);
+    if (kayit.eposta) metaParcalari.push('E-posta: ' + kayit.eposta);
+    if (giris.tarih) metaParcalari.push(new Date(giris.tarih).toLocaleString('tr-TR'));
+
+    kart.innerHTML = `
+      <div class="ariza-kart-ust">
+        <div class="ariza-kart-baslik">
+          <h3>${giris.ad}</h3>
+          <p>${giris.sube}</p>
+        </div>
+        <div class="ariza-etiketler">${oncelikHtml}${kategoriHtml}</div>
+      </div>
+      <p class="ariza-kart-metin">${kayit.aciklama || 'Açıklama girilmemiş.'}</p>
+      <div class="ariza-kart-alt">
+        <span class="ariza-kart-meta">${metaParcalari.join(' · ')}</span>
+        ${cozBtnHtml}
+      </div>`;
+    return kart;
+  }
+
+  async function arizaListesiOlustur() {
+    const liste = document.getElementById('ariza-liste');
+    const bosDurum = document.getElementById('ariza-bos-durum');
+    liste.innerHTML = '';
+
+    let kayitlar;
+    try {
+      kayitlar = await tumArizaKayitlariGetir();
+    } catch (err) {
+      liste.classList.remove('show');
+      bosDurum.classList.add('show');
+      bosDurum.querySelector('p').textContent = 'Arıza listesi yüklenemedi: ' + err.message;
+      return;
+    }
+
+    const gorunecekler = kayitlar.filter(function (g) {
+      return aktifFiltre === 'hepsi' || (g.kayit.oncelik || 'orta') === aktifFiltre;
+    });
+
+    if (kayitlar.length === 0) {
+      liste.classList.remove('show');
+      bosDurum.classList.add('show');
+      bosDurum.querySelector('p').textContent = 'Şu anda bildirilmiş bir arıza yok. Her şey yolunda görünüyor.';
+      return;
+    }
+    bosDurum.classList.remove('show');
+    liste.classList.add('show');
+
+    if (gorunecekler.length === 0) {
+      liste.innerHTML = '<p class="ariza-bos-durum show" style="padding:30px 0;">Bu filtreyle eşleşen arıza yok.</p>';
+      return;
+    }
+    gorunecekler.forEach(function (g) { liste.appendChild(arizaKartiOlustur(g)); });
+  }
+
+  function arizaFiltreSec(filtre, btn) {
+    aktifFiltre = filtre;
+    document.querySelectorAll('.ariza-filtre-chip').forEach(function (c) { c.classList.remove('aktif-filtre'); });
+    btn.classList.add('aktif-filtre');
+    arizaListesiOlustur();
+  }
+
+  // Tıklanan kaydı gerçek backend'de RESOLVED durumuna çeker
+  // (PATCH /api/faults/:id { status: 'RESOLVED' }); bu, machines.is_faulty
+  // bayrağını da backend tarafında otomatik günceller.
+  let arizaOnayBekleyen = null;
+
+  function arizaCozulduIsaretle(faultId) {
+    arizaOnayBekleyen = faultId;
+    document.getElementById('ariza-onay-overlay').classList.add('show');
+  }
+
+  function arizaOnayKapat() {
+    arizaOnayBekleyen = null;
+    document.getElementById('ariza-onay-overlay').classList.remove('show');
+  }
+
+  async function arizaOnayOnayla() {
+    if (!arizaOnayBekleyen) return;
+    const faultId = arizaOnayBekleyen;
+    try {
+      await arizaApiCagir('/api/faults/' + faultId, {
+        method: 'PATCH',
+        body: JSON.stringify({ status: 'RESOLVED' }),
+      });
+      await arizaListesiOlustur();
+    } catch (e) {
+      alert('Arıza çözüldü olarak işaretlenemedi: ' + (e.message || 'Bilinmeyen hata'));
+    }
+    arizaOnayKapat();
+  }
+
+  document.addEventListener('DOMContentLoaded', function () {
+    if (typeof menuyuRoleGoreDuzenle === 'function') menuyuRoleGoreDuzenle();
+    arizaListesiOlustur();
+  });
+
+  setInterval(arizaListesiOlustur, 5000);
+  document.addEventListener('visibilitychange', function () {
+    if (document.visibilityState === 'visible') arizaListesiOlustur();
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,1353 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Malta Makine — Kullanıcı Kayıtları</title>
+<link rel="icon" type="image/svg+xml" href="assets/image/favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/style.css">
+<script src="assets/js/auth.js"></script>
+<script>
+  // Bu sayfayı sadece 'yonetici' rolündeki kullanıcılar görebilir.
+  sayfaKorumaKontrolEt(['yonetici']);
+</script>
+
+<style>
+  /* style.css'teki mevcut sınıfların üstüne yazmaz, sadece bu ekrana
+     özgü tablo/log görünümünü tamamlar. Token'lar style.css :root'tan
+     birebir alındı (--steel-950/800/700, --paper, --paper-deep, --ink,
+     --muted, --approve, --signal). */
+
+  .kayit-uyari{
+    display:flex;
+    align-items:flex-start;
+    gap:12px;
+    background: var(--paper-deep);
+    border:1px solid rgba(32,34,36,0.14);
+    border-left:4px solid var(--steel-950);
+    border-radius:10px;
+    padding:13px 16px;
+    margin:22px 0 26px;
+    font-size:13px;
+    line-height:1.55;
+    color: var(--muted);
+  }
+  .kayit-uyari strong{ color: var(--ink); }
+  .kayit-uyari code{
+    background:rgba(32,34,36,0.08);
+    color:var(--steel-950);
+    padding:1px 5px;
+    border-radius:4px;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12px;
+  }
+
+  /* ── Arama + filtre çubuğu (makineler.html ile aynı dil) ── */
+  .makine-arama-row{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    flex-wrap:wrap;
+    margin:18px 0 0;
+  }
+  .makine-arama-input{
+    flex:1 1 260px;
+    min-width:200px;
+    font-family:'IBM Plex Sans', sans-serif;
+    font-size:13.5px;
+    color:var(--ink);
+    background:var(--paper-deep);
+    border:1px solid rgba(32,34,36,0.16);
+    border-radius:8px;
+    padding:10px 14px;
+    transition:border-color .15s ease, background .15s ease;
+  }
+  .makine-arama-input::placeholder{ color:var(--muted); }
+  .makine-arama-input:focus{
+    outline:none;
+    border-color:var(--steel-950);
+    background:var(--paper);
+  }
+  .makine-filtre-chip{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11.5px;
+    letter-spacing:0.03em;
+    border:1.5px solid rgba(32,34,36,0.18);
+    border-radius:999px;
+    padding:9px 15px;
+    background:none;
+    color:var(--muted);
+    cursor:pointer;
+    transition: all .15s ease;
+    white-space:nowrap;
+  }
+  .makine-filtre-chip:hover{ border-color:var(--steel-950); color:var(--ink); }
+  .makine-filtre-chip.aktif-filtre{
+    background:var(--steel-950);
+    border-color:var(--steel-950);
+    color:#fff;
+  }
+
+  .kayit-tablo-wrap{
+    overflow-x:auto;
+    border:1px solid rgba(32,34,36,0.12);
+    border-radius:12px;
+    background: var(--paper);
+  }
+  table.kayit-tablo{
+    width:100%;
+    border-collapse:collapse;
+    font-size:13.5px;
+    min-width:720px;
+  }
+  table.kayit-tablo thead th{
+    text-align:left;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px;
+    letter-spacing:0.05em;
+    text-transform:uppercase;
+    color: var(--muted);
+    padding:13px 16px;
+    border-bottom:1.5px solid rgba(32,34,36,0.14);
+    white-space:nowrap;
+  }
+  table.kayit-tablo tbody td{
+    padding:13px 16px;
+    border-bottom:1px solid rgba(32,34,36,0.08);
+    vertical-align:middle;
+  }
+  table.kayit-tablo tbody tr:last-child td{ border-bottom:none; }
+  table.kayit-tablo tbody tr:hover{ background: var(--paper-deep); }
+
+  .kayit-ad{ font-weight:600; color: var(--ink); }
+  .kayit-email{ font-family:'IBM Plex Mono', monospace; font-size:12.5px; color: var(--muted); }
+
+  .kayit-rozet{
+    display:inline-flex;
+    align-items:center;
+    gap:5px;
+    padding:4px 10px;
+    border-radius:999px;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:10.5px;
+    font-weight:700;
+    letter-spacing:0.04em;
+    border:1.5px solid;
+  }
+  /* Onaylı hesap = sistemdeki "approve" tonu, style.css'teki --approve ile hizalı */
+  .kayit-rozet.aktif{ background:rgba(47,125,94,0.12); border-color:var(--approve); color:var(--approve); }
+  .kayit-rozet.bekliyor{ background:#FEF6E7; border-color:#B7791F; color:#B7791F; }
+
+  .kayit-rol-rozet{
+    display:inline-flex;
+    padding:4px 10px;
+    border-radius:999px;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:10.5px;
+    font-weight:700;
+    letter-spacing:0.04em;
+  }
+  /* "Sinyal" tonu (--signal) yönetici rozetinde, market rozeti steel tonlarında */
+  .kayit-rol-rozet.yonetici{ background:rgba(226,87,43,0.12); color:var(--signal); }
+  .kayit-rol-rozet.market{ background:rgba(30,33,36,0.08); color:var(--steel-700); }
+
+  .kayit-mukerrer{
+    display:inline-flex;
+    align-items:center;
+    gap:4px;
+    margin-left:6px;
+    padding:2px 8px;
+    border-radius:999px;
+    background:rgba(226,87,43,0.12);
+    color:var(--signal);
+    font-family:'IBM Plex Mono', monospace;
+    font-size:9.5px;
+    font-weight:700;
+    letter-spacing:0.03em;
+    cursor:help;
+  }
+
+  /* ── İşlem butonları: aynı boyut/radius dili, renk anlamına göre ayrışır ── */
+  .kayit-onayla-btn, .kayit-reddet-btn, .kayit-sil-btn{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px;
+    font-weight:700;
+    letter-spacing:0.03em;
+    border-radius:7px;
+    padding:6px 11px;
+    cursor:pointer;
+    transition: all .15s ease;
+    white-space:nowrap;
+    margin-right:6px;
+  }
+  .kayit-onayla-btn{ border:1.5px solid rgba(47,125,94,0.4); background:none; color:var(--approve); }
+  .kayit-onayla-btn:hover{ background:var(--approve); color:#fff; border-color:var(--approve); }
+  .kayit-reddet-btn, .kayit-sil-btn{ border:1.5px solid rgba(226,87,43,0.4); background:none; color:var(--signal); }
+  .kayit-reddet-btn:hover, .kayit-sil-btn:hover{ background:var(--signal); color:#fff; border-color:var(--signal); }
+
+  /* CSV dışa aktar butonuyla aynı görünüm dilinde — satır bazlı düzenleme */
+  .kayit-duzelt-btn{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px;
+    letter-spacing:0.03em;
+    border:1.5px solid rgba(32,34,36,0.18);
+    border-radius:999px;
+    padding:6px 13px;
+    background:none;
+    color: var(--ink);
+    cursor:pointer;
+    transition: all .15s ease;
+    white-space:nowrap;
+    margin-right:6px;
+  }
+  .kayit-duzelt-btn:hover{ border-color: var(--steel-950); background: var(--paper-deep); }
+
+  /* Düzenleme modu kapalıyken satır içi Düzelt butonları gizli kalır;
+     yalnızca üstteki "✎ Düzelt" anahtarıyla açılır. */
+  .kayit-tablo-wrap.duzenleme-kapali .kayit-duzelt-btn{ display:none; }
+  #duzelt-mod-btn.aktif-mod{ background: var(--steel-950); color:#fff; border-color: var(--steel-950); }
+
+  .kayit-sabit-not{ font-size:11.5px; color: var(--muted); }
+
+  .kayit-bos-durum{
+    text-align:center;
+    padding:44px 0;
+    color: var(--muted);
+    font-size:13.5px;
+  }
+  .kayit-bos-durum:not(.show){ display:none; }
+
+  .kayit-ust-satir{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:14px;
+    flex-wrap:wrap;
+    margin:26px 0 4px;
+  }
+  .kayit-disa-aktar-btn{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px;
+    letter-spacing:0.04em;
+    text-transform:uppercase;
+    border:1.5px solid rgba(32,34,36,0.18);
+    border-radius:999px;
+    padding:9px 16px;
+    background:none;
+    color: var(--ink);
+    cursor:pointer;
+    transition: all .15s ease;
+  }
+  .kayit-disa-aktar-btn:hover{ border-color: var(--steel-950); background: var(--paper-deep); }
+
+  /* ── Düzenle modalı: log-modal ile aynı dil (overlay + kart), nötr üst şerit ── */
+  .kayit-duzenle-overlay{
+    position:fixed;
+    inset:0;
+    background:rgba(20,21,23,0.55);
+    backdrop-filter:blur(2px);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:20px;
+    z-index:200;
+    opacity:0;
+    pointer-events:none;
+    transition:opacity .18s ease;
+  }
+  .kayit-duzenle-overlay.show{ opacity:1; pointer-events:auto; }
+
+  .kayit-duzenle-modal{
+    background:var(--paper);
+    border-radius:14px;
+    width:100%;
+    max-width:420px;
+    box-shadow:0 20px 60px rgba(0,0,0,0.35);
+    transform:translateY(10px) scale(0.97);
+    transition:transform .2s ease;
+    border-top:4px solid var(--steel-950);
+    font-family:'IBM Plex Sans', sans-serif;
+  }
+  .kayit-duzenle-overlay.show .kayit-duzenle-modal{ transform:translateY(0) scale(1); }
+
+  .kayit-duzenle-head{
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:12px;
+    padding:22px 24px 4px;
+  }
+  .kayit-duzenle-head h3{
+    font-family:'Space Grotesk', sans-serif;
+    font-weight:700;
+    font-size:17px;
+    margin:0;
+    color:var(--ink);
+  }
+  .kayit-duzenle-sub{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px;
+    letter-spacing:0.05em;
+    color:var(--muted);
+    text-transform:uppercase;
+    margin:3px 0 0;
+  }
+  .kayit-duzenle-close-btn{
+    background:none;
+    border:1.5px solid var(--steel-700);
+    color:var(--steel-950);
+    border-radius:8px;
+    width:30px;
+    height:30px;
+    flex-shrink:0;
+    cursor:pointer;
+    font-size:13px;
+    transition:all .15s ease;
+  }
+  .kayit-duzenle-close-btn:hover{ background:var(--steel-950); color:#fff; border-color:var(--steel-950); }
+
+  .kayit-duzenle-body{ padding:14px 24px 24px; }
+  .kayit-duzenle-body .field{ margin-bottom:16px; }
+  .kayit-duzenle-body label{
+    display:block;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px;
+    letter-spacing:0.06em;
+    text-transform:uppercase;
+    color:var(--muted);
+    margin-bottom:8px;
+  }
+  .kayit-duzenle-body input[type="text"],
+  .kayit-duzenle-body input[type="email"],
+  .kayit-duzenle-body select{
+    width:100%;
+    font-family:'IBM Plex Sans', sans-serif;
+    font-size:14.5px;
+    color:var(--ink);
+    background:var(--paper-deep);
+    border:1px solid rgba(32,34,36,0.16);
+    border-radius:6px;
+    padding:11px 13px;
+    transition:border-color .15s ease, background .15s ease;
+  }
+  .kayit-duzenle-body input[type="text"]:focus,
+  .kayit-duzenle-body input[type="email"]:focus,
+  .kayit-duzenle-body select:focus{
+    outline:none;
+    border-color:var(--steel-950);
+    background:var(--paper);
+  }
+  .kayit-duzenle-body .field.gizli{ display:none; }
+
+  .kayit-duzenle-hata{
+    display:none;
+    color:#C0392B;
+    background:#FCEAEA;
+    border-radius:7px;
+    padding:9px 12px;
+    font-size:13px;
+    margin:-4px 0 14px;
+  }
+  .kayit-duzenle-hata.show{ display:block; }
+
+  .kayit-duzenle-foot{
+    display:flex;
+    justify-content:flex-end;
+    gap:10px;
+    margin-top:6px;
+  }
+  .kayit-duzenle-vazgec-btn{
+    font-family:'IBM Plex Sans', sans-serif;
+    font-size:13.5px;
+    font-weight:500;
+    background:none;
+    border:none;
+    color:var(--muted);
+    cursor:pointer;
+    padding:11px 6px;
+    transition:color .15s ease;
+  }
+  .kayit-duzenle-vazgec-btn:hover{ color:var(--ink); }
+  .kayit-duzenle-kaydet-btn{
+    font-family:'IBM Plex Sans', sans-serif;
+    font-size:13.5px;
+    font-weight:500;
+    background:var(--steel-950);
+    color:var(--paper);
+    border:none;
+    border-radius:6px;
+    padding:11px 22px;
+    cursor:pointer;
+    transition:background .15s ease, transform .15s ease;
+  }
+  .kayit-duzenle-kaydet-btn:hover{ background:var(--steel-800); transform:translateY(-1px); }
+  .kayit-duzenle-kaydet-btn:disabled{ opacity:0.6; cursor:not-allowed; transform:none; }
+
+  /* Onayla/Reddet modalları aynı .kayit-duzenle-* dilini kullanır, sadece tonu değişir */
+  .kayit-duzenle-modal.ton-onay{ border-top-color: var(--approve); }
+  .kayit-duzenle-modal.ton-ret{ border-top-color: var(--signal); }
+  .kayit-onayla-kaydet-btn{ background:var(--approve) !important; }
+  .kayit-onayla-kaydet-btn:hover{ background:#256b4f !important; }
+  .kayit-reddet-kaydet-btn{ background:var(--signal) !important; }
+  .kayit-reddet-kaydet-btn:hover{ background:#c94a25 !important; }
+
+  /* ── Onay kutusu: native confirm()/alert() yerine, aynı modal dili ── */
+  .kayit-onay-overlay{
+    position:fixed;
+    inset:0;
+    background:rgba(20,21,23,0.55);
+    backdrop-filter:blur(2px);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:20px;
+    z-index:220;
+    opacity:0;
+    pointer-events:none;
+    transition:opacity .18s ease;
+  }
+  .kayit-onay-overlay.show{ opacity:1; pointer-events:auto; }
+
+  .kayit-onay-modal{
+    background:var(--paper);
+    border-radius:14px;
+    width:100%;
+    max-width:380px;
+    box-shadow:0 20px 60px rgba(0,0,0,0.35);
+    transform:translateY(10px) scale(0.97);
+    transition:transform .2s ease;
+    border-top:4px solid var(--steel-950);
+    font-family:'IBM Plex Sans', sans-serif;
+  }
+  .kayit-onay-overlay.show .kayit-onay-modal{ transform:translateY(0) scale(1); }
+  /* Onaylama = approve tonu, reddetme = signal tonu — buton renkleriyle aynı anlam dili */
+  .kayit-onay-modal.ton-onay{ border-top-color: var(--approve); }
+  .kayit-onay-modal.ton-ret{ border-top-color: var(--signal); }
+
+  .kayit-onay-head{ padding:22px 24px 2px; }
+  .kayit-onay-head h3{
+    font-family:'Space Grotesk', sans-serif;
+    font-weight:700;
+    font-size:16.5px;
+    margin:0;
+    color:var(--ink);
+  }
+
+  .kayit-onay-body{ padding:10px 24px 4px; }
+  .kayit-onay-body p{
+    margin:0;
+    font-size:13.5px;
+    line-height:1.55;
+    color:var(--muted);
+  }
+
+  .kayit-onay-foot{
+    display:flex;
+    justify-content:flex-end;
+    gap:10px;
+    padding:18px 24px 24px;
+  }
+  .kayit-onay-vazgec-btn{
+    font-family:'IBM Plex Sans', sans-serif;
+    font-size:13.5px;
+    font-weight:500;
+    background:none;
+    border:none;
+    color:var(--muted);
+    cursor:pointer;
+    padding:11px 6px;
+    transition:color .15s ease;
+  }
+  .kayit-onay-vazgec-btn:hover{ color:var(--ink); }
+  .kayit-onay-evet-btn{
+    font-family:'IBM Plex Sans', sans-serif;
+    font-size:13.5px;
+    font-weight:500;
+    color:#fff;
+    border:none;
+    border-radius:6px;
+    padding:11px 22px;
+    cursor:pointer;
+    transition:background .15s ease, transform .15s ease;
+    background:var(--steel-950);
+  }
+  .kayit-onay-evet-btn:hover{ transform:translateY(-1px); }
+  .kayit-onay-evet-btn.ton-onay{ background:var(--approve); }
+  .kayit-onay-evet-btn.ton-onay:hover{ background:#256b4f; }
+  .kayit-onay-evet-btn.ton-ret{ background:var(--signal); }
+  .kayit-onay-evet-btn.ton-ret:hover{ background:#c94a25; }
+</style>
+</head>
+<body>
+
+  <input type="checkbox" id="menu-toggle" class="menu-toggle-input">
+  <label for="menu-toggle" class="hamburger" aria-label="Menüyü aç/kapat">
+    <span></span><span></span><span></span>
+  </label>
+  <label for="menu-toggle" class="overlay" aria-hidden="true"></label>
+
+  <aside class="sidebar" aria-label="Ana gezinme">
+    <div class="mark">
+      <div class="mark-glyph" aria-hidden="true">
+        <a href="makineler.html">
+        <img src="assets/image/logo.svg" alt="Malta logosu" class="mark-glyph-img">
+       </a>
+      </div>
+      <div class="mark-text">Malta Makine</div>
+    </div>
+    <div class="mark-sub">İade Kiosk Sistemleri</div>
+
+    <div class="panel-seam"></div>
+
+    <nav>
+      <div class="nav-group">
+        <p class="nav-label">Genel</p>
+        <ul class="nav-list">
+          <li class="nav-item">
+            <a class="nav-link" href="makineler.html"><span class="led"></span>Makinelerim</a>
+          </li>
+          <li class="nav-item" data-rol="yonetici">
+            <a class="nav-link" href="makine-yonetimi.html"><span class="led"></span>Makine Yönetimi</a>
+          </li>
+          <li class="nav-item " data-rol="yonetici">
+            <a class="nav-link" href="magaza-yonetimi.html"><span class="led"></span>Mağaza Yönetimi</a>
+          </li>
+          <li class="nav-item active" data-rol="yonetici">
+            <a class="nav-link" href="kayitlar.html"><span class="led"></span>Kullanıcı Kayıtları</a>
+          </li>
+          <li class="nav-item " data-rol="yonetici">
+            <a class="nav-link" href="log-kayitlari.html"><span class="led"></span>Giriş / Aktivite Logları</a>
+          </li>
+          <li class="nav-item " data-rol="yonetici">
+            <a class="nav-link" href="bildirilen-arizalar.html"><span class="led"></span>Bildirilen Arızalar</a>
+          </li>
+        </ul>
+      </div>
+    </nav>
+
+    <div class="nav-group">
+        <p class="nav-label"></p>
+        <ul class="nav-list">
+          <li class="nav-item">
+            <a class="nav-link" href="#" onclick="cikisYap(); return false;"><span class="led"></span>Çıkış</a>
+          </li>
+        </ul>
+      </div>
+
+    <div class="sidebar-foot">
+      <div class="barcode" aria-hidden="true"></div>
+      <span>PANEL SÜRÜM 0.1</span>
+    </div>
+  </aside>
+
+  <main>
+    <section id="ana-sayfa">
+      <div class="home-body">
+
+        <p class="eyebrow" style="margin-bottom:6px;">Yönetim Paneli</p>
+        <h1 style="font-size:clamp(24px,3vw,32px); margin:0 0 10px;">Kullanıcı Kayıtları</h1>
+        <p class="lede" style="margin:0 0 8px;">register.html üzerinden açılmış tüm mağaza hesaplarının ve sabit demo hesapların listesi.</p>
+
+        <div class="kayit-uyari">
+          <span>ℹ️</span>
+          <span><strong>Not:</strong> Bu liste artık gerçek veritabanından okunuyor. "Bekleyen Başvurular" register.html üzerinden gelip henüz onaylanmamış hesaplardır — onaylamadan hiçbir kullanıcı sisteme giriş yapamaz. Aynı isimde bir firma zaten kayıtlıysa başvuru "olası mükerrer" etiketiyle işaretlenir; onaylamadan önce bilgileri düzeltebilirsiniz.</span>
+        </div>
+
+        <div class="kapak-baslik" style="margin:26px 0 4px;">
+          <h3>Kayıtlar</h3>
+          <span class="acik-badge" id="toplam-badge">0 toplam</span>
+          <span class="toplam-badge" id="aktif-badge">0 aktif hesap</span>
+          <span class="toplam-badge" id="bekleyen-badge">0 bekleyen başvuru</span>
+        </div>
+
+        <div class="makine-arama-row">
+          <input type="text" id="kayit-arama" class="makine-arama-input" placeholder="Ad, mağaza veya e-posta ara…" oninput="kayitListesiFiltrele()">
+          <button class="makine-filtre-chip aktif-filtre" data-filtre="hepsi" onclick="kayitFiltreSec('hepsi', this)">Hepsi</button>
+          <button class="makine-filtre-chip" data-filtre="bekliyor" onclick="kayitFiltreSec('bekliyor', this)">Bekleyen Başvurular</button>
+          <button class="makine-filtre-chip" data-filtre="aktif" onclick="kayitFiltreSec('aktif', this)">Aktif Hesaplar</button>
+        </div>
+
+        <div class="kayit-ust-satir">
+          <span></span>
+          <div style="display:flex; gap:10px;">
+            <button class="kayit-disa-aktar-btn gizli" id="market-ekle-ac-btn" onclick="marketEkleAc()">+ Yeni Market Ekle</button>
+            <button class="kayit-disa-aktar-btn" id="duzelt-mod-btn" onclick="duzenlemeModunuAcKapa()">✎ Düzelt</button>
+            <button class="kayit-disa-aktar-btn" onclick="kayitlariCsvIndir()">⭳ CSV olarak dışa aktar</button>
+          </div>
+        </div>
+
+        <div class="kayit-tablo-wrap duzenleme-kapali" id="kayit-tablo-wrap" style="margin-top:14px;">
+          <table class="kayit-tablo">
+            <thead>
+              <tr>
+                <th>Ad Soyad</th>
+                <th>Mağaza</th>
+                <th>E-posta</th>
+                <th>Rol</th>
+                <th>Kaynak</th>
+                <th>Kayıt Tarihi</th>
+                <th>İşlem</th>
+              </tr>
+            </thead>
+            <tbody id="kayit-tablo-govde"></tbody>
+          </table>
+        </div>
+        <p class="kayit-bos-durum" id="kayit-bos-durum">Aramanızla eşleşen bir kayıt bulunamadı.</p>
+
+      </div>
+    </section>
+  </main>
+
+  <!-- ── Düzenle modalı (log-modal ile aynı tasarım dili) ── -->
+  <div class="kayit-duzenle-overlay" id="kayit-duzenle-overlay">
+    <div class="kayit-duzenle-modal">
+      <div class="kayit-duzenle-head">
+        <div>
+          <h3>Kaydı düzenle</h3>
+          <p class="kayit-duzenle-sub" id="kayit-duzenle-sub">—</p>
+        </div>
+        <button type="button" class="kayit-duzenle-close-btn" onclick="kayitDuzenleKapat()" aria-label="Kapat">✕</button>
+      </div>
+      <form class="kayit-duzenle-body" id="kayit-duzenle-form">
+        <div class="field">
+          <label for="duzenle-ad">Ad Soyad</label>
+          <input id="duzenle-ad" type="text" required>
+        </div>
+        <div class="field">
+          <label for="duzenle-magaza">Mağaza / Firma adı</label>
+          <input id="duzenle-magaza" type="text" required>
+        </div>
+        <div class="field">
+          <label for="duzenle-email">E-posta</label>
+          <input id="duzenle-email" type="email" required>
+        </div>
+        <div class="field gizli" id="duzenle-rol-alan">
+          <label for="duzenle-rol">Rol</label>
+          <select id="duzenle-rol">
+            <option value="SUPER_ADMIN">Süper Yönetici</option>
+            <option value="COMPANY">Firma Yöneticisi</option>
+            <option value="MARKET">Market / Bayi</option>
+            <option value="SERVICE_PERSONNEL">Servis Personeli</option>
+            <option value="GOV_AGENCY">Bakanlık</option>
+          </select>
+        </div>
+        <div class="field gizli" id="duzenle-rol-firma-alan">
+          <label for="duzenle-rol-firma">Bağlı Firma</label>
+          <select id="duzenle-rol-firma"><option value="">— Firma seçin —</option></select>
+        </div>
+        <div class="field gizli" id="duzenle-rol-market-alan">
+          <label for="duzenle-rol-market">Bağlı Market / Mağaza</label>
+          <select id="duzenle-rol-market"><option value="">— Market seçin —</option></select>
+        </div>
+        <p class="kayit-duzenle-hata" id="kayit-duzenle-hata"></p>
+        <div class="kayit-duzenle-foot">
+          <button type="button" class="kayit-duzenle-vazgec-btn" onclick="kayitDuzenleKapat()">Vazgeç</button>
+          <button type="submit" class="kayit-duzenle-kaydet-btn" id="kayit-duzenle-kaydet-btn">Kaydet</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ── Onayla modalı (native prompt/confirm zincirinin yerine) ── -->
+  <div class="kayit-duzenle-overlay" id="kayit-onayla-overlay">
+    <div class="kayit-duzenle-modal ton-onay" id="kayit-onayla-modal">
+      <div class="kayit-duzenle-head">
+        <div>
+          <h3>Başvuruyu onayla</h3>
+          <p class="kayit-duzenle-sub" id="kayit-onayla-sub">—</p>
+        </div>
+        <button type="button" class="kayit-duzenle-close-btn" onclick="kayitOnaylaModalKapat()" aria-label="Kapat">✕</button>
+      </div>
+      <form class="kayit-duzenle-body" id="kayit-onayla-form">
+        <div class="field">
+          <label for="onayla-ad">Ad Soyad</label>
+          <input id="onayla-ad" type="text" required>
+        </div>
+        <div class="field">
+          <label for="onayla-magaza">Mağaza / Firma adı</label>
+          <input id="onayla-magaza" type="text" required>
+        </div>
+        <div class="field">
+          <label for="onayla-email">E-posta</label>
+          <input id="onayla-email" type="email" required>
+        </div>
+        <p class="kayit-duzenle-hata" id="kayit-onayla-hata"></p>
+        <div class="kayit-duzenle-foot">
+          <button type="button" class="kayit-duzenle-vazgec-btn" onclick="kayitOnaylaModalKapat()">Vazgeç</button>
+          <button type="submit" class="kayit-duzenle-kaydet-btn kayit-onayla-kaydet-btn" id="kayit-onayla-kaydet-btn">Onayla ve Hesap Oluştur</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ── Reddet modalı (native prompt/confirm zincirinin yerine) ── -->
+  <div class="kayit-duzenle-overlay" id="kayit-reddet-overlay">
+    <div class="kayit-duzenle-modal ton-ret" id="kayit-reddet-modal">
+      <div class="kayit-duzenle-head">
+        <div>
+          <h3>Başvuruyu reddet</h3>
+          <p class="kayit-duzenle-sub">Bu işlem geri alınamaz</p>
+        </div>
+        <button type="button" class="kayit-duzenle-close-btn" onclick="kayitReddetModalKapat()" aria-label="Kapat">✕</button>
+      </div>
+      <form class="kayit-duzenle-body" id="kayit-reddet-form">
+        <div class="field">
+          <label for="reddet-not">Ret nedeni (opsiyonel)</label>
+          <input id="reddet-not" type="text" placeholder="Örn. bilgiler eksik / mükerrer kayıt">
+        </div>
+        <p class="kayit-duzenle-hata" id="kayit-reddet-hata"></p>
+        <div class="kayit-duzenle-foot">
+          <button type="button" class="kayit-duzenle-vazgec-btn" onclick="kayitReddetModalKapat()">Vazgeç</button>
+          <button type="submit" class="kayit-duzenle-kaydet-btn kayit-reddet-kaydet-btn" id="kayit-reddet-kaydet-btn">Evet, Reddet</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ── Yeni Market Ekle modalı (sadece SUPER_ADMIN — mevcut bir firmaya ek market açar) ── -->
+  <div class="kayit-duzenle-overlay" id="market-ekle-overlay">
+    <div class="kayit-duzenle-modal ton-onay">
+      <div class="kayit-duzenle-head">
+        <div>
+          <h3>Yeni market ekle</h3>
+          <p class="kayit-duzenle-sub">Var olan bir firmaya ek market/mağaza kaydı açar</p>
+        </div>
+        <button type="button" class="kayit-duzenle-close-btn" onclick="marketEkleKapat()" aria-label="Kapat">✕</button>
+      </div>
+      <form class="kayit-duzenle-body" id="market-ekle-form">
+        <div class="field">
+          <label for="market-ekle-firma">Firma</label>
+          <select id="market-ekle-firma" required><option value="">— Firma seçin —</option></select>
+        </div>
+        <div class="field">
+          <label for="market-ekle-ad">Market / Mağaza adı</label>
+          <input id="market-ekle-ad" type="text" required>
+        </div>
+        <div class="field">
+        <label for="market-ekle-adres">Adres (Opsiyonel)</label>
+        <input id="market-ekle-adres" type="text">
+        </div>
+        <p class="kayit-duzenle-hata" id="market-ekle-hata"></p>
+        <div class="kayit-duzenle-foot">
+          <button type="button" class="kayit-duzenle-vazgec-btn" onclick="marketEkleKapat()">Vazgeç</button>
+          <button type="submit" class="kayit-duzenle-kaydet-btn kayit-onayla-kaydet-btn" id="market-ekle-kaydet-btn">Market Oluştur</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ── Onay kutusu (native confirm() yerine, tasarım diliyle uyumlu — Sil işlemi için) ── -->
+  <div class="kayit-onay-overlay" id="kayit-onay-overlay">
+    <div class="kayit-onay-modal" id="kayit-onay-modal">
+      <div class="kayit-onay-head">
+        <h3 id="kayit-onay-baslik">Emin misiniz?</h3>
+      </div>
+      <div class="kayit-onay-body">
+        <p id="kayit-onay-mesaj">—</p>
+      </div>
+      <div class="kayit-onay-foot">
+        <button type="button" class="kayit-onay-vazgec-btn" id="kayit-onay-vazgec-btn">Vazgeç</button>
+        <button type="button" class="kayit-onay-evet-btn" id="kayit-onay-evet-btn">Evet</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+  menuyuRoleGoreDuzenle();
+
+  const kullanici = oturumdakiKullanici();
+  const buYoneticiSuperAdmin = kullanici && kullanici.rolKodu === 'SUPER_ADMIN';
+
+  // "Yeni Market Ekle" sadece SUPER_ADMIN'e açık (backend de MARKET_CREATE yetkisini zorunlu kılıyor).
+  document.getElementById('market-ekle-ac-btn').classList.toggle('gizli', !buYoneticiSuperAdmin);
+
+  let aktifKayitFiltre = 'hepsi';
+  let tumKayitlar = [];
+  let tumFirmalar = [];
+  let tumMarketler = [];
+
+  function authFetch(yol, secenekler) {
+    const secenek = secenekler || {};
+    secenek.headers = Object.assign(
+      { 'Content-Type': 'application/json' },
+      { Authorization: 'Bearer ' + oturumAccessTokenGetir() },
+      secenek.headers || {}
+    );
+    return fetch(AUTH_API_BASE + yol, secenek).then(function(res){
+      if (res.status === 401) {
+        // Access token geçersiz/süresi dolmuş → oturumu kapat, login'e dön.
+        if (typeof cikisYap === 'function') cikisYap();
+      }
+      return res;
+    });
+  }
+
+  function tarihFormatla(iso){
+    if (!iso) return '—';
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return '—';
+    return String(d.getDate()).padStart(2,'0') + '.' + String(d.getMonth()+1).padStart(2,'0') + '.' + d.getFullYear()
+      + ' ' + String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
+  }
+
+  /* Backend'den gelen veriyi (bekleyen başvurular + aktif kullanıcılar)
+     tabloda kullanılan ortak bir yapıya dönüştürür. */
+  function kayitlariYukle(){
+    const istekler = [ authFetch('/api/users').then(r => r.ok ? r.json() : []).catch(() => []) ];
+
+    // Bekleyen başvurular sadece SUPER_ADMIN'e açık (backend de bunu zorunlu kılıyor).
+    if (buYoneticiSuperAdmin) {
+      istekler.push(authFetch('/api/registrations').then(r => r.ok ? r.json() : []).catch(() => []));
+    } else {
+      istekler.push(Promise.resolve([]));
+    }
+
+    // Firma adlarını göstermek için (best-effort; yetki yoksa sessizce boş kalır).
+    istekler.push(authFetch('/api/companies').then(r => r.ok ? r.json() : []).catch(() => []));
+
+    // Rol değişikliğinde Market/Bayi seçimi için (best-effort; yetki yoksa sessizce boş kalır).
+    istekler.push(authFetch('/api/markets').then(r => r.ok ? r.json() : []).catch(() => []));
+
+    return Promise.all(istekler).then(([kullanicilar, bekleyenler, firmalar, marketler]) => {
+      tumFirmalar = firmalar;
+      tumMarketler = marketler;
+      const firmaAdi = {};
+      firmalar.forEach(f => { firmaAdi[f.company_id] = f.company_name; });
+
+      const aktifSatirlar = kullanicilar.map(u => ({
+        id: 'user-' + u.user_id,
+        kaynak: 'aktif',
+        adSoyad: u.full_name,
+        magazaAdi: firmaAdi[u.company_id] || (u.company_id ? ('Firma #' + u.company_id) : '—'),
+        email: u.email || '—',
+        rol: u.role_code === 'SUPER_ADMIN' || u.role_code === 'COMPANY' ? 'yonetici' : 'market',
+        rolEtiket: u.role_code,
+        kayitTarihi: u.created_at,
+        userId: u.user_id,
+        companyId: u.company_id,
+        marketId: u.market_id,
+      }));
+
+      const bekleyenSatirlar = bekleyenler
+        .filter(b => b.status === 'PENDING')
+        .map(b => ({
+          id: 'pending-' + b.pending_id,
+          kaynak: 'bekliyor',
+          adSoyad: b.full_name,
+          magazaAdi: b.store_name,
+          email: b.email,
+          rol: 'yonetici',
+          rolEtiket: 'COMPANY (başvuru)',
+          kayitTarihi: b.created_at,
+          pendingId: b.pending_id,
+          mukerrerFirma: b.duplicate_company_name || null,
+        }));
+
+      return bekleyenSatirlar.concat(aktifSatirlar);
+    });
+  }
+
+  function kayitSatiriOlustur(k){
+    const tr = document.createElement('tr');
+    tr.dataset.kaynak = k.kaynak;
+    tr.dataset.arama = (k.adSoyad + ' ' + k.magazaAdi + ' ' + k.email).toLowerCase();
+
+    let islemHtml;
+    if (k.kaynak === 'bekliyor') {
+      islemHtml = buYoneticiSuperAdmin
+        ? `<button class="kayit-duzelt-btn" onclick="kayitDuzenle('${k.id}')">Düzelt</button>`
+          + `<button class="kayit-onayla-btn" onclick="kayitOnayla(${k.pendingId}, this)">Onayla</button>`
+          + `<button class="kayit-reddet-btn" onclick="kayitReddet(${k.pendingId})">Reddet</button>`
+        : `<span class="kayit-sabit-not">Onay yönetici hesabında</span>`;
+    } else {
+      islemHtml = `<button class="kayit-duzelt-btn" onclick="kayitDuzenle('${k.id}')">Düzelt</button>`
+        + `<button class="kayit-sil-btn" onclick="kayitSilOnayla(${k.userId})">Sil</button>`;
+    }
+
+    const mukerrerHtml = k.mukerrerFirma
+      ? `<span class="kayit-mukerrer" title="Aynı isimde kayıtlı firma: ${k.mukerrerFirma}">⚠ MÜKERRER OLABİLİR</span>`
+      : '';
+
+    tr.innerHTML = `
+      <td class="kayit-ad">${k.adSoyad || '—'}</td>
+      <td>${k.magazaAdi || '—'}${mukerrerHtml}</td>
+      <td class="kayit-email">${k.email}</td>
+      <td><span class="kayit-rol-rozet ${k.rol}">${k.rolEtiket}</span></td>
+      <td><span class="kayit-rozet ${k.kaynak}">${k.kaynak === 'bekliyor' ? 'BEKLİYOR' : 'AKTİF'}</span></td>
+      <td>${tarihFormatla(k.kayitTarihi)}</td>
+      <td>${islemHtml}</td>`;
+    return tr;
+  }
+
+  function kayitListesiOlustur(){
+    kayitlariYukle().then(liste => {
+      tumKayitlar = liste;
+      const govde = document.getElementById('kayit-tablo-govde');
+      govde.innerHTML = '';
+      tumKayitlar.forEach(k => govde.appendChild(kayitSatiriOlustur(k)));
+
+      const aktifSayisi = tumKayitlar.filter(k => k.kaynak === 'aktif').length;
+      const bekleyenSayisi = tumKayitlar.filter(k => k.kaynak === 'bekliyor').length;
+      document.getElementById('toplam-badge').textContent = tumKayitlar.length + ' toplam';
+      document.getElementById('aktif-badge').textContent = aktifSayisi + ' aktif hesap';
+      document.getElementById('bekleyen-badge').textContent = bekleyenSayisi + ' bekleyen başvuru';
+
+      kayitListesiFiltrele();
+    });
+  }
+
+  function kayitFiltreSec(filtre, btn){
+    aktifKayitFiltre = filtre;
+    document.querySelectorAll('.makine-filtre-chip').forEach(c => c.classList.remove('aktif-filtre'));
+    btn.classList.add('aktif-filtre');
+    kayitListesiFiltrele();
+  }
+
+  function kayitListesiFiltrele(){
+    const q = document.getElementById('kayit-arama').value.trim().toLowerCase();
+    const satirlar = document.querySelectorAll('#kayit-tablo-govde tr');
+    let gorunenSayisi = 0;
+
+    satirlar.forEach(satir => {
+      const aramaUyumlu = !q || satir.dataset.arama.includes(q);
+      const filtreUyumlu = aktifKayitFiltre === 'hepsi' ? true : satir.dataset.kaynak === aktifKayitFiltre;
+      const goster = aramaUyumlu && filtreUyumlu;
+      satir.style.display = goster ? '' : 'none';
+      if (goster) gorunenSayisi++;
+    });
+
+    document.getElementById('kayit-bos-durum').classList.toggle('show', gorunenSayisi === 0);
+  }
+
+  /* Native confirm() yerine tasarıma uygun onay kutusu.
+     ton: 'onay' (yeşil) ya da 'ret' (turuncu) — buton/üst şerit rengini belirler.
+     "Evet"e basılırsa true, "Vazgeç"e ya da dışarı tıklanırsa false döner. */
+  let kayitOnayCozucu = null;
+
+  function kayitOnayKutusuGoster(secenekler){
+    const overlay = document.getElementById('kayit-onay-overlay');
+    const modal = document.getElementById('kayit-onay-modal');
+    const evetBtn = document.getElementById('kayit-onay-evet-btn');
+
+    document.getElementById('kayit-onay-baslik').textContent = secenekler.baslik || 'Emin misiniz?';
+    document.getElementById('kayit-onay-mesaj').textContent = secenekler.mesaj || '';
+    evetBtn.textContent = secenekler.evetMetni || 'Evet';
+
+    modal.classList.remove('ton-onay', 'ton-ret');
+    evetBtn.classList.remove('ton-onay', 'ton-ret');
+    if (secenekler.ton) {
+      modal.classList.add('ton-' + secenekler.ton);
+      evetBtn.classList.add('ton-' + secenekler.ton);
+    }
+
+    overlay.classList.add('show');
+
+    return new Promise(resolve => { kayitOnayCozucu = resolve; });
+  }
+
+  function kayitOnayKutusuKapat(sonuc){
+    document.getElementById('kayit-onay-overlay').classList.remove('show');
+    if (kayitOnayCozucu) {
+      kayitOnayCozucu(sonuc);
+      kayitOnayCozucu = null;
+    }
+  }
+
+  document.getElementById('kayit-onay-evet-btn').addEventListener('click', () => kayitOnayKutusuKapat(true));
+  document.getElementById('kayit-onay-vazgec-btn').addEventListener('click', () => kayitOnayKutusuKapat(false));
+  document.getElementById('kayit-onay-overlay').addEventListener('click', function(e){
+    if (e.target === this) kayitOnayKutusuKapat(false);
+  });
+
+  let onaylanacakKayit = null;
+
+  function kayitOnayla(pendingId, btn){
+    const kayit = tumKayitlar.find(k => k.pendingId === pendingId);
+    if (!kayit) return;
+
+    onaylanacakKayit = { pendingId, btn };
+    document.getElementById('kayit-onayla-sub').textContent = 'Bilgileri kontrol edin, gerekirse düzeltin';
+    document.getElementById('onayla-ad').value = kayit.adSoyad || '';
+    document.getElementById('onayla-magaza').value = kayit.magazaAdi || '';
+    document.getElementById('onayla-email').value = kayit.email || '';
+    document.getElementById('kayit-onayla-hata').classList.remove('show');
+
+    document.getElementById('kayit-onayla-overlay').classList.add('show');
+    document.getElementById('onayla-ad').focus();
+  }
+
+  function kayitOnaylaModalKapat(){
+    document.getElementById('kayit-onayla-overlay').classList.remove('show');
+    onaylanacakKayit = null;
+  }
+
+  document.getElementById('kayit-onayla-overlay').addEventListener('click', function(e){
+    if (e.target === this) kayitOnaylaModalKapat();
+  });
+
+  document.getElementById('kayit-onayla-form').addEventListener('submit', function(e){
+    e.preventDefault();
+    if (!onaylanacakKayit) return;
+
+    const { pendingId, btn } = onaylanacakKayit;
+    const adSoyad = document.getElementById('onayla-ad').value.trim();
+    const magazaAdi = document.getElementById('onayla-magaza').value.trim();
+    const email = document.getElementById('onayla-email').value.trim();
+    const hata = document.getElementById('kayit-onayla-hata');
+    const kaydetBtn = document.getElementById('kayit-onayla-kaydet-btn');
+
+    hata.classList.remove('show');
+    kaydetBtn.disabled = true;
+    kaydetBtn.textContent = 'Onaylanıyor…';
+
+    authFetch('/api/registrations/' + pendingId + '/approve', {
+      method: 'POST',
+      body: JSON.stringify({ fullName: adSoyad, storeName: magazaAdi, email: email }),
+    })
+      .then(r => r.json().then(data => ({ ok: r.ok, data })))
+      .then(({ ok, data }) => {
+        if (!ok) {
+          hata.textContent = (data && data.message) || 'Onaylama başarısız oldu.';
+          hata.classList.add('show');
+          return;
+        }
+        if (btn) btn.disabled = true;
+        kayitOnaylaModalKapat();
+        kayitListesiOlustur();
+      })
+      .catch(() => {
+        hata.textContent = 'Sunucuya ulaşılamadı.';
+        hata.classList.add('show');
+      })
+      .finally(() => {
+        kaydetBtn.disabled = false;
+        kaydetBtn.textContent = 'Onayla ve Hesap Oluştur';
+      });
+  });
+
+  let reddedilecekPendingId = null;
+
+  function kayitReddet(pendingId){
+    reddedilecekPendingId = pendingId;
+    document.getElementById('reddet-not').value = '';
+    document.getElementById('kayit-reddet-hata').classList.remove('show');
+
+    document.getElementById('kayit-reddet-overlay').classList.add('show');
+    document.getElementById('reddet-not').focus();
+  }
+
+  function kayitReddetModalKapat(){
+    document.getElementById('kayit-reddet-overlay').classList.remove('show');
+    reddedilecekPendingId = null;
+  }
+
+  document.getElementById('kayit-reddet-overlay').addEventListener('click', function(e){
+    if (e.target === this) kayitReddetModalKapat();
+  });
+
+  document.getElementById('kayit-reddet-form').addEventListener('submit', function(e){
+    e.preventDefault();
+    if (!reddedilecekPendingId) return;
+
+    const pendingId = reddedilecekPendingId;
+    const not = document.getElementById('reddet-not').value.trim();
+    const hata = document.getElementById('kayit-reddet-hata');
+    const kaydetBtn = document.getElementById('kayit-reddet-kaydet-btn');
+
+    hata.classList.remove('show');
+    kaydetBtn.disabled = true;
+    kaydetBtn.textContent = 'Reddediliyor…';
+
+    authFetch('/api/registrations/' + pendingId + '/reject', {
+      method: 'POST',
+      body: JSON.stringify({ note: not || null }),
+    })
+      .then(r => {
+        if (!r.ok) return r.json().then(data => { throw new Error((data && data.message) || 'Reddetme başarısız oldu.'); });
+        kayitReddetModalKapat();
+        kayitListesiOlustur();
+      })
+      .catch(err => {
+        hata.textContent = err.message;
+        hata.classList.add('show');
+      })
+      .finally(() => {
+        kaydetBtn.disabled = false;
+        kaydetBtn.textContent = 'Evet, Reddet';
+      });
+  });
+
+  // ── Yeni Market Ekle: mevcut bir firmaya ek market/mağaza kaydı açar ──
+  function marketEkleAc(){
+    const firmaSelect = document.getElementById('market-ekle-firma');
+    firmaSelect.innerHTML = '<option value="">— Firma seçin —</option>'
+      + tumFirmalar.map(f => `<option value="${f.company_id}">${f.company_name}</option>`).join('');
+
+    document.getElementById('market-ekle-ad').value = '';
+    document.getElementById('market-ekle-adres').value = '';
+    document.getElementById('market-ekle-hata').classList.remove('show');
+
+    document.getElementById('market-ekle-overlay').classList.add('show');
+    firmaSelect.focus();
+  }
+
+  function marketEkleKapat(){
+    document.getElementById('market-ekle-overlay').classList.remove('show');
+  }
+
+  document.getElementById('market-ekle-overlay').addEventListener('click', function(e){
+    if (e.target === this) marketEkleKapat();
+  });
+
+  document.getElementById('market-ekle-form').addEventListener('submit', function(e){
+    e.preventDefault();
+
+    const companyId = document.getElementById('market-ekle-firma').value;
+    const marketName = document.getElementById('market-ekle-ad').value.trim();
+    const address = document.getElementById('market-ekle-adres').value.trim();
+    const hata = document.getElementById('market-ekle-hata');
+    const kaydetBtn = document.getElementById('market-ekle-kaydet-btn');
+
+    hata.classList.remove('show');
+    if (!companyId) {
+      hata.textContent = 'Lütfen bir firma seçin.';
+      hata.classList.add('show');
+      return;
+    }
+
+    kaydetBtn.disabled = true;
+    kaydetBtn.textContent = 'Oluşturuluyor…';
+
+    authFetch('/api/markets', {
+      method: 'POST',
+      body: JSON.stringify({
+        companyId: Number(companyId),
+        marketName: marketName,
+        address: address || null,
+      }),
+    })
+      .then(r => r.json().then(data => ({ ok: r.ok, data })))
+      .then(({ ok, data }) => {
+        if (!ok) {
+          hata.textContent = (data && data.message) || 'Market oluşturulamadı.';
+          hata.classList.add('show');
+          return;
+        }
+        marketEkleKapat();
+        kayitListesiOlustur();
+      })
+      .catch(() => {
+        hata.textContent = 'Sunucuya ulaşılamadı.';
+        hata.classList.add('show');
+      })
+      .finally(() => {
+        kaydetBtn.disabled = false;
+        kaydetBtn.textContent = 'Market Oluştur';
+      });
+  });
+
+  // Onaylanmış olsun ya da olmasın bilgileri düzeltmek için.
+  function duzenlemeModunuAcKapa(){
+    const wrap = document.getElementById('kayit-tablo-wrap');
+    const btn = document.getElementById('duzelt-mod-btn');
+    const acildi = wrap.classList.toggle('duzenleme-kapali') === false;
+    btn.classList.toggle('aktif-mod', acildi);
+  }
+
+  // Onaylanmış olsun ya da olmasın bilgileri düzeltmek için.
+  let duzenlenenKayitId = null;
+
+  // Seçilen role göre "Bağlı Firma" / "Bağlı Market" alanlarını gösterir, seçenekleri
+  // doldurur ve mevcut değerleri seçili getirir (trg_validate_user_role_scope kuralına uyum için).
+  function kayitRolAlanlariGuncelle(rolKodu, seciliCompanyId, seciliMarketId){
+    const firmaAlan = document.getElementById('duzenle-rol-firma-alan');
+    const marketAlan = document.getElementById('duzenle-rol-market-alan');
+    const firmaSelect = document.getElementById('duzenle-rol-firma');
+    const marketSelect = document.getElementById('duzenle-rol-market');
+
+    const firmaGerekli = rolKodu === 'COMPANY' || rolKodu === 'MARKET' || rolKodu === 'SERVICE_PERSONNEL';
+    const marketGerekli = rolKodu === 'MARKET';
+
+    firmaAlan.classList.toggle('gizli', !firmaGerekli);
+    marketAlan.classList.toggle('gizli', !marketGerekli);
+
+    if (firmaGerekli) {
+      firmaSelect.innerHTML = '<option value="">— Firma seçin —</option>'
+        + tumFirmalar.map(f => `<option value="${f.company_id}">${f.company_name}</option>`).join('');
+      firmaSelect.value = seciliCompanyId || '';
+    }
+
+    if (marketGerekli) {
+      const firmaId = firmaSelect.value ? Number(firmaSelect.value) : null;
+      const filtreli = firmaId ? tumMarketler.filter(m => m.company_id === firmaId) : tumMarketler;
+      marketSelect.innerHTML = '<option value="">— Market seçin —</option>'
+        + filtreli.map(m => `<option value="${m.market_id}">${m.market_name}</option>`).join('');
+      marketSelect.value = seciliMarketId || '';
+    }
+  }
+
+  document.getElementById('duzenle-rol').addEventListener('change', function(){
+    kayitRolAlanlariGuncelle(this.value, null, null);
+  });
+  document.getElementById('duzenle-rol-firma').addEventListener('change', function(){
+    kayitRolAlanlariGuncelle(document.getElementById('duzenle-rol').value, this.value, null);
+  });
+
+  function kayitDuzenle(kayitId){
+    const kayit = tumKayitlar.find(k => k.id === kayitId);
+    if (!kayit) return;
+
+    duzenlenenKayitId = kayitId;
+    document.getElementById('kayit-duzenle-sub').textContent =
+      kayit.kaynak === 'bekliyor' ? 'Bekleyen başvuru — onaylamadan düzenleniyor' : 'Aktif hesap';
+    document.getElementById('duzenle-ad').value = kayit.adSoyad || '';
+    document.getElementById('duzenle-magaza').value = kayit.magazaAdi || '';
+    document.getElementById('duzenle-email').value = kayit.email || '';
+    document.getElementById('kayit-duzenle-hata').classList.remove('show');
+
+    // Rol değiştirme yalnızca aktif hesaplarda ve SUPER_ADMIN'e açık;
+    // bekleyen başvurularda henüz bir kullanıcı/rol oluşmadığı için gösterilmez.
+    const rolAlani = document.getElementById('duzenle-rol-alan');
+    if (kayit.kaynak === 'aktif' && buYoneticiSuperAdmin) {
+      rolAlani.classList.remove('gizli');
+      const rolKodu = kayit.rolEtiket || 'MARKET';
+      document.getElementById('duzenle-rol').value = rolKodu;
+      kayitRolAlanlariGuncelle(rolKodu, kayit.companyId, kayit.marketId);
+    } else {
+      rolAlani.classList.add('gizli');
+      document.getElementById('duzenle-rol-firma-alan').classList.add('gizli');
+      document.getElementById('duzenle-rol-market-alan').classList.add('gizli');
+    }
+
+    document.getElementById('kayit-duzenle-overlay').classList.add('show');
+    document.getElementById('duzenle-ad').focus();
+  }
+
+  function kayitDuzenleKapat(){
+    document.getElementById('kayit-duzenle-overlay').classList.remove('show');
+    duzenlenenKayitId = null;
+  }
+
+  document.getElementById('kayit-duzenle-overlay').addEventListener('click', function(e){
+    if (e.target === this) kayitDuzenleKapat();
+  });
+
+  document.getElementById('kayit-duzenle-form').addEventListener('submit', function(e){
+    e.preventDefault();
+    const kayit = tumKayitlar.find(k => k.id === duzenlenenKayitId);
+    if (!kayit) return;
+
+    const adSoyad = document.getElementById('duzenle-ad').value.trim();
+    const magazaAdi = document.getElementById('duzenle-magaza').value.trim();
+    const email = document.getElementById('duzenle-email').value.trim();
+    const hata = document.getElementById('kayit-duzenle-hata');
+    const kaydetBtn = document.getElementById('kayit-duzenle-kaydet-btn');
+
+    hata.classList.remove('show');
+    kaydetBtn.disabled = true;
+    kaydetBtn.textContent = 'Kaydediliyor…';
+
+    let istek;
+    if (kayit.kaynak === 'bekliyor') {
+      // Henüz onaylanmamış başvuru: onaylamadan sadece bilgileri güncelle.
+      istek = authFetch('/api/registrations/' + kayit.pendingId, {
+        method: 'PATCH',
+        body: JSON.stringify({ fullName: adSoyad, storeName: magazaAdi, email: email }),
+      }).then(r => r.json().then(data => ({ ok: r.ok, data })));
+    } else {
+      // Aktif hesap: kullanıcı bilgisini ve (varsa) firma adını ayrı ayrı güncelle.
+      const kullaniciGovde = { fullName: adSoyad, email: email };
+      const rolAlaniGorunur = !document.getElementById('duzenle-rol-alan').classList.contains('gizli');
+      if (rolAlaniGorunur) {
+        kullaniciGovde.roleCode = document.getElementById('duzenle-rol').value;
+        if (!document.getElementById('duzenle-rol-firma-alan').classList.contains('gizli')) {
+          const firmaDeger = document.getElementById('duzenle-rol-firma').value;
+          kullaniciGovde.companyId = firmaDeger ? Number(firmaDeger) : null;
+        }
+        if (!document.getElementById('duzenle-rol-market-alan').classList.contains('gizli')) {
+          const marketDeger = document.getElementById('duzenle-rol-market').value;
+          kullaniciGovde.marketId = marketDeger ? Number(marketDeger) : null;
+        }
+      }
+
+      const istekler = [
+        authFetch('/api/users/' + kayit.userId, {
+          method: 'PATCH',
+          body: JSON.stringify(kullaniciGovde),
+        }),
+      ];
+      if (kayit.companyId) {
+        istekler.push(
+          authFetch('/api/companies/' + kayit.companyId, {
+            method: 'PATCH',
+            body: JSON.stringify({ companyName: magazaAdi }),
+          })
+        );
+      }
+      istek = Promise.all(istekler).then(sonuclar => {
+        const basarisiz = sonuclar.find(r => !r.ok);
+        return { ok: !basarisiz, data: {} };
+      });
+    }
+
+    istek
+      .then(({ ok, data }) => {
+        if (!ok) {
+          hata.textContent = (data && data.message) || 'Güncelleme başarısız oldu.';
+          hata.classList.add('show');
+          return;
+        }
+        kayitDuzenleKapat();
+        kayitListesiOlustur();
+      })
+      .catch(() => {
+        hata.textContent = 'Sunucuya ulaşılamadı.';
+        hata.classList.add('show');
+      })
+      .finally(() => {
+        kaydetBtn.disabled = false;
+        kaydetBtn.textContent = 'Kaydet';
+      });
+  });
+
+  function kayitSilOnayla(userId){
+    kayitOnayKutusuGoster({
+      baslik: 'Bu hesabı silmek istediğinize emin misiniz?',
+      mesaj: 'Bu işlem geri alınamaz, hesap kalıcı olarak silinecek.',
+      evetMetni: 'Evet, Sil',
+      ton: 'ret'
+    }).then(onaylandi => {
+      if (!onaylandi) return;
+      authFetch('/api/users/' + userId, { method: 'DELETE' })
+        .then(r => {
+          if (!r.ok && r.status !== 204) { alert('Silme başarısız oldu.'); return; }
+          kayitListesiOlustur();
+        })
+        .catch(() => alert('Sunucuya ulaşılamadı.'));
+    });
+  }
+
+  function kayitlariCsvIndir(){
+    const basliklar = ['Ad Soyad', 'Mağaza', 'E-posta', 'Rol', 'Durum', 'Kayıt Tarihi'];
+    const satirlar = tumKayitlar.map(k => [
+      k.adSoyad || '', k.magazaAdi || '', k.email, k.rolEtiket, k.kaynak, k.kayitTarihi ? tarihFormatla(k.kayitTarihi) : ''
+    ]);
+    const csvIcerik = [basliklar].concat(satirlar)
+      .map(satir => satir.map(h => '"' + String(h).replace(/"/g, '""') + '"').join(','))
+      .join('\n');
+    const blob = new Blob(['\uFEFF' + csvIcerik], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'kullanici-kayitlari.csv';
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  document.addEventListener('DOMContentLoaded', kayitListesiOlustur);
+</script>
+</body>
+</html>

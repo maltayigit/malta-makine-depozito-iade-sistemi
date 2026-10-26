@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ekran Durum Paneli — Malta Makine</title>
+<link rel="icon" type="image/svg+xml" href="assets/image/favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/style.css">
+<script src="assets/js/auth.js"></script>
+<script>sayfaKorumaKontrolEt(['yonetici','market']);</script>
+<script src="assets/js/api-client.js"></script>
+<script src="assets/js/ekran-veri.js"></script>
+<script src="assets/js/ekran-durumu-api.js"></script>
+<script src="assets/js/kapak-uyari.js"></script>
+
+<style>
+  /* ── EKRAN DURUM PANELİ — sitenin kağıt/çelik diline uyumlu ekler ── */
+  .ekran-grid{
+    display:grid;
+    grid-template-columns:repeat(2, 1fr);
+    gap:16px;
+    margin-bottom:8px;
+  }
+  @media (max-width:700px){ .ekran-grid{ grid-template-columns:1fr; } }
+
+  .ekran-card{
+    display:flex;
+    flex-direction:column;
+    gap:14px;
+    border-radius:14px;
+    padding:20px 20px 18px;
+    border:1.5px solid;
+    transition:background .25s ease, border-color .25s ease;
+  }
+  .ekran-top{ display:flex; align-items:flex-start; gap:14px; }
+  .ekran-icon-wrap{
+    width:48px; height:48px; border-radius:11px;
+    display:flex; align-items:center; justify-content:center;
+    flex-shrink:0;
+  }
+  .ekran-icon-wrap svg{ width:23px; height:23px; }
+  .ekran-info{ flex:1; min-width:0; }
+  .ekran-info .ad{
+    font-family:'Space Grotesk', sans-serif;
+    font-weight:700;
+    font-size:16px;
+    line-height:1.3;
+  }
+  .ekran-info .kimlik{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:10.5px;
+    letter-spacing:0.08em;
+    text-transform:uppercase;
+    color:var(--muted);
+    margin-top:3px;
+  }
+  .ekran-durum-rozet{
+    font-family:'Space Grotesk', sans-serif;
+    font-weight:700;
+    font-size:12.5px;
+    padding:4px 11px;
+    border-radius:20px;
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    white-space:nowrap;
+  }
+  .ekran-durum-rozet .nokta{ width:6px; height:6px; border-radius:50%; flex-shrink:0; }
+
+  .ekran-meta{
+    display:flex;
+    flex-direction:column;
+    gap:6px;
+    padding-top:13px;
+    border-top:1px solid rgba(32,34,36,0.12);
+  }
+  .ekran-meta .satir{
+    display:flex;
+    justify-content:space-between;
+    gap:10px;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11.5px;
+  }
+  .ekran-meta .satir span:first-child{ color:var(--muted); flex-shrink:0; }
+  .ekran-meta .satir span:last-child{ color:var(--ink); text-align:right; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+
+  /* durum: çalışıyor (yeşil) */
+  .ekran-card.calisiyor{ background:#E8F5F0; border-color:#0F6E56; }
+  .ekran-card.calisiyor .ekran-icon-wrap{ background:#0F6E56; color:#fff; }
+  .ekran-card.calisiyor .ekran-durum-rozet{ background:rgba(15,110,86,0.14); color:#0F6E56; }
+  .ekran-card.calisiyor .ekran-durum-rozet .nokta{ background:#0F6E56; box-shadow:0 0 0 3px rgba(15,110,86,0.25); }
+  .ekran-card.calisiyor .ekran-meta{ border-top-color:rgba(15,110,86,0.18); }
+
+  /* durum: hiç bağlanmadı (nötr) */
+  .ekran-card.beklemede{ background:var(--paper-deep); border-color:rgba(32,34,36,0.14); }
+  .ekran-card.beklemede .ekran-icon-wrap{ background:var(--led-off); color:#fff; }
+  .ekran-card.beklemede .ekran-durum-rozet{ background:rgba(107,111,115,0.16); color:var(--muted); }
+  .ekran-card.beklemede .ekran-durum-rozet .nokta{ background:var(--led-off); }
+
+  /* durum: çevrimdışı / arızalı (kırmızı, nabız) */
+  .ekran-card.sikisma{ background:#FCEAEA; border-color:#C0392B; animation:heroUyariNabiz 1.6s ease-in-out infinite; }
+  .ekran-card.sikisma .ekran-icon-wrap{ background:#C0392B; color:#fff; }
+  .ekran-card.sikisma .ekran-durum-rozet{ background:rgba(192,57,43,0.14); color:#C0392B; }
+  .ekran-card.sikisma .ekran-durum-rozet .nokta{ background:#C0392B; box-shadow:0 0 0 3px rgba(192,57,43,0.25); animation:rozetNabiz 1.6s ease-in-out infinite; }
+  .ekran-card.sikisma .ekran-meta{ border-top-color:rgba(192,57,43,0.2); }
+
+  .ekran-ozet{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11.5px;
+    color:var(--muted);
+  }
+  .ekran-ozet strong{ color:var(--ink); font-weight:600; }
+
+  .kod{
+    background:var(--steel-950);
+    color:var(--paper);
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11.5px;
+    padding:3px 9px;
+    border-radius:5px;
+    display:inline-block;
+    line-height:1.6;
+  }
+</style>
+</head>
+<body>
+
+  <input type="checkbox" id="menu-toggle" class="menu-toggle-input">
+  <label for="menu-toggle" class="hamburger" aria-label="Menüyü aç/kapat">
+    <span></span><span></span><span></span>
+  </label>
+  <label for="menu-toggle" class="overlay" aria-hidden="true"></label>
+
+  <aside class="sidebar" aria-label="Ana gezinme">
+    <div class="mark">
+      <div class="mark-glyph" aria-hidden="true">
+        <a href="index.html">
+        <img src="assets/image/logo.svg" alt="Malta logosu" class="mark-glyph-img">
+       </a>
+      </div>
+      <div class="mark-text">Malta Makine</div>
+    </div>
+    <div class="mark-sub">İade Kiosk Sistemleri</div>
+
+    <div class="panel-seam"></div>
+
+    <nav>
+      <div class="nav-group">
+        <p class="nav-label">Ürün</p>
+        <ul class="nav-list">
+          <li class="nav-item">
+            <a class="nav-link" href="index.html"><span class="led"></span>Bakım</a>
+          </li>
+          <li class="nav-item" data-rol="yonetici,market">
+            <a class="nav-link" href="makine.html"><span class="led"></span>Kapaklar</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="doluluk.html"><span class="led"></span>Doluluk Bilgi</a>
+          </li>
+          <li class="nav-item" data-rol="yonetici,market">
+            <a class="nav-link" href="motor-durum.html"><span class="led"></span>Motor Durum Özeti</a>
+          </li>
+          <li class="nav-item" data-rol="yonetici">
+            <a class="nav-link" href="kapak-motor-durum.html"><span class="led"></span>Kapak Motor Durumu</a>
+          </li>
+          <li class="nav-item" data-rol="yonetici,market">
+            <a class="nav-link" href="fan.html"><span class="led"></span>Fan Durum</a>
+          </li>
+          <li class="nav-item" data-rol="yonetici">
+            <a class="nav-link" href="kamera-durum.html"><span class="led"></span>Kamera Durum</a>
+          </li>
+          <li class="nav-item" data-rol="yonetici,market">
+            <a class="nav-link" href="ekran-durumu.html"><span class="led"></span>Ekran Durum Paneli</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="acil-durum.html"><span class="led"></span>Acil Durum & Alarm</a>
+          </li>
+        </ul>
+      </div>
+ 
+      <div class="nav-group">
+        <p class="nav-label">Motorlar</p>
+        <ul class="nav-list">
+          <li class="nav-item">
+            <a class="nav-link" href="unite.html?unite=ezme1_05l"><span class="led"></span>(0.5L) 1. Plastik Ezme Durum</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="unite.html?unite=ezme2_05l"><span class="led"></span>(0.5L) 2. Plastik Ezme Durum</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="unite.html?unite=ezme1_13l"><span class="led"></span>(1-3L) 1. Plastik Ezme Durum</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="unite.html?unite=ezme2_13l"><span class="led"></span>(1-3L) 2. Plastik Ezme Durum</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="unite.html?unite=ezme3"><span class="led"></span>Teneke/Alüminyum Ezme Durum</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="cam-kirma.html"><span class="led"></span>1. Cam Kırma Durum</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="cam-kirma2.html"><span class="led"></span>2. Cam Kırma Durum</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="unite.html?unite=suKaristirma"><span class="led"></span>Atık Su Tankı Karıştırma Durum</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="unite.html?unite=atikSuPompa"><span class="led"></span>Atık Su Pompa Durum</a>
+          </li>
+        </ul>
+      </div>
+
+        <div class="nav-group">
+        <p class="nav-label">İletişim</p>
+        <ul class="nav-list">
+          <li class="nav-item">
+            <a class="nav-link" href="ariza-bildir.html"><span class="led"></span>Arıza Bildir</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="contact.html"><span class="led"></span>Bizimle İletişime Geçin</a>
+          </li>
+        </ul>
+      </div>
+    </nav>
+
+    <div class="nav-group">
+        <p class="nav-label"></p>
+        <ul class="nav-list">
+          <li class="nav-item">
+            <a class="nav-link" href="makineler.html"><span class="led"></span>Çıkış</a>
+          </li>
+        </ul>
+      </div>
+
+    <div class="sidebar-foot">
+      <div class="barcode" aria-hidden="true"></div>
+      <span>PANEL SÜRÜM 0.1</span>
+    </div>
+  </aside>
+
+  <main>
+    <section id="ekran-durum">
+      <span class="eyebrow">Canlılık / Heartbeat</span>
+      <h1>Ekran Durum Paneli</h1>
+      <p class="lede">Makine üzerindeki tabletlerin her biri, üzerinde açık olan sayfa aracılığıyla düzenli aralıklarla bir sinyal gönderir. Bu panel o sinyalleri okuyarak her ekranın çalışır durumda mı yoksa donmuş / kapanmış / ağdan düşmüş mü olduğunu gösterir.</p>
+
+      <div class="row">
+        <h2>Tabletler</h2>
+        <span class="ekran-ozet" id="ekran-ozet">Kontrol ediliyor…</span>
+      </div>
+
+      <div id="baglanti-hata-wrap"></div>
+
+      <div class="ekran-grid" id="ekran-grid"></div>
+
+      <div class="guvenlik-notu">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+        <div>
+          <strong>Nasıl çalışır:</strong> Her tabletteki sayfa 3 saniyede bir "buradayım" sinyali gönderir. 8 saniyeden uzun süre sinyal gelmezse ekran <strong>çevrimdışı / arızalı</strong> sayılır. Bir tableti bu panele bağlamak için o tabletteki sayfaya şunu ekleyin:
+          <br><br>
+          <span class="kod">&lt;script src="ekran-veri.js"&gt;&lt;/script&gt;</span><br><br>
+          <span class="kod">ekranHeartbeatBaslat('ekran1', '1. Tablet');</span>
+          <br><br>
+          Her tablet için farklı bir kimlik kullanın: <code style="font-family:'IBM Plex Mono',monospace;">ekran1, ekran2, ekran3, ekran4</code>. İkinci parametredeki ismi dilediğiniz gibi değiştirebilirsiniz (örn. gerçek tablet konumunun adı).
+        </div>
+      </div>
+    </section>
+  </main>
+
+<script>
+
+    // Mevcut sayfanın URL'sine göre doğru sekmeyi otomatik "aktif" yap
+    (function aktifSekmeAyarla(){
+      var mevcutDosya = window.location.pathname.split('/').pop() || 'index.html';
+      var eslesenLink = null;
+
+      document.querySelectorAll('.nav-link').forEach(function(link){
+        var href = link.getAttribute('href');
+        if (!href || href === '#') return;
+        var hedefDosya = href.split('/').pop();
+        if (hedefDosya === mevcutDosya) {
+          eslesenLink = link;
+        }
+      });
+
+      document.querySelectorAll('.nav-item').forEach(function(item){
+        item.classList.remove('active');
+      });
+      if (eslesenLink) {
+        eslesenLink.closest('.nav-item').classList.add('active');
+      }
+    })();
+
+    // Mobil çekmece açıksa, bir menüye tıklandığında otomatik kapansın
+    document.querySelectorAll('.nav-link').forEach(function(link){
+      link.addEventListener('click', function(){
+        var toggle = document.getElementById('menu-toggle');
+        if (toggle) toggle.checked = false;
+      });
+    });
+
+  // ── Ekran (tablet) canlılık kartları ────────────────────────────────────
+  var EKRAN_DURUM_SINIF = { cevrimici: 'calisiyor', cevrimdisi: 'sikisma', hicgorulmedi: 'beklemede' };
+  var EKRAN_DURUM_METIN = { cevrimici: 'Çalışıyor', cevrimdisi: 'Çevrimdışı / Arızalı', hicgorulmedi: 'Hiç Bağlanmadı' };
+
+  var TABLET_IKON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>';
+
+  function zamanFarkiMetni(ms){
+    var sn = Math.floor(ms / 1000);
+    if (sn < 5) return 'az önce';
+    if (sn < 60) return sn + ' sn önce';
+    var dk = Math.floor(sn / 60);
+    if (dk < 60) return dk + ' dk önce';
+    var sa = Math.floor(dk / 60);
+    return sa + ' sa önce';
+  }
+
+  function saatMetni(ts){
+    var d = new Date(ts);
+    return String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0') + ':' + String(d.getSeconds()).padStart(2,'0');
+  }
+
+  function ekranKartOlustur(ekranTanim, kayit){
+    var d = ekranDurumHesapla(kayit);
+    var sinif = EKRAN_DURUM_SINIF[d.key] || 'beklemede';
+    var ad = kayit && kayit.ad ? kayit.ad : ekranTanim.varsayilanAd;
+
+    var card = document.createElement('div');
+    card.className = 'ekran-card ' + sinif;
+
+    var metaHtml = '<div class="satir"><span>Son sinyal</span><span>Hiç sinyal alınmadı</span></div>';
+    if (kayit){
+      metaHtml =
+        '<div class="satir"><span>Son sinyal</span><span>' + saatMetni(kayit.sonGorulme) + ' · ' + zamanFarkiMetni(Date.now() - kayit.sonGorulme) + '</span></div>' +
+        '<div class="satir"><span>Açık sayfa</span><span>' + (kayit.sayfaYolu || '—') + '</span></div>';
+    }
+
+    card.innerHTML =
+      '<div class="ekran-top">' +
+        '<div class="ekran-icon-wrap">' + TABLET_IKON + '</div>' +
+        '<div class="ekran-info">' +
+          '<div class="ad">' + ad + '</div>' +
+          '<div class="kimlik">' + ekranTanim.id + '</div>' +
+        '</div>' +
+        '<span class="ekran-durum-rozet"><span class="nokta"></span>' + (EKRAN_DURUM_METIN[d.key] || d.ad) + '</span>' +
+      '</div>' +
+      '<div class="ekran-meta">' + metaHtml + '</div>';
+
+    return card;
+  }
+
+  function ekranPaneliGuncelle(){
+    var veriler = ekranlariYukle();
+    var grid = document.getElementById('ekran-grid');
+    grid.innerHTML = '';
+
+    var cevrimici = 0, cevrimdisi = 0, hic = 0;
+    EKRAN_LISTESI.forEach(function(ekranTanim){
+      var kayit = veriler[ekranTanim.id] || null;
+      var d = ekranDurumHesapla(kayit);
+      if (d.key === 'cevrimici') cevrimici++;
+      else if (d.key === 'cevrimdisi') cevrimdisi++;
+      else hic++;
+      grid.appendChild(ekranKartOlustur(ekranTanim, kayit));
+    });
+
+    var ozet = document.getElementById('ekran-ozet');
+    ozet.innerHTML = '<strong>' + cevrimici + '</strong> çalışıyor · <strong>' + cevrimdisi + '</strong> çevrimdışı/arızalı · <strong>' + hic + '</strong> hiç bağlanmadı';
+  }
+
+  if (typeof apiEkranDurumuBaslat === 'function') {
+    apiEkranDurumuBaslat();
+  } else {
+    // api-client.js / ekran-durumu-api.js yüklenemediyse (örn. dosya
+    // eksik/hatalı) sessizce eski localStorage verisine düşmek yerine
+    // bunu açıkça bildir, sonra yine de eski davranışa düş.
+    const wrap = document.getElementById('baglanti-hata-wrap');
+    if (wrap) wrap.innerHTML = '<div class="doluluk-alert" role="alert"><div class="doluluk-alert-body"><p class="doluluk-alert-title">Entegrasyon Hatası</p><p class="doluluk-alert-text">api-client.js veya ekran-durumu-api.js yüklenemedi, canlı veri gösterilemiyor.</p></div></div>';
+    ekranPaneliGuncelle();
+    setInterval(ekranPaneliGuncelle, 1500);
+    window.addEventListener('storage', function(e){
+      if (e.key === EKRAN_DEPO_KEY) ekranPaneliGuncelle();
+    });
+  }
+
+
+document.addEventListener('DOMContentLoaded', function(){ menuyuRoleGoreDuzenle(); });
+</script>
+</body>
+</html>

@@ -1,0 +1,1109 @@
+﻿<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Malta Makine — Self-Servis İade Kioskı</title>
+<link rel="icon" type="image/svg+xml" href="assets/image/favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/style.css">
+<script src="assets/js/auth.js"></script>
+<script>sayfaKorumaKontrolEt(['yonetici','market']);</script>
+<script src="assets/js/api-client.js"></script>
+<script src="assets/js/doluluk-veri.js"></script>
+<script src="assets/js/fan-veri.js"></script>
+<style>
+  /* Kapak uzun süre açık uyarısı — TÜM SAYFAYI ENGELLEYEN modal.
+     Sitenin warn-overlay/confirm-overlay diliyle aynı yapıyı kullanır:
+     karartılmış arka plan + ortalanmış kart. Arka plan tüm tıklamaları
+     yakaladığı için (pointer-events:auto + z-index çok yüksek) uyarı
+     açıkken menüdeki linklere veya sayfadaki hiçbir öğeye tıklanamaz;
+     kullanıcı yalnızca "Farkındayım, Ertele" butonuyla devam edebilir. */
+  .kapak-uyari-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(20,21,23,0.6);
+    backdrop-filter: blur(2px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    z-index: 1000;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .2s ease;
+  }
+  .kapak-uyari-overlay.show {
+    opacity: 1;
+    pointer-events: auto;
+  }
+  .kapak-uyari-banner {
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+    width: 100%;
+    max-width: 440px;
+    padding: 26px 24px 22px;
+    border-radius: 14px;
+    background: var(--paper);
+    border-top: 4px solid #C0392B;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.35);
+    transform: translateY(10px) scale(0.97);
+    transition: transform .2s ease;
+  }
+  .kapak-uyari-overlay.show .kapak-uyari-banner {
+    transform: translateY(0) scale(1);
+  }
+  .kapak-uyari-ikon {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    background: #FCEAEA;
+    color: #C0392B;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    animation: kapakUyariNabiz 1.8s ease-in-out infinite;
+  }
+  .kapak-uyari-ikon svg { width: 20px; height: 20px; }
+  .kapak-uyari-govde { flex: 1; min-width: 0; }
+  .kapak-uyari-baslik {
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 700;
+    font-size: 17px;
+    color: var(--ink);
+    margin: 0 0 6px;
+  }
+  .kapak-uyari-metin {
+    font-size: 14px;
+    line-height: 1.6;
+    color: #4B4F52;
+    margin: 0;
+  }
+  .kapak-uyari-aksiyon {
+    margin-top: 20px;
+    display: flex;
+    justify-content: flex-end;
+  }
+  .kapak-uyari-btn {
+    background: #C0392B;
+    color: #fff;
+    border: none;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 500;
+    padding: 10px 18px;
+    border-radius: 7px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background .15s ease, transform .15s ease;
+  }
+  .kapak-uyari-btn:hover {
+    background: #a8301f;
+    transform: translateY(-1px);
+  }
+  @keyframes kapakUyariNabiz {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(192,57,43,0.35); }
+    50% { box-shadow: 0 0 0 6px rgba(192,57,43,0); }
+  }
+</style>
+</head>
+<body>
+ 
+  <input type="checkbox" id="menu-toggle" class="menu-toggle-input">
+  <label for="menu-toggle" class="hamburger" aria-label="Menüyü aç/kapat">
+    <span></span><span></span><span></span>
+  </label>
+  <label for="menu-toggle" class="overlay" aria-hidden="true"></label>
+ 
+  <aside class="sidebar" aria-label="Ana gezinme">
+    <div class="mark">
+      <div class="mark-glyph" aria-hidden="true">
+        <a href="index.html">
+        <img src="assets/image/logo.svg" alt="Malta logosu" class="mark-glyph-img">
+       </a>
+      </div>
+      <div class="mark-text">Malta Makine</div>
+    </div>
+    <div class="mark-sub">İade Kiosk Sistemleri</div>
+ 
+    <div class="panel-seam"></div>
+
+    <nav>
+      <div class="nav-group">
+        <p class="nav-label">Ürün</p>
+        <ul class="nav-list">
+          <li class="nav-item">
+            <a class="nav-link" href="index.html"><span class="led"></span>Bakım</a>
+          </li>
+          <li class="nav-item" data-rol="yonetici,market">
+            <a class="nav-link" href="makine.html"><span class="led"></span>Kapaklar</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="doluluk.html"><span class="led"></span>Doluluk Bilgi</a>
+          </li>
+          <li class="nav-item" data-rol="yonetici,market">
+            <a class="nav-link" href="motor-durum.html"><span class="led"></span>Motor Durum Özeti</a>
+          </li>
+          <li class="nav-item" data-rol="yonetici">
+            <a class="nav-link" href="kapak-motor-durum.html"><span class="led"></span>Kapak Motor Durumu</a>
+          </li>
+          <li class="nav-item" data-rol="yonetici,market">
+            <a class="nav-link" href="fan.html"><span class="led"></span>Fan Durum</a>
+          </li>
+          <li class="nav-item" data-rol="yonetici">
+            <a class="nav-link" href="kamera-durum.html"><span class="led"></span>Kamera Durum</a>
+          </li>
+          <li class="nav-item" data-rol="yonetici,market">
+            <a class="nav-link" href="ekran-durumu.html"><span class="led"></span>Ekran Durum Paneli</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="acil-durum.html"><span class="led"></span>Acil Durum & Alarm</a>
+          </li>
+        </ul>
+      </div>
+ 
+      <div class="nav-group">
+        <p class="nav-label">Motorlar</p>
+        <ul class="nav-list">
+          <li class="nav-item">
+            <a class="nav-link" href="unite.html?unite=ezme1_05l"><span class="led"></span>(0.5L) 1. Plastik Ezme Durum</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="unite.html?unite=ezme2_05l"><span class="led"></span>(0.5L) 2. Plastik Ezme Durum</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="unite.html?unite=ezme1_13l"><span class="led"></span>(1-3L) 1. Plastik Ezme Durum</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="unite.html?unite=ezme2_13l"><span class="led"></span>(1-3L) 2. Plastik Ezme Durum</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="unite.html?unite=ezme3"><span class="led"></span>Teneke/Alüminyum Ezme Durum</a>
+          </li>
+         <li class="nav-item">
+            <a class="nav-link" href="cam-kirma.html"><span class="led"></span>1. Cam Kırma Durum</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="cam-kirma2.html"><span class="led"></span>2. Cam Kırma Durum</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="unite.html?unite=suKaristirma"><span class="led"></span>Atık Su Tankı Karıştırma Durum</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="unite.html?unite=atikSuPompa"><span class="led"></span>Atık Su Pompa Durum</a>
+          </li>
+        </ul>
+      </div>
+
+        <div class="nav-group">
+        <p class="nav-label">İletişim</p>
+        <ul class="nav-list">
+          <li class="nav-item active">
+            <a class="nav-link" href="ariza-bildir.html"><span class="led"></span>Arıza Bildir</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="contact.html"><span class="led"></span>Bizimle İletişime Geçin</a>
+          </li>
+        </ul>
+      </div>
+    </nav>
+
+    <div class="nav-group">
+        <p class="nav-label"></p>
+        <ul class="nav-list">
+          <li class="nav-item">
+            <a class="nav-link" href="makineler.html"><span class="led"></span>Çıkış</a>
+          </li>
+        </ul>
+      </div>
+ 
+    <div class="sidebar-foot">
+      <div class="barcode" aria-hidden="true"></div>
+      <span>PANEL SÜRÜM 0.1</span>
+    </div>
+  </aside>
+  <main>
+    <section id="ana-sayfa">
+ 
+    <!-- ANA EKRAN -->
+  <div class="screen" id="home-screen">
+    <div class="doluluk-top">
+      <div>
+        <p class="eyebrow" style="margin-bottom:6px;">Makine #001 · Malta · Murat Kaya</p>
+        <h1 style="font-size:clamp(24px,3vw,32px); margin:0;">Kapaklar</h1>
+      </div>
+      <div class="toplu-row" style="align-items:center; flex-wrap:wrap;">
+        <button class="toplu-btn ac" onclick="tumunuAc()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 019.9-1"/></svg>
+          Tümünü Aç
+        </button>
+        <button class="toplu-btn kapat" onclick="tumunuKapat()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+          Tümünü Kapat
+        </button>
+        <button class="toplu-btn kayit" onclick="kayitlarAc()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          Kayıtlar
+        </button>
+      </div>
+    </div>
+ 
+    <div class="home-body">
+ 
+      <!-- Kapak başlık -->
+      <div class="kapak-baslik">
+        <h3>Kapak Durumları</h3>
+        <span class="acik-badge" id="acik-badge">0 açık</span>
+        <span class="toplam-badge" id="toplam-badge" title="Bu zamana kadar toplam açılma sayısı">0 kez açıldı</span>
+      </div>
+ 
+      <!-- Kapak grid -->
+      <div class="kapak-grid" id="kapak-grid"></div>
+ 
+    </div>
+  </div>
+ 
+    
+  </main>
+  <!-- Güvenlik Uyarısı Modalı (index.html / ezme sayfalarıyla aynı tasarım) -->
+  <div class="warn-overlay" id="warn-overlay">
+    <div class="warn-modal" role="alertdialog" aria-labelledby="warn-title" aria-describedby="warn-text">
+      <div class="warn-head">
+        <div class="warn-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        </div>
+        <div>
+          <p class="warn-sub">Güvenlik Uyarısı</p>
+          <h3 class="warn-title" id="warn-title">Kapak açılamadı</h3>
+        </div>
+      </div>
+      <p class="warn-text" id="warn-text">Makine çalışırken kapaklar güvenlik nedeniyle açılamıyor. Lütfen önce makineyi kapatıp tekrar deneyin.</p>
+      <ul class="warn-list" id="warn-list"></ul>
+      <div class="warn-actions">
+        <button class="warn-btn" onclick="uyariKapat()">Anladım</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Kapak Açılma/Kapanma Kayıtları Modalı -->
+  <div class="log-overlay" id="log-overlay">
+    <div class="log-modal" role="dialog" aria-labelledby="log-title">
+      <div class="log-head">
+        <div>
+          <h3 id="log-title">Kapak İşlem Geçmişi</h3>
+          <p class="log-sub">Veritabanında saklanan açılma · kapanma geçmişi</p>
+        </div>
+        <button class="log-close-btn" onclick="kayitlarKapat()" aria-label="Kapat">✕</button>
+      </div>
+      <div class="log-body">
+        <table class="log-table">
+          <thead>
+            <tr>
+              <th class="log-no-col">#</th>
+              <th>Kapak</th>
+              <th>Açılma (Gün.Ay.Yıl Saat)</th>
+              <th>Kapanma (Gün.Ay.Yıl Saat)</th>
+              <th>Açık Kalma Süresi</th>
+            </tr>
+          </thead>
+          <tbody id="log-tbody"></tbody>
+        </table>
+      </div>
+      <div class="log-foot">
+      </div>
+    </div>
+  </div>
+
+  <!-- Kayıtları Temizle Onay Modalı -->
+  <div class="confirm-overlay" id="confirm-overlay">
+    <div class="confirm-modal" role="alertdialog" aria-labelledby="confirm-title" aria-describedby="confirm-text">
+      <div class="confirm-head">
+        <div class="confirm-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg>
+        </div>
+        <div>
+          <p class="confirm-sub">Kayıtlar Silinecek</p>
+          <h3 class="confirm-title" id="confirm-title">Emin misiniz?</h3>
+        </div>
+      </div>
+      <p class="confirm-text" id="confirm-text">Tüm kapak açılma/kapanma kayıtları kalıcı olarak silinecek. Bu işlem geri alınamaz.</p>
+      <div class="confirm-actions">
+        <button class="confirm-btn-ghost" onclick="kayitlariTemizleOnayKapat()">Vazgeç</button>
+        <button class="confirm-btn-danger" onclick="kayitlariTemizleOnayla()">Evet, Sil</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Kayıt Defteri Dolu Bildirimi -->
+  <div class="confirm-overlay" id="full-overlay">
+    <div class="confirm-modal" role="alertdialog" aria-labelledby="full-title" aria-describedby="full-text">
+      <div class="confirm-head">
+        <div class="confirm-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+        </div>
+        <div>
+          <p class="confirm-sub">Kayıt Defteri Dolu</p>
+          <h3 class="confirm-title" id="full-title">Kapak açılamıyor</h3>
+        </div>
+      </div>
+      <p class="confirm-text" id="full-text">Kapak açılma/kapanma kayıt defteri doldu (<span id="full-sayi">0</span>/<span id="full-limit">0</span>). Kapakları açabilmek için en eski 50 kaydın silinmesi gerekiyor. Silelim mi?</p>
+      <div class="confirm-actions">
+        <button class="confirm-btn-ghost" onclick="kayitDefteriDoluBildirimKapat()">Vazgeç</button>
+        <button class="confirm-btn-danger" onclick="eskiKayitlariSilVeAc()">Evet, Sil ve Aç</button>
+      </div>
+    </div>
+  </div>  <!-- Kapak Uzun Süre Açık Uyarı Modalı — TÜM SAYFAYI ENGELLER, kendiliğinden kapanmaz -->
+  <div class="kapak-uyari-overlay" id="uzun-acik-bildirim" role="alertdialog" aria-live="assertive" aria-labelledby="uzun-acik-bildirim-baslik" aria-describedby="uzun-acik-bildirim-metin">
+    <div class="kapak-uyari-banner">
+      <div class="kapak-uyari-ikon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+      </div>
+      <div class="kapak-uyari-govde">
+        <p class="kapak-uyari-baslik" id="uzun-acik-bildirim-baslik">Kapak uzun süredir açık</p>
+        <p class="kapak-uyari-metin" id="uzun-acik-bildirim-metin"></p>
+        <div class="kapak-uyari-aksiyon">
+          <button class="kapak-uyari-btn" onclick="uzunAcikBildirimErtele()">Farkındayım, Ertele (5 dk)</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+<script>
+ 
+    // Mevcut sayfanın URL'sine göre doğru sekmeyi otomatik "aktif" yap
+    (function aktifSekmeAyarla(){
+      var mevcutDosya = window.location.pathname.split('/').pop() || 'index.html';
+      var eslesenLink = null;
+ 
+      document.querySelectorAll('.nav-link').forEach(function(link){
+        var href = link.getAttribute('href');
+        if (!href || href === '#') return;
+        var hedefDosya = href.split('/').pop();
+        if (hedefDosya === mevcutDosya) {
+          eslesenLink = link;
+        }
+      });
+ 
+      document.querySelectorAll('.nav-item').forEach(function(item){
+        item.classList.remove('active');
+      });
+      if (eslesenLink) {
+        eslesenLink.closest('.nav-item').classList.add('active');
+      }
+    })();
+ 
+    // Mobil çekmece açıksa, bir menüye tıklandığında otomatik kapansın
+    document.querySelectorAll('.nav-link').forEach(function(link){
+      link.addEventListener('click', function(){
+        var toggle = document.getElementById('menu-toggle');
+        if (toggle) toggle.checked = false;
+      });
+    });
+ 
+  // ── Uygulama durumu (state) ─────────────────────────────────────────────
+  const state = {
+    makineAcik: false,
+    kapaklar: new Array(10).fill(false),
+    acilmaZamanlari: new Array(10).fill(null), // her kapağın en son açılma zaman damgası (ms)
+    uzunAcikUyariGonderildi: new Array(10).fill(false), // 5dk uyarısı bu açık kalma süresi için zaten gönderildi mi
+    uzunAcikSonrakiKontrolZamani: new Array(10).fill(null) // "Ertele" sonrası bir sonraki uyarının erken olmayacağı zaman (ms)
+  };
+
+  function kapakMakineIdGetir() {
+    const id = (typeof MaltaApi !== 'undefined') ? MaltaApi.machineId() : null;
+    if (!id) throw new Error('Makine seçimi bulunamadı. Makinelerim sayfasından makineyi yeniden açın.');
+    return id;
+  }
+
+  async function kapaklariSunucudanYukle() {
+    const makineId = kapakMakineIdGetir();
+    const kapaklar = await MaltaApi.request('/api/machines/' + encodeURIComponent(makineId) + '/covers');
+    state.kapaklar = Array.from({ length: 10 }, function (_, i) {
+      const kapak = kapaklar.find(function (k) { return Number(k.cover_number) === i + 1; });
+      return kapak ? kapak.status === 'OPEN' : false;
+    });
+    kaydet(); // Eski uyarı/kayıt modülleriyle geçici uyumluluk için.
+  }
+
+  async function kapakDurumunuSunucuyaYaz(index, acik) {
+    const makineId = kapakMakineIdGetir();
+    await MaltaApi.request('/api/machines/' + encodeURIComponent(makineId) + '/covers/' + (index + 1), {
+      method: 'PATCH',
+      body: JSON.stringify({ status: acik ? 'OPEN' : 'CLOSED' })
+    });
+  }
+
+  async function makineAcikMi() {
+    const makineId = kapakMakineIdGetir();
+    const guc = await MaltaApi.request('/api/machines/' + encodeURIComponent(makineId) + '/power');
+    state.makineAcik = !!guc.is_powered_on;
+    return state.makineAcik;
+  }
+ 
+  // ── Çıkış modalı (henüz ayrı bir modal tanımlı değilse geçici davranış) ──
+  function cikisModalAc() {
+    if (confirm('Çıkış yapmak istediğinize emin misiniz?')) {
+      // Burada gerçek çıkış/yönlendirme mantığı eklenebilir
+      window.location.href = 'index.html';
+    }
+  }
+ 
+  // ── Yönetici Push Bildirimleri ────────────────────────────────────────
+  // Tarayıcının yerleşik Notification API'sini kullanır. Bildirimlerin
+  // gelebilmesi için bu panelin (sekmenin) açık olması ve kullanıcının
+  // bildirim iznini onaylamış olması gerekir.
+  function bildirimIzniIste() {
+    if (!('Notification' in window)) return; // tarayıcı desteklemiyor
+    if (Notification.permission !== 'default') return; // zaten karara bağlanmış (izin verildi/reddedildi), tekrar sorma
+    if (localStorage.getItem('bildirimIzniSorulduMu') === '1') return; // bu tarayıcıda daha önce soruldu, sayfa değişse de tekrar sorma
+    localStorage.setItem('bildirimIzniSorulduMu', '1');
+    Notification.requestPermission();
+  }
+
+  function yoneticiBildirimGonder(baslik, mesaj) {
+    if (!('Notification' in window)) return;
+    if (Notification.permission !== 'granted') return;
+    try {
+      const bildirim = new Notification(baslik, {
+        body: mesaj,
+        icon: 'assets/image/logo.svg',
+        tag: 'kapak-bildirim-' + Date.now() // her bildirim ayrı görünsün
+      });
+      // Bildirime tıklanınca paneli öne getir
+      bildirim.onclick = function () {
+        window.focus();
+        bildirim.close();
+      };
+    } catch (e) {
+      console.warn('Bildirim gönderilemedi:', e);
+    }
+  }
+
+  function kapakAcilmaBildirimiGonder(kapakAdi) {
+    yoneticiBildirimGonder(
+      'Kapak Açıldı — Makine #001',
+      kapakAdi + ' açıldı. (' + tarihFormatla(Date.now()) + ')'
+    );
+  }
+
+  // ── Kapak uzun süre açık kaldı uyarısı (tüm sayfayı engelleyen modal) ────
+  const UZUN_ACIK_ESIK_MS = 5 * 60 * 1000; // 5 dakika
+  const UZUN_ACIK_ERTELEME_MS = 5 * 60 * 1000; // "Ertele" ile verilen ek süre
+  let uzunAcikBekleyenKapaklar = []; // o an uyarıda listelenen kapak index'leri
+  let uzunAcikUyariAcikMi = false; // uyarı modalı şu an ekranda mı (sayfa değişimini engellemek için)
+
+  function panelBildirimGoster(baslik, mesaj) {
+    const banner = document.getElementById('uzun-acik-bildirim');
+    if (!banner) return;
+    document.getElementById('uzun-acik-bildirim-baslik').textContent = baslik;
+    document.getElementById('uzun-acik-bildirim-metin').textContent = mesaj;
+    banner.classList.add('show');
+    uzunAcikUyariAcikMi = true;
+  }
+
+  function uzunAcikBildirimGizle() {
+    const banner = document.getElementById('uzun-acik-bildirim');
+    if (banner) banner.classList.remove('show');
+    uzunAcikUyariAcikMi = false;
+  }
+
+  // "Farkındayım, Ertele" butonuna basıldığında: o an uyarıda listelenen
+  // kapaklara UZUN_ACIK_ERTELEME_MS kadar ek süre tanınır ve banner
+  // kapatılır. Süre dolduğunda kapak hâlâ açıksa uyarı tekrar tetiklenir.
+  function uzunAcikBildirimErtele() {
+    const simdi = Date.now();
+    uzunAcikBekleyenKapaklar.forEach(function (i) {
+      state.uzunAcikSonrakiKontrolZamani[i] = simdi + UZUN_ACIK_ERTELEME_MS;
+      state.uzunAcikUyariGonderildi[i] = false;
+    });
+    uzunAcikBekleyenKapaklar = [];
+    uzunAcikBildirimGizle();
+  }
+
+  // Her açık kapağın açık kalma süresini kontrol eder; 5 dakikayı aşan ve
+  // henüz uyarısı gönderilmemiş (veya "Ertele" ile verilen ek süresi dolmuş)
+  // kapaklar için banner'ı gösterir. Banner, kullanıcı "Farkındayım, Ertele"
+  // demeden kendiliğinden kapanmaz.
+  function kapakUzunSureAcikKontrolEt() {
+    const simdi = Date.now();
+    const uyarilacaklar = [];
+
+    for (let i = 0; i < 10; i++) {
+      if (!state.kapaklar[i] || !state.acilmaZamanlari[i]) continue;
+      if (state.uzunAcikUyariGonderildi[i]) continue;
+      if (state.uzunAcikSonrakiKontrolZamani[i] && simdi < state.uzunAcikSonrakiKontrolZamani[i]) continue;
+      if (simdi - state.acilmaZamanlari[i] >= UZUN_ACIK_ESIK_MS) {
+        state.uzunAcikUyariGonderildi[i] = true;
+        uyarilacaklar.push(i);
+      }
+    }
+
+    if (!uyarilacaklar.length) return;
+
+    uzunAcikBekleyenKapaklar = uyarilacaklar;
+    const isimler = uyarilacaklar.map(function (i) { return kapakIsimleri[i]; });
+
+    if (isimler.length === 1) {
+      panelBildirimGoster(
+        'Kapak uzun süredir açık',
+        isimler[0] + ' 5 dakikadır açık kaldı. Kapağın açık olduğundan haberiniz var mı?'
+      );
+    } else {
+      panelBildirimGoster(
+        isimler.length + ' kapak uzun süredir açık',
+        isimler.join(', ') + ' en az 5 dakikadır açık. Kapakların açık olduğundan haberiniz var mı?'
+      );
+    }
+  }
+
+  // ── Sayfa yüklendiğinde başlangıç kurulumu ───────────────────────────────
+  document.addEventListener('DOMContentLoaded', async () => {
+    menuyuRoleGoreDuzenle();
+    const k=JSON.parse(localStorage.getItem('kapakDurumu')||'null'); if(k&&k.length===10) state.kapaklar=k;
+    const z=JSON.parse(localStorage.getItem('kapakAcilmaZamanlari')||'null'); if(z&&z.length===10) state.acilmaZamanlari=z;
+    try {
+      await kapaklariSunucudanYukle();
+    } catch (error) {
+      console.error('[kapaklar] Sunucu durumları alınamadı:', error);
+      alert('Kapak durumları sunucudan alınamadı: ' + error.message);
+    }
+    kapakGridOlustur();
+    toplamBadgeGuncelle();
+    makineGuncelle();
+    bildirimIzniIste();
+    // Kayıtlar modalı açıkken "hâlâ açık" sürelerini canlı güncelle
+    setInterval(() => {
+      const overlay = document.getElementById('log-overlay');
+      if (overlay && overlay.classList.contains('show')) kayitlarOlustur();
+    }, 1000);
+    // 5 dakikadan uzun süredir açık kalan kapaklar için site içi uyarı banner'ı
+    setInterval(kapakUzunSureAcikKontrolEt, 15000);
+  });
+
+  // ── Başka sekme/pencerelerde (ör. aynı sitenin başka bir sayfası açıkken)
+  // yapılan değişiklikleri yakalayıp bu sayfayı da anında güncelle ──────────
+  window.addEventListener('storage', function (e) {
+    if (!e.key) return;
+
+    if (e.key === 'kapakDurumu' || e.key === 'kapakAcilmaZamanlari') {
+      const k = JSON.parse(localStorage.getItem('kapakDurumu') || 'null');
+      if (k && k.length === 10) state.kapaklar = k;
+      const z = JSON.parse(localStorage.getItem('kapakAcilmaZamanlari') || 'null');
+      if (z && z.length === 10) state.acilmaZamanlari = z;
+      for (let i = 0; i < 10; i++) kapakGuncelle(i);
+      acikBadgeGuncelle();
+      const logOverlayEl = document.getElementById('log-overlay');
+      if (logOverlayEl && logOverlayEl.classList.contains('show')) kayitlarOlustur();
+    }
+
+    if (e.key === 'kapakToplamAcilmaSayisi') {
+      toplamBadgeGuncelle();
+    }
+
+    if (e.key === 'makineAcik') {
+      state.makineAcik = JSON.parse(e.newValue || 'false');
+      makineGuncelle();
+    }
+
+    if (e.key === 'kapakKayitlari') {
+      const logOverlayEl = document.getElementById('log-overlay');
+      if (logOverlayEl && logOverlayEl.classList.contains('show')) kayitlarOlustur();
+    }
+  });
+ 
+  // ── Makine toggle ─────────────────────────────────────────────────────
+  function makineToggle() {
+    state.makineAcik = !state.makineAcik;
+    makineGuncelle();
+  }
+ 
+  function makineGuncelle() {
+    const kart    = document.getElementById('makine-kart');
+    const toggle  = document.getElementById('makine-toggle');
+    const deger   = document.getElementById('makine-deger');
+    const icon    = document.getElementById('makine-icon');
+
+    // Bu sayfada makine kartı elemanları bulunmuyor; varsa güncelle, yoksa sessizce çık
+    if (!kart || !toggle || !deger || !icon) return;
+ 
+    if (state.makineAcik) {
+      kart.className = 'makine-kart acik';
+      toggle.className = 'toggle on';
+      deger.textContent = 'AÇIK';
+      icon.innerHTML = '<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>';
+    } else {
+      kart.className = 'makine-kart kapali';
+      toggle.className = 'toggle off';
+      deger.textContent = 'KAPALI';
+      icon.innerHTML = '<circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>';
+    }
+  }
+ 
+  const kapakIsimleri = [
+    'Tablet Bakım Kapağı', 'Su Tahliye Kapağı', 'Metal Atık kapağı', 'Cam Atık Kapağı', 'Plastik Atık Kapağı',
+    'Plastik Kapak Kutusu', 'Ups Kapağı', 'Üst Pano Kapağı', 'Pil Kutusu Kapağı', 'Elektrik Pano Kapağı'
+  ];
+ 
+  // ── Kapak grid ────────────────────────────────────────────────────────
+  function kapakGridOlustur() {
+    const grid = document.getElementById('kapak-grid');
+    grid.innerHTML = '';
+    for (let i = 0; i < 10; i++) {
+      const acik = state.kapaklar[i];
+      const kart = document.createElement('div');
+      kart.className = 'kapak-kart ' + (acik ? 'acik' : 'kapali');
+      kart.id = 'kapak-' + i;
+      kart.onclick = () => kapakToggle(i);
+      kart.innerHTML = `
+        <div class="kapak-dot"></div>
+        <div class="kapak-info">
+          <div class="kapak-no">${kapakIsimleri[i]}</div>
+          <div class="kapak-durum">${acik ? 'Açık' : 'Kapalı'}</div>
+        </div>
+        <svg class="kapak-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          ${acik
+            ? '<rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 019.9-1"/>'
+            : '<rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/>'}
+        </svg>`;
+      grid.appendChild(kart);
+    }
+    acikBadgeGuncelle();
+    kaydet();
+  }
+ 
+  function kaydet(){localStorage.setItem('kapakDurumu',JSON.stringify(state.kapaklar));}
+ 
+  async function kapakToggle(i) {
+  try {
+    await makineAcikMi();
+  } catch (error) {
+    alert('Makine durumu sunucudan alınamadı: ' + error.message);
+    return;
+  }
+
+  if (state.makineAcik) {
+    guvenlikUyarisi(['Makine çalışırken "' + kapakIsimleri[i] + '" açılamaz. Önce makineyi kapatın.']);
+    return;
+  }
+
+  const yeniDurum = !state.kapaklar[i];
+
+  if (yeniDurum) {
+    // Kapak açılmak isteniyor: önce kayıt defteri dolu mu diye bak
+    if (kayitDefteriDoluMu()) {
+      bekleyenAcmaIslemi = { tip: 'tekli', index: i };
+      kayitDefteriDoluBildirimAc();
+      return;
+    }
+    await kapakGercektenAc(i);
+  } else {
+    try {
+      await kapakDurumunuSunucuyaYaz(i, false);
+      // Kapak kapanıyor: açık kaldığı süreyi kayıt defterine yaz
+      state.kapaklar[i] = false;
+      state.uzunAcikUyariGonderildi[i] = false;
+      state.uzunAcikSonrakiKontrolZamani[i] = null;
+      kapakKapanmaKaydiOlustur(i);
+      acilmaZamanlariniKaydet();
+      kapakGuncelle(i);
+      acikBadgeGuncelle();
+      kaydet();
+    } catch (error) {
+      alert('Kapak kapatılamadı: ' + error.message);
+    }
+  }
+}
+
+  async function kapakGercektenAc(i) {
+    try {
+      await kapakDurumunuSunucuyaYaz(i, true);
+      state.kapaklar[i] = true;
+      state.acilmaZamanlari[i] = Date.now();
+      state.uzunAcikUyariGonderildi[i] = false;
+      state.uzunAcikSonrakiKontrolZamani[i] = null;
+      acilmaZamanlariniKaydet();
+      kapakGuncelle(i);
+      acikBadgeGuncelle();
+      toplamAcilmaSayaciArtir();
+      kaydet();
+      kapakAcilmaBildirimiGonder(kapakIsimleri[i]);
+    } catch (error) {
+      alert('Kapak açılamadı: ' + error.message);
+    }
+  }
+ 
+  function kapakGuncelle(i) {
+    const kart = document.getElementById('kapak-' + i);
+    const acik = state.kapaklar[i];
+    kart.className = 'kapak-kart ' + (acik ? 'acik' : 'kapali');
+    kart.querySelector('.kapak-durum').textContent = acik ? 'Açık' : 'Kapalı';
+    kart.querySelector('.kapak-icon').innerHTML = acik
+      ? '<rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 019.9-1"/>'
+      : '<rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/>';
+  }
+ 
+  function acikBadgeGuncelle() {
+    const sayi = state.kapaklar.filter(Boolean).length;
+    document.getElementById('acik-badge').textContent = sayi + ' açık';
+  }
+ 
+  async function tumunuAc() {
+  try {
+    await makineAcikMi();
+  } catch (error) {
+    alert('Makine durumu sunucudan alınamadı: ' + error.message);
+    return;
+  }
+
+  if (state.makineAcik) {
+    guvenlikUyarisi(['Makine çalışırken kapaklar açılamaz. Önce makineyi kapatın.']);
+    return;
+  }
+
+  if (kayitDefteriDoluMu()) {
+    bekleyenAcmaIslemi = { tip: 'tumu' };
+    kayitDefteriDoluBildirimAc();
+    return;
+  }
+
+  tumunuGercektenAc();
+}
+
+  async function tumunuGercektenAc() {
+    try {
+      await Promise.all(state.kapaklar.map(function (acik, i) {
+        return acik ? null : kapakDurumunuSunucuyaYaz(i, true);
+      }).filter(Boolean));
+    } catch (error) {
+      alert('Kapaklar açılamadı: ' + error.message);
+      return;
+    }
+    let kacTaneYeniAcildi = 0;
+    const yeniAcilanlar = [];
+    for (let i = 0; i < 10; i++) {
+      if (!state.kapaklar[i]) {
+        state.acilmaZamanlari[i] = Date.now();
+        state.uzunAcikUyariGonderildi[i] = false;
+        state.uzunAcikSonrakiKontrolZamani[i] = null;
+        kacTaneYeniAcildi++;
+        yeniAcilanlar.push(kapakIsimleri[i]);
+      }
+    }
+    state.kapaklar.fill(true);
+    acilmaZamanlariniKaydet();
+    for (let i = 0; i < 10; i++) kapakGuncelle(i);
+    acikBadgeGuncelle();
+    toplamAcilmaSayaciArtir(kacTaneYeniAcildi);
+    kaydet();
+    if (yeniAcilanlar.length === 1) {
+      kapakAcilmaBildirimiGonder(yeniAcilanlar[0]);
+    } else if (yeniAcilanlar.length > 1) {
+      yoneticiBildirimGonder(
+        'Kapaklar Açıldı — Makine #001',
+        yeniAcilanlar.length + ' kapak açıldı: ' + yeniAcilanlar.join(', ')
+      );
+    }
+  }
+ 
+  async function tumunuKapat() {
+    try {
+      await Promise.all(state.kapaklar.map(function (acik, i) {
+        return acik ? kapakDurumunuSunucuyaYaz(i, false) : null;
+      }).filter(Boolean));
+    } catch (error) {
+      alert('Kapaklar kapatılamadı: ' + error.message);
+      return;
+    }
+    for (let i = 0; i < 10; i++) {
+      if (state.kapaklar[i]) kapakKapanmaKaydiOlustur(i);
+      state.uzunAcikUyariGonderildi[i] = false;
+      state.uzunAcikSonrakiKontrolZamani[i] = null;
+    }
+    state.kapaklar.fill(false);
+    acilmaZamanlariniKaydet();
+    for (let i = 0; i < 10; i++) kapakGuncelle(i);
+    acikBadgeGuncelle();
+    kaydet();
+  }
+
+  // ── Kapak açılma/kapanma kayıt defteri ──────────────────────────────────
+  const KAYIT_LIMIT = 300;       // bu sayıya ulaşınca defter "dolu" sayılır, kapak açmaya izin verilmez
+  const KAYIT_SERT_TAVAN = 1000; // tarayıcı depolaması aşırı şişmesin diye mutlak üst sınır
+  let bekleyenAcmaIslemi = null; // kayıt defteri doluyken açılmak istenen kapak(lar) burada bekler
+
+  function acilmaZamanlariniKaydet() {
+    localStorage.setItem('kapakAcilmaZamanlari', JSON.stringify(state.acilmaZamanlari));
+  }
+
+  function kayitlariYukle() {
+    return JSON.parse(localStorage.getItem('kapakKayitlari') || '[]');
+  }
+
+  function kayitlariKaydet(kayitlar) {
+    localStorage.setItem('kapakKayitlari', JSON.stringify(kayitlar));
+  }
+
+  function kapakKapanmaKaydiOlustur(i) {
+    const acilis = state.acilmaZamanlari[i];
+    if (!acilis) return; // açılma zamanı bilinmiyorsa (örn. sayfa yenilenmeden önce açılmışsa) kayıt oluşturma
+    const kapanis = Date.now();
+    const kayitlar = kayitliYukleGuvenli();
+    kayitlar.unshift({
+      ad: kapakIsimleri[i],
+      acilis: acilis,
+      kapanis: kapanis,
+      sureMs: kapanis - acilis
+    });
+    if (kayitlar.length > KAYIT_SERT_TAVAN) kayitlar.length = KAYIT_SERT_TAVAN; // mutlak tavan
+    kayitlariKaydet(kayitlar);
+    state.acilmaZamanlari[i] = null;
+  }
+
+  function kayitDefteriDoluMu() {
+    // İşlem geçmişi artık veritabanında tutuluyor; tarayıcı kotası kapak
+    // açma işlemini engellememeli.
+    return false;
+  }
+
+  // ── Bu zamana kadar toplam kaç kez kapak açıldığı sayacı ────────────────
+  function toplamAcilmaSayaciYukle() {
+    return parseInt(localStorage.getItem('kapakToplamAcilmaSayisi') || '0', 10) || 0;
+  }
+
+  function toplamAcilmaSayaciArtir(adet) {
+    const artis = adet == null ? 1 : adet;
+    if (artis <= 0) return;
+    const guncel = toplamAcilmaSayaciYukle() + artis;
+    localStorage.setItem('kapakToplamAcilmaSayisi', String(guncel));
+    toplamBadgeGuncelle();
+  }
+
+  function toplamBadgeGuncelle() {
+    const el = document.getElementById('toplam-badge');
+    if (!el) return;
+    const sayi = toplamAcilmaSayaciYukle();
+    el.textContent = sayi + (sayi === 1 ? ' kez açıldı' : ' kez açıldı');
+  }
+
+  // En eski `adet` kaydı sil (kayıtlar en yeniden en eskiye sıralı tutuluyor)
+  function eskiKayitlariSil(adet) {
+    const kayitlar = kayitliYukleGuvenli();
+    kayitlar.length = Math.max(0, kayitlar.length - adet);
+    kayitlariKaydet(kayitlar);
+  }
+
+  function kayitDefteriDoluBildirimAc() {
+    const sayiEl = document.getElementById('full-sayi');
+    const limitEl = document.getElementById('full-limit');
+    if (sayiEl) sayiEl.textContent = kayitliYukleGuvenli().length;
+    if (limitEl) limitEl.textContent = KAYIT_LIMIT;
+    const overlay = document.getElementById('full-overlay');
+    if (overlay) overlay.classList.add('show');
+  }
+
+  function kayitDefteriDoluBildirimKapat() {
+    const overlay = document.getElementById('full-overlay');
+    if (overlay) overlay.classList.remove('show');
+    bekleyenAcmaIslemi = null; // vazgeçildi, bekleyen açma işlemi iptal
+  }
+
+  function eskiKayitlariSilVeAc() {
+    eskiKayitlariSil(50);
+    const overlay = document.getElementById('full-overlay');
+    if (overlay) overlay.classList.remove('show');
+    bekleyenIslemiCalistir();
+  }
+
+  function bekleyenIslemiCalistir() {
+    if (!bekleyenAcmaIslemi) return;
+    const islem = bekleyenAcmaIslemi;
+    bekleyenAcmaIslemi = null;
+    if (islem.tip === 'tekli') {
+      kapakGercektenAc(islem.index);
+    } else if (islem.tip === 'tumu') {
+      tumunuGercektenAc();
+    }
+  }
+
+  function kayitliYukleGuvenli() {
+    try { return kayitlariYukle(); } catch (e) { return []; }
+  }
+
+  function ikiHaneli(n) { return String(n).padStart(2, '0'); }
+
+  function tarihFormatla(ts) {
+    if (!ts) return '—';
+    const d = new Date(ts);
+    return ikiHaneli(d.getDate()) + '.' + ikiHaneli(d.getMonth() + 1) + '.' + d.getFullYear() +
+           ' ' + ikiHaneli(d.getHours()) + ':' + ikiHaneli(d.getMinutes()) + ':' + ikiHaneli(d.getSeconds());
+  }
+
+  function sureFormatla(ms) {
+    if (ms == null || ms < 0) return '—';
+    let saniyeToplam = Math.floor(ms / 1000);
+    const gun = Math.floor(saniyeToplam / 86400); saniyeToplam %= 86400;
+    const saat = Math.floor(saniyeToplam / 3600); saniyeToplam %= 3600;
+    const dakika = Math.floor(saniyeToplam / 60); saniyeToplam %= 60;
+    const saniye = saniyeToplam;
+    const parcalar = [];
+    if (gun) parcalar.push(gun + ' gün');
+    if (gun || saat) parcalar.push(saat + ' sa');
+    if (gun || saat || dakika) parcalar.push(dakika + ' dk');
+    if (!gun && !saat) parcalar.push(saniye + ' sn');
+    return parcalar.join(' ');
+  }
+
+  async function kayitlarOlustur() {
+    const govde = document.getElementById('log-tbody');
+    if (!govde) return;
+    let olaylar;
+    try {
+      const makineId = kapakMakineIdGetir();
+      olaylar = await MaltaApi.request('/api/machines/' + encodeURIComponent(makineId) + '/covers/events?limit=300');
+    } catch (error) {
+      govde.innerHTML = '<tr><td colspan="5" class="log-bos">Kayıtlar sunucudan alınamadı: ' + error.message + '</td></tr>';
+      return;
+    }
+
+    const acikKapaklar = {};
+    const kayitlar = [];
+    olaylar.slice().reverse().forEach(function (olay) {
+      const no = Number(olay.cover_number);
+      if (olay.action === 'OPEN') {
+        acikKapaklar[no] = olay;
+      } else if (olay.action === 'CLOSE' && acikKapaklar[no]) {
+        const acilis = acikKapaklar[no];
+        const acilisTs = new Date(acilis.created_at).getTime();
+        const kapanisTs = new Date(olay.created_at).getTime();
+        kayitlar.push({
+          ad: kapakIsimleri[no - 1] || ('Kapak ' + no),
+          acilis: acilisTs,
+          kapanis: kapanisTs,
+          sureMs: kapanisTs - acilisTs
+        });
+        delete acikKapaklar[no];
+      }
+    });
+    kayitlar.sort(function (a, b) { return b.kapanis - a.kapanis; });
+    let satirlar = '';
+    let sira = 1;
+
+    // Hâlâ açık kapaklar, son OPEN kaydından itibaren canlı süreyle gösterilir.
+    Object.keys(acikKapaklar).forEach(function (no) {
+        const acilis = acikKapaklar[no];
+        const acilisTs = new Date(acilis.created_at).getTime();
+        const suredi = Date.now() - acilisTs;
+        satirlar += '<tr class="log-row acik-row">' +
+          '<td class="log-no">' + (sira++) + '</td>' +
+          '<td>' + (kapakIsimleri[Number(no) - 1] || ('Kapak ' + no)) + '</td>' +
+          '<td>' + tarihFormatla(acilisTs) + '</td>' +
+          '<td><span class="log-acik-badge">Hâlâ açık</span></td>' +
+          '<td>' + sureFormatla(suredi) + ' (devam ediyor)</td>' +
+        '</tr>';
+    });
+
+    kayitlar.forEach(function (k) {
+      satirlar += '<tr class="log-row">' +
+        '<td class="log-no">' + (sira++) + '</td>' +
+        '<td>' + k.ad + '</td>' +
+        '<td>' + tarihFormatla(k.acilis) + '</td>' +
+        '<td>' + tarihFormatla(k.kapanis) + '</td>' +
+        '<td>' + sureFormatla(k.sureMs) + '</td>' +
+      '</tr>';
+    });
+
+    govde.innerHTML = satirlar || '<tr><td colspan="5" class="log-bos">Henüz kayıt yok</td></tr>';
+  }
+
+  async function kayitlarAc() {
+    const overlay = document.getElementById('log-overlay');
+    if (overlay) overlay.classList.add('show');
+    await kayitlarOlustur();
+  }
+
+  function kayitlarKapat() {
+    const overlay = document.getElementById('log-overlay');
+    if (overlay) overlay.classList.remove('show');
+  }
+
+  function kayitlariTemizleOnayAc() {
+    const overlay = document.getElementById('confirm-overlay');
+    if (overlay) overlay.classList.add('show');
+  }
+
+  function kayitlariTemizleOnayKapat() {
+    const overlay = document.getElementById('confirm-overlay');
+    if (overlay) overlay.classList.remove('show');
+  }
+
+  function kayitlariTemizleOnayla() {
+    localStorage.removeItem('kapakKayitlari');
+    kayitlarOlustur();
+    kayitlariTemizleOnayKapat();
+  }
+
+  document.addEventListener('DOMContentLoaded', function () {
+    const logOverlayEl = document.getElementById('log-overlay');
+    if (logOverlayEl) {
+      logOverlayEl.addEventListener('click', function (e) {
+        if (e.target === this) kayitlarKapat();
+      });
+    }
+    const confirmOverlayEl = document.getElementById('confirm-overlay');
+    if (confirmOverlayEl) {
+      confirmOverlayEl.addEventListener('click', function (e) {
+        if (e.target === this) kayitlariTemizleOnayKapat();
+      });
+    }
+    const fullOverlayEl = document.getElementById('full-overlay');
+    if (fullOverlayEl) {
+      fullOverlayEl.addEventListener('click', function (e) {
+        if (e.target === this) kayitDefteriDoluBildirimKapat();
+      });
+    }
+  });
+  document.addEventListener('keydown', function (e) {
+    if (e.key !== 'Escape') return;
+    const fullOverlayEl = document.getElementById('full-overlay');
+    if (fullOverlayEl && fullOverlayEl.classList.contains('show')) {
+      kayitDefteriDoluBildirimKapat();
+      return;
+    }
+    const confirmOverlayEl = document.getElementById('confirm-overlay');
+    if (confirmOverlayEl && confirmOverlayEl.classList.contains('show')) {
+      kayitlariTemizleOnayKapat();
+      return;
+    }
+    kayitlarKapat();
+  });
+  function guvenlikUyarisi(aciklar){
+    const liste = document.getElementById('warn-list');
+    const overlay = document.getElementById('warn-overlay');
+    if (!liste || !overlay) return;
+    liste.innerHTML = aciklar.map(function(ad){
+      return '<li><span class="warn-dot"></span>' + ad + '</li>';
+    }).join('');
+    overlay.classList.add('show');
+  }
+
+  function uyariKapat(){
+    const overlay = document.getElementById('warn-overlay');
+    if (overlay) overlay.classList.remove('show');
+  }
+
+  const warnOverlayEl = document.getElementById('warn-overlay');
+  if (warnOverlayEl) {
+    warnOverlayEl.addEventListener('click', function(e){
+      if (e.target === this) uyariKapat();
+    });
+  }
+  document.addEventListener('keydown', function(e){
+    if (e.key === 'Escape') uyariKapat();
+  });
+
+</script>
+</html>

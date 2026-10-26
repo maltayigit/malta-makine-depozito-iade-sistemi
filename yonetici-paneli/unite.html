@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title id="page-title">Malta Makine — Ünite Durum</title>
+<link rel="icon" type="image/svg+xml" href="assets/image/favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/style.css">
+<script src="assets/js/auth.js"></script>
+<script>sayfaKorumaKontrolEt(['yonetici','market','bakanlik']);</script>
+<script src="assets/js/api-client.js"></script>
+<!-- doluluk-veri.js: artık salt-okunur backend polling yapıyor (bkz. dosyanın
+     başındaki not), bu yüzden ezme üniteleriyle çakışma riski kalmadı ve
+     su birimlerinin (suKaristirma/atikSuPompa) ihtiyaç duyduğu dolulukTick()
+     arka planda otomatik çalışıyor. -->
+<script src="assets/js/doluluk-veri.js"></script>
+<script src="assets/js/ezme-veri.js"></script>
+<script src="assets/js/unite-api.js"></script>
+<script src="assets/js/acil-durum-veri.js"></script>
+<script src="assets/js/kapak-uyari.js"></script>
+</head>
+<body>
+
+  <input type="checkbox" id="menu-toggle" class="menu-toggle-input">
+  <label for="menu-toggle" class="hamburger" aria-label="Menüyü aç/kapat">
+    <span></span><span></span><span></span>
+  </label>
+  <label for="menu-toggle" class="overlay" aria-hidden="true"></label>
+
+  <aside class="sidebar" aria-label="Ana gezinme">
+    <div class="mark">
+      <div class="mark-glyph" aria-hidden="true">
+        <a href="index.html">
+        <img src="assets/image/logo.svg" alt="Malta logosu" class="mark-glyph-img">
+       </a>
+      </div>
+      <div class="mark-text">Malta Makine</div>
+    </div>
+    <div class="mark-sub">İade Kiosk Sistemleri</div>
+
+    <div class="panel-seam"></div>
+
+    <nav>
+      <div class="nav-group">
+        <p class="nav-label">Ürün</p>
+        <ul class="nav-list">
+          <li class="nav-item">
+            <a class="nav-link" href="index.html"><span class="led"></span>Bakım</a>
+          </li>
+          <li class="nav-item" data-rol="yonetici,market">
+            <a class="nav-link" href="makine.html"><span class="led"></span>Kapaklar</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="doluluk.html"><span class="led"></span>Doluluk Bilgi</a>
+          </li>
+          <li class="nav-item" data-rol="yonetici,market">
+            <a class="nav-link" href="motor-durum.html"><span class="led"></span>Motor Durum Özeti</a>
+          </li>
+          <li class="nav-item" data-rol="yonetici">
+            <a class="nav-link" href="kapak-motor-durum.html"><span class="led"></span>Kapak Motor Durumu</a>
+          </li>
+          <li class="nav-item" data-rol="yonetici,market">
+            <a class="nav-link" href="fan.html"><span class="led"></span>Fan Durum</a>
+          </li>
+          <li class="nav-item" data-rol="yonetici">
+            <a class="nav-link" href="kamera-durum.html"><span class="led"></span>Kamera Durum</a>
+          </li>
+          <li class="nav-item" data-rol="yonetici,market">
+            <a class="nav-link" href="ekran-durumu.html"><span class="led"></span>Ekran Durum Paneli</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="acil-durum.html"><span class="led"></span>Acil Durum & Alarm</a>
+          </li>
+        </ul>
+      </div>
+
+      <div class="nav-group">
+        <p class="nav-label">Motorlar</p>
+        <ul class="nav-list" id="ezme-nav-list">
+          <!-- Bu liste sayfa açılırken uniteAyarlari (ezme-veri.js) içinden,
+               navSira alanına göre sıralanarak otomatik üretilir — yeni bir
+               ünite eklemek için bu dosyaya dokunmaya gerek yok, sadece
+               ezme-veri.js'e navEtiket + navSira içeren bir config eklemek
+               yeterli (cam kırma dahil, artık TÜM üniteler bu şekilde). -->
+        </ul>
+      </div>
+
+        <div class="nav-group">
+        <p class="nav-label">İletişim</p>
+        <ul class="nav-list">
+          <li class="nav-item" data-rol="yonetici,market">
+            <a class="nav-link" href="ariza-bildir.html"><span class="led"></span>Arıza Bildir</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="contact.html"><span class="led"></span>Bizimle İletişime Geçin</a>
+          </li>
+        </ul>
+      </div>
+    </nav>
+
+    <div class="nav-group">
+        <p class="nav-label"></p>
+        <ul class="nav-list">
+          <li class="nav-item">
+            <a class="nav-link" href="makineler.html"><span class="led"></span>Çıkış</a>
+          </li>
+        </ul>
+      </div>
+
+    <div class="sidebar-foot">
+      <div class="barcode" aria-hidden="true"></div>
+      <span>PANEL SÜRÜM 0.1</span>
+    </div>
+  </aside>
+
+  <main>
+    <section id="ezme-durum">
+
+      <div class="doluluk-top">
+        <div>
+          <p class="eyebrow" id="ezme-eyebrow" style="margin-bottom:6px;">—</p>
+          <h1 id="ezme-h1" style="font-size:clamp(24px,3vw,32px); margin:0;">—</h1>
+        </div>
+        <div style="text-align:right;">
+          <div class="doluluk-status" id="ana-makine-badge" style="margin-bottom:8px; display:inline-block;">Ana Makine: —</div>
+          <div class="doluluk-updated">
+            <span class="dot"></span>
+            <span id="son-guncelleme">Son güncelleme: —</span>
+          </div>
+        </div>
+      </div>
+
+      <div id="baglanti-hata-wrap"></div>
+
+      <!-- Sıkışma / arıza uyarısı -->
+      <div id="ezme-alert-wrap"></div>
+
+      <!-- Kritik doluluk uyarısı (yalnızca 'bolme' tanımlı üniteler, ör. cam kırma) -->
+      <div id="doluluk-alert-wrap"></div>
+
+      <!-- Motor durum kartı -->
+      <div class="unite-hero beklemede" id="unite-hero">
+        <div class="unite-ikon-wrap" id="unite-ikon-wrap">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.65 1.65 0 004.6 15a1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06A1.65 1.65 0 009 4.6a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+        </div>
+        <div class="unite-hero-info">
+          <div class="label" id="ezme-motor-etiketi">Motor Durumu</div>
+          <div class="deger" id="unite-deger">BEKLEMEDE</div>
+        </div>
+        <div class="unite-actions">
+          <button class="unite-btn gider" id="btn-gider" onclick="sikismaGider()" style="display:none;">Sıkışmayı Gider</button>
+          <span id="unite-otomatik-etiket" style="display:flex; align-items:center; gap:6px; font-family:'IBM Plex Mono', monospace; font-size:10.5px; letter-spacing:0.04em; color:var(--muted); text-transform:uppercase;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px; height:13px; flex-shrink:0;"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
+            Otomatik · Ana Makineye Bağlı
+          </span>
+        </div>
+      </div>
+
+      <!-- Özet kartları -->
+      <div class="doluluk-summary">
+        <div class="summary-card">
+          <div class="s-label">Bugünkü Ezme Sayısı</div>
+          <div class="s-value" id="ozet-sayac">—<span>adet</span></div>
+        </div>
+        <div class="summary-card">
+          <div class="s-label">Ortam Sıcaklığı</div>
+          <div class="s-value" id="ozet-sicaklik">—<span>°C</span></div>
+        </div>
+      </div>
+
+      <div class="row">
+        <h2 id="yuk-baslik">Motor Yükü</h2>
+        <span>Gerçek Zamanlı İzleme</span>
+      </div>
+
+      <div class="doluluk-card" style="margin-bottom:36px;" id="yuk-card">
+        <div class="doluluk-ring">
+          <svg viewBox="0 0 100 100">
+            <circle class="ring-track" cx="50" cy="50" r="40"></circle>
+            <circle class="ring-fill" id="yuk-ring" cx="50" cy="50" r="40"
+              stroke="#0F6E56"
+              stroke-dasharray="251.2"
+              stroke-dashoffset="251.2"></circle>
+          </svg>
+          <div class="doluluk-ring-label">
+            <div class="doluluk-ring-pct" id="yuk-pct">%0</div>
+            <div class="doluluk-ring-unit">YÜK</div>
+          </div>
+        </div>
+        <div class="doluluk-info">
+          <div class="doluluk-info-head">
+            <div class="doluluk-name">
+              <span class="doluluk-icon" id="doluluk-icon-wrap" style="background:#0F6E5622; color:#0F6E56;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 2h8v3l2 2v13a1 1 0 01-1 1H7a1 1 0 01-1-1V7l2-2V2z"/><path d="M9 2v3M15 2v3"/></svg>
+              </span>
+              <span id="ezme-motor-adi">Motor</span>
+            </div>
+            <span class="doluluk-status beklemede" id="yuk-badge">Beklemede</span>
+          </div>
+          <div class="doluluk-meta" id="yuk-meta">Motor durduğunda yük ölçülmez.</div>
+          <div class="doluluk-bar-track">
+            <div class="doluluk-bar-fill" id="yuk-bar" style="width:0%; background:#0F6E56;"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tepsi/bölme widget'ı: sadece ayar.bolme tanımlıysa (ör. cam kırma
+           üniteleri) gösterilir; menuyuUniteAyarlarindanUret script'i altındaki
+           config script bunu doldurup görünür yapar. -->
+      <div id="tepsi-bolum" style="display:none;">
+        <div class="row">
+          <h2 id="tepsi-baslik">Bölme Doluluk</h2>
+          <span id="tepsi-alt-baslik">Doluluk Bilgi ile Senkron</span>
+        </div>
+
+        <div class="doluluk-card" id="tepsi-card" style="margin-bottom:36px;">
+          <div class="doluluk-ring">
+            <svg viewBox="0 0 100 100">
+              <circle class="ring-track" cx="50" cy="50" r="40"></circle>
+              <circle class="ring-fill" id="tepsi-ring" cx="50" cy="50" r="40"
+                stroke="#8E44AD"
+                stroke-dasharray="251.2"
+                stroke-dashoffset="251.2"></circle>
+            </svg>
+            <div class="doluluk-ring-label">
+              <div class="doluluk-ring-pct" id="tepsi-pct">%0</div>
+              <div class="doluluk-ring-unit">DOLU</div>
+            </div>
+          </div>
+          <div class="doluluk-info">
+            <div class="doluluk-info-head">
+              <div class="doluluk-name">
+                <span class="doluluk-icon" id="tepsi-icon-wrap" style="background:#8E44AD22; color:#8E44AD;">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 2h6l1 6-1 3v9a2 2 0 01-2 2h-2a2 2 0 01-2-2v-9L8 8z"/></svg>
+                </span>
+                <span id="tepsi-adi">Bölme</span>
+              </div>
+              <span class="doluluk-status normal" id="tepsi-badge">Normal</span>
+            </div>
+            <div class="doluluk-meta" id="tepsi-meta">— / — adet</div>
+            <div class="doluluk-bar-track">
+              <div class="doluluk-bar-fill" id="tepsi-bar" style="width:0%; background:#8E44AD;"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="row">
+        <h2>Son İşlemler</h2>
+        <span id="log-sayisi">0 kayıt</span>
+      </div>
+
+      <div class="log-liste" id="log-liste">
+        <div class="log-empty">Henüz işlem kaydı yok.</div>
+      </div>
+
+      <div class="guvenlik-notu">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        <span id="ezme-guvenlik-notu">—</span>
+      </div>
+
+    </section>
+  </main>
+
+
+</body>
+<script>
+
+  // ── URL'den ünite seçimi ──────────────────────────────────────────────
+  // unite.html?unite=ezme2_05l gibi açılır. 'unite' parametresi
+  // uniteAyarlari (ezme-veri.js) içindeki bir anahtarla eşleşmeli.
+  const uniteAnahtari = new URLSearchParams(window.location.search).get('unite');
+  const ayar = uniteAnahtari ? uniteAyarlari[uniteAnahtari] : null;
+
+  if (!ayar) {
+    document.querySelector('main').innerHTML =
+      '<div class="doluluk-alert" role="alert"><div class="doluluk-alert-body">' +
+      '<p class="doluluk-alert-title">Ünite bulunamadı</p>' +
+      '<p class="doluluk-alert-text">Geçerli bir ünite belirtilmedi. Lütfen "Makineler" ekranından tekrar deneyin. (unite=' +
+      (uniteAnahtari || 'yok') + ')</p></div></div>';
+    throw new Error('Geçersiz ünite anahtarı: ' + uniteAnahtari);
+  }
+
+  // ── Sayfayı 'ayar' config'ine göre doldur ──────────────────────────────
+  document.title = ayar.sekmeBaslik || ayar.baslik;
+  document.getElementById('page-title').textContent = ayar.sekmeBaslik || ayar.baslik;
+  document.getElementById('ezme-eyebrow').textContent = ayar.eyebrow || ayar.altBaslik || ayar.baslik;
+  document.getElementById('ezme-h1').textContent = ayar.h1 || ayar.baslik;
+  document.getElementById('ezme-motor-etiketi').textContent = (ayar.motorEtiketi || ayar.baslik) + ' Durumu';
+  document.getElementById('ezme-motor-adi').textContent = ayar.motorEtiketi || ayar.baslik;
+  document.getElementById('ezme-guvenlik-notu').innerHTML = ayar.guvenlikNotuHtml ||
+    ('Bu ünitenin ilgili atık kapağı açıkken motor güvenlik nedeniyle başlatılamaz.');
+  document.getElementById('yuk-baslik').textContent = ayar.yukBaslik || 'Motor Yükü';
+  document.getElementById('yuk-ring').setAttribute('stroke', ayar.renk);
+  document.getElementById('yuk-bar').style.background = ayar.renk;
+  document.getElementById('doluluk-icon-wrap').style.background = ayar.renk + '22';
+  document.getElementById('doluluk-icon-wrap').style.color = ayar.renk;
+
+  // ── Tepsi/bölme widget'ı (ör. cam kırma'nın cam parçacık tepsisi) ──────
+  // Sadece ayar.bolme tanımlıysa gösterilir; DOM güncellemesi unite-api.js
+  // içinden her poll'da tepsiGuncelle(ayar, compartment) çağrılarak yapılır.
+  if (ayar.bolme) {
+    document.getElementById('tepsi-bolum').style.display = '';
+    document.getElementById('tepsi-baslik').textContent = ayar.bolme.baslik || 'Bölme Doluluk';
+    document.getElementById('tepsi-alt-baslik').textContent = ayar.bolme.altBaslik || 'Doluluk Bilgi ile Senkron';
+    document.getElementById('tepsi-adi').textContent = ayar.bolme.ad || 'Bölme';
+    document.getElementById('tepsi-ring').setAttribute('stroke', ayar.renk);
+    document.getElementById('tepsi-bar').style.background = ayar.renk;
+    document.getElementById('tepsi-icon-wrap').style.background = ayar.renk + '22';
+    document.getElementById('tepsi-icon-wrap').style.color = ayar.renk;
+  }
+
+  // ── "Motorlar" menüsünü uniteAyarlari'ndan otomatik üret ───────────────
+  // Yeni bir ünite eklendiğinde (ezme-veri.js -> uniteAyarlari) bu menü elle
+  // güncellenmeden otomatik olarak burada belirir; navSira alanına göre sıralanır.
+  (function menuyuUniteAyarlarindanUret(){
+    const liste = document.getElementById('ezme-nav-list');
+    if (!liste) return;
+    const parcalar = Object.keys(uniteAyarlari)
+      .map(function(anahtar){ return uniteAyarlari[anahtar]; })
+      .filter(function(a){ return !!a.navEtiket; }) // navEtiket yoksa menüde görünmez
+      .sort(function(a, b){ return (a.navSira || 0) - (b.navSira || 0); })
+      .map(function(a){
+        return '<li class="nav-item">' +
+          '<a class="nav-link" href="unite.html?unite=' + encodeURIComponent(a.anahtar) + '"><span class="led"></span>' + a.navEtiket + '</a>' +
+        '</li>';
+      });
+    liste.innerHTML = parcalar.join('');
+  })();
+
+  // Mevcut sayfanın URL'sine (unite.html?unite=... dahil) göre doğru sekmeyi
+  // otomatik "aktif" yap.
+  (function aktifSekmeAyarla(){
+    const mevcutTamYol = window.location.pathname.split('/').pop() + window.location.search;
+    document.querySelectorAll('.nav-link').forEach(function(link){
+      const href = link.getAttribute('href');
+      if (!href || href === '#') return;
+      if (href === mevcutTamYol) {
+        link.closest('.nav-item').classList.add('active');
+      }
+    });
+  })();
+
+  // Mobil çekmede açıksa, bir menüye tıklandığında otomatik kapansın
+  document.querySelectorAll('.nav-link').forEach(function(link){
+    link.addEventListener('click', function(){
+      var toggle = document.getElementById('menu-toggle');
+      if (toggle) toggle.checked = false;
+    });
+  });
+
+  function yerelDurumuOku(){
+    try {
+      const kayitli = JSON.parse(localStorage.getItem(ayar.sayacKey) || 'null');
+      if (kayitli) return kayitli;
+    } catch (e) { /* bozuk kayıt varsayılana düşülür */ }
+    return { calisiyor: false, sikisma: false, bugunSayisi: 0, sicaklik: 24, yuk: 0, sonIslemler: [] };
+  }
+
+  let state = yerelDurumuOku();
+  if (!Array.isArray(state.sonIslemler)) state.sonIslemler = [];
+
+  function kaydet(){ localStorage.setItem(ayar.sayacKey, JSON.stringify(state)); }
+
+  function anaMakineDurumGoster(){
+    const badge = document.getElementById('ana-makine-badge');
+    if (!badge) return;
+    const acik = anaMakineAcikMi();
+    badge.textContent = 'Ana Makine: ' + (acik ? 'AÇIK' : 'KAPALI');
+    badge.className = 'doluluk-status ' + (acik ? 'calisiyor' : 'beklemede');
+  }
+
+  function ekranGuncelle(){
+    const hero = document.getElementById('unite-hero');
+    const deger = document.getElementById('unite-deger');
+    const btnGider = document.getElementById('btn-gider');
+    const otomatikEtiket = document.getElementById('unite-otomatik-etiket');
+    const badge = document.getElementById('yuk-badge');
+    const meta = document.getElementById('yuk-meta');
+
+    hero.className = 'unite-hero ' + (state.sikisma ? 'sikisma' : (state.calisiyor ? 'calisiyor' : 'beklemede'));
+    hero.style.setProperty('--durum-renk', ayar.renk);
+    hero.style.setProperty('--durum-acik-bg', ayar.renkAcik);
+
+    if (state.sikisma) {
+      deger.textContent = 'SIKIŞMA';
+      badge.textContent = 'Sıkışma';
+      badge.className = 'doluluk-status sikisma';
+      meta.textContent = 'Motor durduruldu. Sıkışmayı giderdikten sonra devam edecek.';
+      btnGider.style.display = 'inline-block';
+      otomatikEtiket.style.display = 'none';
+    } else if (state.calisiyor) {
+      deger.textContent = 'ÇALIŞIYOR';
+      badge.textContent = 'Çalışıyor';
+      badge.className = 'doluluk-status calisiyor';
+      meta.textContent = 'Motor yükü canlı olarak izleniyor.';
+      btnGider.style.display = 'none';
+      otomatikEtiket.style.display = 'flex';
+    } else {
+      deger.textContent = 'BEKLEMEDE';
+      badge.textContent = 'Beklemede';
+      badge.className = 'doluluk-status beklemede';
+      meta.textContent = 'Motor, ana makine açıldığında otomatik olarak çalışmaya başlayacak.';
+      btnGider.style.display = 'none';
+      otomatikEtiket.style.display = 'flex';
+    }
+
+    document.getElementById('ozet-sayac').innerHTML = state.bugunSayisi + '<span>adet</span>';
+    document.getElementById('ozet-sicaklik').innerHTML = state.sicaklik + '<span>°C</span>';
+
+    const r = 40, c = 2 * Math.PI * r;
+    const offset = c - (state.yuk / 100) * c;
+    document.getElementById('yuk-ring').setAttribute('stroke-dashoffset', offset);
+    document.getElementById('yuk-pct').textContent = '%' + state.yuk;
+    document.getElementById('yuk-bar').style.width = state.yuk + '%';
+
+    logListesiCiz();
+    anaMakineDurumGoster();
+
+    const simdi = new Date();
+    document.getElementById('son-guncelleme').textContent = 'Son güncelleme: ' + saatStr(simdi);
+  }
+
+  function logListesiCiz(){
+    const kap = document.getElementById('log-liste');
+    document.getElementById('log-sayisi').textContent = state.sonIslemler.length + ' kayıt';
+    if (state.sonIslemler.length === 0){
+      kap.innerHTML = '<div class="log-empty">Henüz işlem kaydı yok.</div>';
+      return;
+    }
+    kap.innerHTML = state.sonIslemler.slice(0, 8).map(function(k){
+      return '<div class="log-item"><span class="log-dot" style="background:' + ayar.renk + ';"></span>' +
+             '<span class="log-time">' + k.zaman + '</span>' +
+             '<span class="log-text">' + k.text + '</span></div>';
+    }).join('');
+  }
+
+  function alertGoster(){
+    const wrap = document.getElementById('ezme-alert-wrap');
+    if (!state.sikisma){ wrap.innerHTML = ''; return; }
+    wrap.innerHTML =
+      '<div class="doluluk-alert" role="alert">' +
+        '<span class="doluluk-alert-icon" aria-hidden="true">' +
+          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 9v4M12 17h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>' +
+        '</span>' +
+        '<div class="doluluk-alert-body">' +
+          '<p class="doluluk-alert-title">Sıkışma Tespit Edildi</p>' +
+          '<p class="doluluk-alert-text"><strong>' + ayar.baslik + '</strong> içinde sıkışma algılandı, motor otomatik olarak durduruldu. Bölmeyi kontrol edip “Sıkışmayı Gider” butonuna basın.</p>' +
+        '</div>' +
+      '</div>';
+  }
+
+  // ── Tepsi/bölme widget'ı (ör. cam parçacık tepsisi) ─────────────────────
+  // unite-api.js her poll'da, ayar.bolme tanımlıysa compartments verisini
+  // çekip bu fonksiyonu çağırır. compartment undefined gelirse (backend'de
+  // henüz bu bölme tanımlı değilse) widget'ı "veri yok" durumunda bırakır.
+  function tepsiDurum(c){
+    if (Number(c.fill_percent) >= Number(c.critical_threshold)) return { key: 'kritik', ad: 'Kritik' };
+    if (Number(c.fill_percent) >= Number(c.warning_threshold)) return { key: 'uyari', ad: 'Uyarı' };
+    return { key: 'normal', ad: 'Normal' };
+  }
+
+  function tepsiGuncelle(ayar, compartment){
+    const wrap = document.getElementById('doluluk-alert-wrap');
+    if (!compartment){
+      document.getElementById('tepsi-meta').textContent = 'Bu bölme için backend verisi bulunamadı.';
+      if (wrap) wrap.innerHTML = '';
+      return;
+    }
+
+    const yuzde = Number(compartment.fill_percent);
+    const st = tepsiDurum(compartment);
+
+    const r = 40, c = 2 * Math.PI * r;
+    const offset = c - (yuzde / 100) * c;
+    document.getElementById('tepsi-ring').setAttribute('stroke-dashoffset', offset);
+    document.getElementById('tepsi-pct').textContent = '%' + yuzde;
+    document.getElementById('tepsi-bar').style.width = yuzde + '%';
+    document.getElementById('tepsi-meta').textContent =
+      Math.round(compartment.capacity * (yuzde / 100)) + ' / ' + compartment.capacity + ' ' + compartment.unit;
+    document.getElementById('tepsi-badge').textContent = st.ad;
+    document.getElementById('tepsi-badge').className = 'doluluk-status ' + st.key;
+    document.getElementById('tepsi-card').className = 'doluluk-card' + (st.key === 'kritik' ? ' kart-kritik' : '');
+
+    if (!wrap) return;
+    if (st.key === 'kritik'){
+      wrap.innerHTML =
+        '<div class="doluluk-alert" role="alert">' +
+          '<span class="doluluk-alert-icon" aria-hidden="true">' +
+            '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 9v4M12 17h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>' +
+          '</span>' +
+          '<div class="doluluk-alert-body">' +
+            '<p class="doluluk-alert-title">Kritik Doluluk Uyarısı</p>' +
+            '<p class="doluluk-alert-text"><strong>' + (compartment.display_name || (ayar.bolme && ayar.bolme.ad) || 'Bölme') + ' (%' + yuzde + ')</strong> kritik seviyeye ulaştı. En kısa sürede boşaltılması gerekiyor. ' +
+            '<a href="doluluk.html" style="color:#C0392B; text-decoration:underline;">Detayları görüntüle →</a></p>' +
+          '</div>' +
+        '</div>';
+    } else {
+      wrap.innerHTML = '';
+    }
+  }
+
+  function sikismaGiderYerel(){
+    state.sikisma = false;
+    if (typeof acilDurumGiderKaynak === 'function') acilDurumGiderKaynak(ayar.baslik);
+
+    if (!anaMakineAcikMi()) {
+      state.calisiyor = false;
+      state.yuk = 0;
+    } else {
+      state.yuk = rastgele(45, 60);
+    }
+
+    kaydet();
+    ekranGuncelle();
+    alertGoster();
+  }
+
+  function sikismaGider(){
+    UniteApi.sikismaGider(ayar)
+      .then(sikismaGiderYerel)
+      .catch(function(error){ alert('Sıkışma durumu güncellenemedi: ' + error.message); });
+  }
+
+  window.addEventListener('storage', function(e){
+    if (e.key === ayar.sayacKey || e.key === 'makineAcik'){
+      state = yerelDurumuOku();
+      if (!Array.isArray(state.sonIslemler)) state.sonIslemler = [];
+      ekranGuncelle();
+      alertGoster();
+    }
+  });
+
+  document.addEventListener('DOMContentLoaded', function(){
+    menuyuRoleGoreDuzenle();
+    ekranGuncelle();
+    alertGoster();
+    if (window.UniteApi) {
+      UniteApi.baslat(ayar);
+    } else {
+      const wrap = document.getElementById('baglanti-hata-wrap');
+      if (wrap) wrap.innerHTML = '<div class="doluluk-alert" role="alert"><div class="doluluk-alert-body"><p class="doluluk-alert-title">Entegrasyon Hatası</p><p class="doluluk-alert-text">unite-api.js yüklenemedi, canlı veri gösterilemiyor.</p></div></div>';
+    }
+  });
+
+  // Makine açıkken panelden çıkışı engelle
+  (function makineAcikkenCikisiEngelle(){
+    function makineCalisiyorMu(){
+      return JSON.parse(localStorage.getItem('makineAcik') || 'false');
+    }
+    function cikisUyarisiGoster(){
+      alert('Makine açıkken siteden çıkamazsınız. Lütfen önce makineyi kapatın.');
+    }
+    document.querySelectorAll('a[href="login.html"]').forEach(function(link){
+      link.addEventListener('click', function(e){
+        if (!makineCalisiyorMu()) return;
+        e.preventDefault();
+        e.stopPropagation();
+        cikisUyarisiGoster();
+      });
+    });
+  })();
+  </script>
+</html>

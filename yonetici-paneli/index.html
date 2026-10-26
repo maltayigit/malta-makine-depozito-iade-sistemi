@@ -1,0 +1,838 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Malta Makine — Self-Servis İade Kioskı</title>
+<link rel="icon" type="image/svg+xml" href="assets/image/favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/style.css">
+<script src="assets/js/auth.js"></script>
+<script>sayfaKorumaKontrolEt(['yonetici','market','bakanlik']);</script>
+<script src="assets/js/api-client.js"></script>
+<script src="assets/js/doluluk-veri.js"></script>
+<script src="assets/js/ezme-veri.js"></script>
+<script src="assets/js/fan-veri.js"></script>
+<script src="assets/js/acil-durum-veri.js"></script>
+<script src="assets/js/kapak-motor-veri.js"></script>
+<script src="assets/js/kapak-uyari.js"></script>
+
+<style>
+  .kapak-alert-wrap {
+    display: none;
+    margin-bottom: 16px;
+
+  }
+
+  .kapak-alert-wrap.show {
+    display: block;
+  }
+
+  .kapak-alert-card {
+    border: 1px solid rgba(255, 82, 82, 0.35);
+    border-left: 5px solid #ff5252;
+    border-radius: 8px;
+    background: rgba(255, 82, 82, 0.10);
+    color: var(--paper--deep);
+    padding: 14px 16px;
+  }
+
+  .kapak-alert-title {
+    margin: 0 0 6px;
+    font-weight: 700;
+    color: var(--paper--deep);
+  }
+
+  .kapak-alert-text {
+    margin: 0 0 10px;
+    color: var(--paper--deep);
+  }
+
+  .kapak-alert-list {
+    margin: 0;
+    padding-left: 18px;
+  }
+
+  .sikisma-alert-card {
+    border: 1px solid rgba(220, 38, 38, 0.5);
+    border-left: 5px solid #dc2626;
+    border-radius: 8px;
+    background: rgba(220, 38, 38, 0.12);
+    color: var(--paper--deep);
+    padding: 14px 16px;
+    animation: sikisma-yanip-sonme 1.4s ease-in-out infinite;
+  }
+
+  @keyframes sikisma-yanip-sonme {
+    0%, 100% { box-shadow: 0 0 0 rgba(220, 38, 38, 0); }
+    50% { box-shadow: 0 0 0 4px rgba(220, 38, 38, 0.18); }
+  }
+
+  .sikisma-alert-btn {
+    margin-top: 10px;
+    border: none;
+    border-radius: 6px;
+    background: #dc2626;
+    color: #fff;
+    font-weight: 600;
+    padding: 8px 14px;
+    cursor: pointer;
+  }
+
+  .acil-alarm-card {
+    border: 1px solid rgba(192, 57, 43, 0.5);
+    border-left: 5px solid #C0392B;
+    border-radius: 8px;
+    background: rgba(192, 57, 43, 0.12);
+    color: var(--paper--deep);
+    padding: 14px 16px;
+    animation: sikisma-yanip-sonme 1.2s ease-in-out infinite;
+  }
+
+  .acil-alarm-list {
+    margin: 6px 0 10px;
+    padding-left: 18px;
+  }
+
+  .acil-alarm-btn {
+    margin-top: 4px;
+    border: none;
+    border-radius: 6px;
+    background: #C0392B;
+    color: #fff;
+    font-weight: 600;
+    padding: 8px 14px;
+    cursor: pointer;
+  }
+</style>
+
+</head>
+<body>
+ 
+  <input type="checkbox" id="menu-toggle" class="menu-toggle-input">
+  <label for="menu-toggle" class="hamburger" aria-label="Menüyü aç/kapat">
+    <span></span><span></span><span></span>
+  </label>
+  <label for="menu-toggle" class="overlay" aria-hidden="true"></label>
+ 
+  <aside class="sidebar" aria-label="Ana gezinme">
+    <div class="mark">
+      <div class="mark-glyph" aria-hidden="true">
+        <a href="index.html">
+        <img src="assets/image/logo.svg" alt="Malta logosu" class="mark-glyph-img">
+       </a>
+      </div>
+      <div class="mark-text">Malta Makine</div>
+    </div>
+    <div class="mark-sub">İade Kiosk Sistemleri</div>
+ 
+    <div class="panel-seam"></div>
+ 
+    <nav>
+      <div class="nav-group">
+        <p class="nav-label">Ürün</p>
+        <ul class="nav-list">
+          <li class="nav-item active">
+            <a class="nav-link" href="index.html"><span class="led"></span>Bakım</a>
+          </li>
+          <li class="nav-item" data-rol="yonetici,market">
+            <a class="nav-link" href="makine.html"><span class="led"></span>Kapaklar</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="doluluk.html"><span class="led"></span>Doluluk Bilgi</a>
+          </li>
+          <li class="nav-item" data-rol="yonetici,market">
+            <a class="nav-link" href="motor-durum.html"><span class="led"></span>Motor Durum Özeti</a>
+          </li>
+          <li class="nav-item" data-rol="yonetici">
+            <a class="nav-link" href="kapak-motor-durum.html"><span class="led"></span>Kapak Motor Durumu</a>
+          </li>
+          <li class="nav-item" data-rol="yonetici,market">
+            <a class="nav-link" href="fan.html"><span class="led"></span>Fan Durum</a>
+          </li>
+          <li class="nav-item" data-rol="yonetici">
+            <a class="nav-link" href="kamera-durum.html"><span class="led"></span>Kamera Durum</a>
+          </li>
+          <li class="nav-item" data-rol="yonetici,market">
+            <a class="nav-link" href="ekran-durumu.html"><span class="led"></span>Ekran Durum Paneli</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="acil-durum.html"><span class="led"></span>Acil Durum & Alarm</a>
+          </li>
+        </ul>
+      </div>
+ 
+      <div class="nav-group">
+        <p class="nav-label">Motorlar</p>
+        <ul class="nav-list">
+          <li class="nav-item">
+            <a class="nav-link" href="unite.html?unite=ezme1_05l"><span class="led"></span>(0.5L) 1. Plastik Ezme Durum</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="unite.html?unite=ezme2_05l"><span class="led"></span>(0.5L) 2. Plastik Ezme Durum</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="unite.html?unite=ezme1_13l"><span class="led"></span>(1-3L) 1. Plastik Ezme Durum</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="unite.html?unite=ezme2_13l"><span class="led"></span>(1-3L) 2. Plastik Ezme Durum</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="unite.html?unite=ezme3"><span class="led"></span>Teneke/Alüminyum Ezme Durum</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="cam-kirma.html"><span class="led"></span>1. Cam Kırma Durum</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="cam-kirma2.html"><span class="led"></span>2. Cam Kırma Durum</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="unite.html?unite=suKaristirma"><span class="led"></span>Atık Su Tankı Karıştırma Durum</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="unite.html?unite=atikSuPompa"><span class="led"></span>Atık Su Pompa Durum</a>
+          </li>
+        </ul>
+      </div>
+
+      <div class="nav-group">
+        <p class="nav-label">Kurumsal</p>
+        <ul class="nav-list">
+          <li class="nav-item">
+            <a class="nav-link" href="#"><span class="led"></span>Referanslar</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="#"><span class="led"></span>Kurulum Süreci</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="#"><span class="led"></span>SSS</a>
+          </li>
+        </ul>
+      </div>
+ 
+        <div class="nav-group">
+        <p class="nav-label">İletişim</p>
+        <ul class="nav-list">
+          <li class="nav-item" data-rol="yonetici,market">
+            <a class="nav-link" href="ariza-bildir.html"><span class="led"></span>Arıza Bildir</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="contact.html"><span class="led"></span>Bizimle İletişime Geçin</a>
+          </li>
+        </ul>
+      </div>
+    </nav>
+
+    <div class="nav-group">
+        <p class="nav-label"></p>
+        <ul class="nav-list">
+          <li class="nav-item">
+            <a class="nav-link" href="makineler.html"><span class="led"></span>Çıkış</a>
+          </li>
+        </ul>
+      </div>
+ 
+    <div class="sidebar-foot">
+      <div class="barcode" aria-hidden="true"></div>
+      <span>PANEL SÜRÜM 0.1</span>
+    </div>
+  </aside>
+  <main>
+    <section id="ana-sayfa">
+ 
+    <div class="home-body">
+ 
+      <!-- Kritik doluluk uyarısı (sadece kritik bölme varsa görünür) -->
+      <div id="doluluk-alert-wrap"></div>
+
+      <!-- Kapak açık uyarısı -->
+<div id="kapak-alert-wrap" class="kapak-alert-wrap" aria-live="polite"></div>
+
+      <!-- Sıkışma / acil durdurma uyarısı -->
+<div id="sikisma-alert-wrap" class="kapak-alert-wrap" aria-live="assertive"></div>
+
+      <!-- Kritik alarm uyarısı (acil-durum-veri.js -> acilDurumAlarmVer ile tetiklenir) -->
+<div id="acil-durum-alert-wrap" class="kapak-alert-wrap" aria-live="assertive"></div>
+
+      <!-- Makine kartı -->
+      <p class="eyebrow" style="margin-bottom:6px;">Makine #001 · Malta · Murat Kaya</p>
+      <div class="makine-kart kapali" id="makine-kart">
+        <svg id="makine-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <div class="makine-kart-info">
+          <div class="label">Makine Durumu</div>
+          <div class="deger" id="makine-deger">KAPALI</div>
+        </div>
+        <button class="toggle off" id="makine-toggle" onclick="makineToggle()"></button>
+      </div>
+    </div>
+ 
+    </section>
+ 
+      <!-- ÜRÜNLER -->
+<section id="urunler">
+  <div class="container">
+    <span class="section-eyebrow reveal">Kabul Edilen Ambalajlar</span>
+    <h2 class="section-title reveal">Hangi Ürünleri Getirebilirsiniz?</h2>
+    <p class="section-lead reveal">Plastik, teneke ve cam olmak üzere üç farklı ambalaj türünü sisteme dahil edebilirsiniz.</p>
+    <div class="urun-grid">
+ 
+      <!-- PLASTİK -->
+      <div class="urun-card reveal acc-plastik">
+        <span class="urun-index">TÜR / 01</span>
+        <div class="urun-header">
+          <div class="urun-icons">
+            <div class="icon-chip"><span class="icon-chip-glyph"><img src="assets/image/plastik.png" alt="Plastik şişe"></span><span>0.5 L</span></div>
+            <div class="icon-chip"><span class="icon-chip-glyph"><img src="assets/image/plastik.png" alt="Plastik şişe"></span><span>1 L</span></div>
+            <div class="icon-chip"><span class="icon-chip-glyph"><img src="assets/image/plastik.png" alt="Plastik şişe"></span><span>1.5 L</span></div>
+            <div class="icon-chip"><span class="icon-chip-glyph"><img src="assets/image/plastik.png" alt="Plastik şişe"></span><span>2–3 L</span></div>
+          </div>
+        </div>
+        <div class="urun-body">
+          <div class="urun-badge">♻ Plastik</div>
+          <h3>Plastik Şişeler</h3>
+          <p class="urun-aralik">0,5 Lt — 3 Lt arası tüm boyutlar</p>
+          <ul class="urun-list">
+            <li>Su, meyve suyu, gazlı içecek şişeleri</li>
+            <li>PET ambalajlı tüm içecekler</li>
+            <li>Temizlenmiş ve ezilmemiş olmalı</li>
+          </ul>
+          <div class="urun-depozito">1 şişe = <strong>1 ₺</strong></div>
+        </div>
+      </div>
+ 
+      <!-- TENEKE -->
+      <div class="urun-card reveal acc-teneke">
+        <span class="urun-index">TÜR / 02</span>
+        <div class="urun-header">
+          <div class="urun-icons">
+            <div class="icon-chip"><span class="icon-chip-glyph"><img src="assets/image/teneke.png" alt="Teneke kutu"></span><span>0.2 L</span></div>
+            <div class="icon-chip"><span class="icon-chip-glyph"><img src="assets/image/teneke.png" alt="Teneke kutu"></span><span>0.33 L</span></div>
+          </div>
+        </div>
+        <div class="urun-body">
+          <div class="urun-badge">🥫 Teneke / Alüminyum</div>
+          <h3>Teneke Kutular</h3>
+          <p class="urun-aralik">0,2 Lt ve 0,33 Lt</p>
+          <ul class="urun-list">
+            <li>Alüminyum içecek kutuları</li>
+            <li>Enerji içeceği ve bira kutuları</li>
+            <li>Ezilmemiş, barkodu okunabilir olmalı</li>
+          </ul>
+          <div class="urun-depozito">1 kutu = <strong>1 ₺</strong></div>
+        </div>
+      </div>
+ 
+      <!-- CAM -->
+      <div class="urun-card reveal acc-cam">
+        <span class="urun-index">TÜR / 03</span>
+        <div class="urun-header">
+          <div class="urun-icons">
+            <div class="icon-chip"><span class="icon-chip-glyph"><img src="assets/image/sise.png" alt="Cam şişe"></span><span>200 ml</span></div>
+            <div class="icon-chip"><span class="icon-chip-glyph"><img src="assets/image/sise.png" alt="Cam şişe"></span><span>500 ml</span></div>
+            <div class="icon-chip"><span class="icon-chip-glyph"><img src="assets/image/sise.png" alt="Cam şişe"></span><span>1 Lt</span></div>
+            <div class="icon-chip"><span class="icon-chip-glyph"><img src="assets/image/sise.png" alt="Cam şişe"></span><span>1.1 Lt</span></div>
+          </div>
+        </div>
+        <div class="urun-body">
+          <div class="urun-badge">🍶 Cam</div>
+          <h3>Cam Şişeler</h3>
+          <p class="urun-aralik">200 ml — 1,1 Lt arası tüm boyutlar</p>
+          <ul class="urun-list">
+            <li>Su, ayran, meyve suyu cam şişeleri</li>
+            <li>gazlı içecek cam şişeleri</li>
+            <li>Kırılmamış, barkodu okunabilir olmalı</li>
+          </ul>
+          <div class="urun-depozito">1 şişe = <strong>1 ₺</strong></div>
+        </div>
+      </div>
+ 
+    </div>
+  </div>
+</section>
+ 
+    <div class="divider-full"></div>
+ 
+ 
+    <section id="teknik-bilgiler">
+    <div class="row">
+      <h2>Yönerge</h2>
+      <span>Malta İade Atık Sistemi</span>
+    </div>
+ 
+    <ul class="spec-list">
+      <li class="spec"><span class="spec-title">Yetkili Harici Açamaz</span><span class="spec-title">Güç Kaynağı ve Jeneretör Bağlanmalıdır</span></li>
+      <li class="spec"><span class="spec-title">220V İle Çalışır</span><span class="spec-title">Atık Su Tahliyesi Manuel Yapılmaktadır</span></li>
+      <li class="spec"><span class="spec-title">Kapaklar Açıkken Çalışmaz</span><span class="spec-title">Tüm Kapaklar Manyetikdir Müdahale Etmeyiniz</span></li>
+      <li class="spec"><span class="spec-title">Atık Su %10 Kala Mesaj Gönderilir</span><span class="spec-title">Fanlar Kesinlikle Çalıştırılacaktır</span></li>
+      <li class="spec"><span class="spec-title">Plastik 0.5 - 3 lt içindir</span><span class="spec-title">Acil Durum Işığına Dikkat Edilmelidir</span></li>
+      <li class="spec"><span class="spec-title">Cam 200 ml - 1 lt içindir</span><span class="spec-title">Standart Atık Torbası Harici Torba Kullanılmaz</span></li>
+      <li class="spec"><span class="spec-title">Teneke Kutu 200-500 ml içindir</span><span class="spec-title"></span></li>
+    </ul>
+    </section>
+  </main>
+ 
+  <!-- Güvenlik Uyarısı Modalı -->
+  <div class="warn-overlay" id="warn-overlay">
+    <div class="warn-modal" role="alertdialog" aria-labelledby="warn-title" aria-describedby="warn-text">
+      <div class="warn-head">
+        <div class="warn-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        </div>
+        <div>
+          <p class="warn-sub">Güvenlik Uyarısı</p>
+          <h3 class="warn-title" id="warn-title">Makine başlatılamadı</h3>
+        </div>
+      </div>
+      <p class="warn-text" id="warn-text">Aşağıdaki kapaklar açık olduğu için makine güvenlik nedeniyle çalıştırılamıyor. Lütfen tüm kapakları kapatıp tekrar deneyin.</p>
+      <ul class="warn-list" id="warn-list"></ul>
+      <div class="warn-actions">
+        <button class="warn-btn" onclick="uyariKapat()">Anladım</button>
+      </div>
+    </div>
+  </div>
+ 
+</body>
+<script>
+ 
+    // Mevcut sayfanın URL'sine göre doğru sekmeyi otomatik "aktif" yap
+    (function aktifSekmeAyarla(){
+      var mevcutDosya = window.location.pathname.split('/').pop() || 'index.html';
+      var eslesenLink = null;
+ 
+      document.querySelectorAll('.nav-link').forEach(function(link){
+        var href = link.getAttribute('href');
+        if (!href || href === '#') return;
+        var hedefDosya = href.split('/').pop();
+        if (hedefDosya === mevcutDosya) {
+          eslesenLink = link;
+        }
+      });
+ 
+      document.querySelectorAll('.nav-item').forEach(function(item){
+        item.classList.remove('active');
+      });
+      if (eslesenLink) {
+        eslesenLink.closest('.nav-item').classList.add('active');
+      }
+    })();
+ 
+    // Mobil çekmece açıksa, bir menüye tıklandığında otomatik kapansın
+    document.querySelectorAll('.nav-link').forEach(function(link){
+      link.addEventListener('click', function(){
+        var toggle = document.getElementById('menu-toggle');
+        if (toggle) toggle.checked = false;
+      });
+    });
+ 
+  // ── Uygulama durumu (state) ─────────────────────────────────────────────
+  // NOT: makineAcik artık burada localStorage'dan OKUNMUYOR — sayfa DOM
+  // hazır olur olmaz makineGucDurumunuYukle() gerçek durumu backend'den
+  // (machine_power_state tablosu, GET /api/machines/:id/power) çekip
+  // state'i günceller. Buradaki 'false' sadece o istek tamamlanana kadarki
+  // kısa süreli varsayılan görünümdür.
+  const state = {
+  makineAcik: false,
+};
+ 
+  
+  const kapakIsimleri=['Tablet Bakım Kapağı','Su Tahliye Kapağı','Metal Atık kapağı','Cam Atık Kapağı','Plastik Atık Kapağı','Plastik Kapak Kutusu','Ups Kapağı','Üst Pano Kapağı','Pil Kutusu Kapağı','Elektrik Pano Kapağı'];
+  async function acikKapaklariBul() {
+    const machineId = (typeof MaltaApi !== 'undefined') ? MaltaApi.machineId() : null;
+    if (!machineId) return [];
+
+    try {
+      const kapaklar = await MaltaApi.request('/api/machines/' + encodeURIComponent(machineId) + '/covers');
+      return kapaklar
+        .filter(function (kapak) { return kapak.status === 'OPEN'; })
+        .map(function (kapak) {
+          const index = Number(kapak.cover_number) - 1;
+          return kapakIsimleri[index] || ('Kapak ' + kapak.cover_number);
+        });
+    } catch (error) {
+      console.error('[kapaklar] Açık kapaklar alınamadı:', error);
+      return [];
+    }
+  }
+
+async function kapakUyarisiGuncelle() {
+  const alan = document.getElementById('kapak-alert-wrap');
+  if (!alan) return;
+
+  const aciklar = await acikKapaklariBul();
+
+  if (!aciklar.length) {
+    alan.classList.remove('show');
+    alan.innerHTML = '';
+    return;
+  }
+
+  alan.classList.add('show');
+  alan.innerHTML =
+    '<div class="kapak-alert-card" role="alert">' +
+      '<p class="kapak-alert-title">Kapak açık uyarısı</p>' +
+      '<p class="kapak-alert-text">Makineyi çalıştırmadan önce açık kapakları kapatın.</p>' +
+      '<ul class="kapak-alert-list">' +
+        aciklar.map(function(ad) {
+          return '<li>' + ad + '</li>';
+        }).join('') +
+      '</ul>' +
+    '</div>';
+}
+
+/* ── Sıkışma güvenlik uyarısı (herhangi bir ezme/kırma ünitesinde
+   sıkışma olduğunda ana ekrana bildirim düşer, sistem otomatik
+   durdurulmuş olur) ────────────────────────────────────────────── */
+async function sikismaUyarisiGuncelle() {
+  const alan = document.getElementById('sikisma-alert-wrap');
+  if (!alan) return;
+
+  const bildirim = (typeof sikismaBildirimiOku === 'function') ? await sikismaBildirimiOku() : null;
+
+  if (!bildirim || !bildirim.unite || !bildirim.zaman) {
+    // Bildirim yok, ya da eski/bozuk formatta (unite/zaman alanları eksik).
+    // Bozuk bildirimi ekranda "undefined" olarak göstermek yerine temizle.
+    if (bildirim) localStorage.removeItem('sikismaBildirimi');
+    alan.classList.remove('show');
+    alan.innerHTML = '';
+    return;
+  }
+
+  alan.classList.add('show');
+  alan.innerHTML =
+    '<div class="sikisma-alert-card" role="alert">' +
+      '<p class="kapak-alert-title">⚠ Sıkışma nedeniyle sistem durduruldu</p>' +
+      '<p class="kapak-alert-text"><strong>' + bildirim.unite + '</strong> içinde saat ' + bildirim.zaman + ' itibarıyla sıkışma tespit edildi. Güvenlik nedeniyle tüm sistem otomatik olarak durduruldu. Sıkışma giderilene kadar bu bildirim ekranda kalır.</p>' +
+      (bildirim.sayfa
+        ? '<button class="sikisma-alert-btn" onclick="window.location.href=\'' + bildirim.sayfa + '\'">' + bildirim.unite + ' Sayfasına Git</button>'
+        : '') +
+    '</div>';
+}
+
+/* Bekleyen bir sıkışma bildirimi varsa: ekran durumunu (KAPALI) senkron
+   tutar, banner'ı gösterir ve ilk görüldüğünde sesli uyarı verir. */
+async function sikismaBildirimiKontrolEt(sesliUyarVer) {
+  if (typeof sikismaBildirimiOku !== 'function') return;
+  const bildirim = await sikismaBildirimiOku();
+
+  if (bildirim && (!bildirim.unite || !bildirim.zaman)) {
+    // Eski/bozuk formatlı bildirim: sesli uyarı verme, temizle.
+    localStorage.removeItem('sikismaBildirimi');
+    await sikismaUyarisiGuncelle();
+    return;
+  }
+
+  if (bildirim) {
+    // Ana makine başka bir sayfadan kapatılmış olabilir; ekranı gerçek
+    // backend durumuna (machine_power_state) göre senkron tut.
+    await makineGucDurumunuYukle();
+
+    if (!bildirim.okundu) {
+      if (sesliUyarVer) {
+        sesliKomutVer('Dikkat. ' + bildirim.unite + ' içinde sıkışma tespit edildi. Sistem güvenlik nedeniyle durduruldu.');
+      }
+      bildirim.okundu = true;
+      localStorage.setItem('sikismaBildirimi', JSON.stringify(bildirim));
+    }
+  }
+
+  await sikismaUyarisiGuncelle();
+}
+
+/* ── Kritik Alarm uyarısı (acil-durum-veri.js) ─────────────────────────
+   acilDurumAlarmVer(...) ile 'kritik' seviyede verilen HERHANGİ bir alarm
+   burada banner olarak gösterilir. İlgili alt sistem sorunu giderip
+   acilDurumGiderKaynak(...) çağırdığında (ya da acil-durum.html'den daha
+   düşük bir seviyeye düşürüldüğünde) alarm 'aktifler' listesinden düşer
+   ve bu banner otomatik olarak ekrandan kalkar. */
+var _oncekiKritikVarMi = false;
+
+function acilDurumUyarisiGuncelle(sesliUyarVer) {
+  const alan = document.getElementById('acil-durum-alert-wrap');
+  if (!alan) return;
+  if (typeof acilDurumAktifler !== 'function') return;
+
+  const aktifler = acilDurumAktifler();
+  const kritikAktif = aktifler.filter(function (k) { return k.seviye === 'kritik'; });
+
+  if (!kritikAktif.length) {
+    alan.classList.remove('show');
+    alan.innerHTML = '';
+    _oncekiKritikVarMi = false;
+    return;
+  }
+
+  if (!_oncekiKritikVarMi && sesliUyarVer) {
+    sesliKomutVer('Dikkat. Kritik alarm. ' + kritikAktif.map(function (k) { return k.kaynak; }).join(', ') + ' için acil müdahale gerekiyor.');
+  }
+  _oncekiKritikVarMi = true;
+
+  alan.classList.add('show');
+  alan.innerHTML =
+    '<div class="acil-alarm-card" role="alert">' +
+      '<p class="kapak-alert-title">⚠ Kritik Alarm Aktif</p>' +
+      '<p class="kapak-alert-text">Aşağıdaki kaynaklar için acil müdahale gerekiyor. Sorun giderilene kadar bu bildirim ekranda kalır.</p>' +
+      '<ul class="acil-alarm-list">' +
+        kritikAktif.map(function (k) {
+          return '<li><strong>' + k.kaynak + '</strong> — ' + k.mesaj + '</li>';
+        }).join('') +
+      '</ul>' +
+      '<button class="acil-alarm-btn" onclick="window.location.href=\'acil-durum.html\'">Acil Durum & Alarm Sayfasına Git</button>' +
+    '</div>';
+}
+
+function sesliKomutVer(metin) {
+  if (!('speechSynthesis' in window)) return;
+
+  window.speechSynthesis.cancel();
+
+  const komut = new SpeechSynthesisUtterance(metin);
+  komut.lang = 'tr-TR';
+  komut.rate = 0.95;
+
+  window.speechSynthesis.speak(komut);
+}
+  function guvenlikUyarisi(aciklar){
+    const liste = document.getElementById('warn-list');
+    const overlay = document.getElementById('warn-overlay');
+    if (!liste || !overlay) { console.warn('Uyarı modalı HTML\'de bulunamadı.'); return; }
+    liste.innerHTML = aciklar.map(function(ad){
+      return '<li><span class="warn-dot"></span>' + ad + '</li>';
+    }).join('');
+    overlay.classList.add('show');
+  }
+ 
+  function uyariKapat(){
+    const overlay = document.getElementById('warn-overlay');
+    if (overlay) overlay.classList.remove('show');
+  }
+ 
+  const warnOverlayEl = document.getElementById('warn-overlay');
+  if (warnOverlayEl) {
+    warnOverlayEl.addEventListener('click', function(e){
+      if (e.target === this) uyariKapat();
+    });
+  }
+  document.addEventListener('keydown', function(e){
+    if (e.key === 'Escape') uyariKapat();
+  });
+ 
+  // ── Çıkış modalı (henüz ayrı bir modal tanımlı değilse geçici davranış) ──
+  function cikisModalAc() {
+    if (confirm('Çıkış yapmak istediğinize emin misiniz?')) {
+      // Burada gerçek çıkış/yönlendirme mantığı eklenebilir
+      window.location.href = 'index.html';
+    }
+  }
+ 
+  // ── Sayfa yüklendiğinde başlangıç kurulumu ───────────────────────────────
+  document.addEventListener('DOMContentLoaded', () => {
+    menuyuRoleGoreDuzenle();
+    // Bakanlık kullanıcısı için salt okunur mod artık auth.js içindeki
+    // bakanlikSaltOkunurModunuUygula() tarafından TÜM sayfalarda otomatik
+    // uygulanıyor (bu makine-toggle butonu dahil) — burada ayrıca bir şey
+    // yapmaya gerek yok. Asıl kısıtlama backend'de: bu rolün
+    // DEVICE_COMMAND_SEND izni yok, PATCH /power isteği zaten 403 döner.
+    // Sayfa açılırken makinenin gerçek çalışma durumunu (açık/kapalı)
+    // localStorage'daki eski değeri değil, backend'deki machine_power_state
+    // kaydını (GET /api/machines/:id/power) okuyarak gösterir. Bir hazne
+    // otomatik kapanma eşiğine ulaştıysa bu zaten sunucuda işlenmiştir;
+    // burada sadece o gerçek durumu yansıtıyoruz.
+    makineGucDurumunuYukle();
+    doluluguKontrolEt(true); // true: banner'da doluluk.html'e link göster
+    dolulukOtomatikKapanmaBildirimiGosterVarsa();
+    kapakUyarisiGuncelle();
+    sikismaBildirimiKontrolEt(true);
+    acilDurumUyarisiGuncelle(true);
+  });
+
+  // doluluk.html sekmesi açık ve verileri canlı ilerletiyorsa, bu sayfadaki
+  // banner da (aynı tarayıcıda) anlık olarak güncellensin.
+  // NOT: 'storage' eventi SADECE başka bir sekme/pencerede değişiklik
+  // olduğunda tetiklenir; aynı sekmenin kendi içindeki değişikliklerini
+  // YAKALAMAZ. doluluk-veri.js'in en altındaki arka plan setInterval'i bu
+  // sayfada da (doluluk.html açık olmasa dahi) dolulukTick()'i çalıştırıp
+  // veriyi günceller, ama bu 'storage' eventini bu sekmede tetiklemez.
+  // Bu yüzden index.html'in banner'ı kendi başına asla yenilenmiyordu.
+  // Çözüm: burada da periyodik bir kontrol ekliyoruz.
+  window.addEventListener('storage', (e) => {
+    if (e.key === DOLULUK_DEPO_KEY) doluluguKontrolEt(true);
+    if (e.key === 'sikismaBildirimi') sikismaBildirimiKontrolEt(true);
+    if (typeof ACIL_KAYIT_KEY !== 'undefined' && e.key === ACIL_KAYIT_KEY) acilDurumUyarisiGuncelle(true);
+    if (e.key === 'makineAcik') {
+      // Değer artık başka sekmeden gelen localStorage içeriğine güvenilmiyor
+      // (birden çok makine olduğu için tek bir global bayrak yetersiz);
+      // sadece "bir şey değişmiş olabilir" sinyali olarak kullanılıp gerçek
+      // durum backend'den tekrar çekiliyor.
+      makineGucDurumunuYukle();
+    }
+  });
+
+  setInterval(() => {
+    doluluguKontrolEt(true);
+  }, 4000);
+
+  // 'storage' olayı sadece BAŞKA bir sekmede değişiklik olduğunda tetiklenir.
+  // Bu yüzden aynı sekme içinde (ör. bu sayfa zaten açıkken arka planda
+  // simulateTick çalışan bir ünite sekmesi kapatılmış olsa bile) bekleyen
+  // bir sıkışma bildirimini kaçırmamak için periyodik olarak da kontrol edilir.
+  setInterval(() => {
+    sikismaBildirimiKontrolEt(true);
+  }, 4000);
+
+  // 'storage' olayı bu sekmenin KENDİ localStorage yazımlarını yakalamaz;
+  // acil-durum-veri.js arka planda (acil-durum.html açık olmasa dahi) yeni
+  // alarm üretebileceğinden, kritik alarm banner'ını burada da periyodik
+  // olarak kontrol ediyoruz.
+  setInterval(() => {
+    acilDurumUyarisiGuncelle(true);
+  }, 2000);
+
+  // Güç durumu sunucu tarafında da değişebilir (ör. bir hazne otomatik
+  // kapanma eşiğine ulaştığında backend makineyi kendisi kapatır). Diğer
+  // canlı-güncelleme aralıklarıyla (doluluk, sıkışma, alarm) tutarlı
+  // şekilde bunu da periyodik olarak backend'den doğruluyoruz.
+  setInterval(() => {
+    makineGucDurumunuYukle();
+  }, 5000);
+ 
+  // ── Makine toggle ─────────────────────────────────────────────────────
+  async function makineToggle() {
+  if (!state.makineAcik) {
+    if (typeof herhangiUniteSikismadaMi === 'function' && await herhangiUniteSikismadaMi()) {
+      guvenlikUyarisi(['Bir ünitede sıkışma giderilmeden makine tekrar başlatılamaz.', 'İlgili ünitenin durum sayfasından veya Motor Durum Özeti\'nden "Sıkışmayı Gider" işlemini yapın.']);
+      sikismaBildirimiKontrolEt(false);
+      return;
+    }
+
+    const acikKapaklar = await acikKapaklariBul();
+
+    // Eşik doluluk-veri.js'de tek yerden yönetiliyor (DOLULUK_OTOMATIK_KAPANMA_ESIK,
+    // şu an %98). Hazne bu eşiğe ulaştıysa hem otomatik kapanır hem de tekrar
+    // açılması burada engellenir; ilgili hazne(ler) boşaltılınca (%0) engel kalkar.
+    const dolulukVerisi = await dolulukYukle();
+    const doluBolmeler = dolulukEsikUstuBolmeleriBul(dolulukVerisi, DOLULUK_OTOMATIK_KAPANMA_ESIK);
+
+    if (acikKapaklar.length || doluBolmeler.length) {
+  const nedenler = [
+    ...acikKapaklar,
+    ...doluBolmeler.map(b => b.ad + ' %' + b.yuzde + ' dolu')
+  ];
+
+  if (acikKapaklar.length) {
+    kapakUyarisiGuncelle();
+    sesliKomutVer('Dikkat. Kapak açık. Makine çalıştırılamaz. Lütfen tüm kapakları kapatın.');
+  }
+
+  guvenlikUyarisi(nedenler);
+  return;
+}
+  }
+
+  const yeniDurum = !state.makineAcik;
+  // Ana panele doğrudan gelindiyse makine kartına tıklanmış olmayabilir.
+  // Bu durumda, oturumdaki kullanıcının erişebildiği ilk makineyi seçerek
+  // açma işlemini sürdür.
+  let machineId = (typeof MaltaApi !== 'undefined') ? MaltaApi.machineId() : null;
+  if (!machineId && typeof aktifMakineIdGetir === 'function') {
+    try {
+      machineId = await aktifMakineIdGetir();
+    } catch (error) {
+      alert('Makine seçilemedi: ' + error.message);
+      return;
+    }
+  }
+  if (!machineId) {
+    alert('Önce Makinelerim sayfasından bir makine seçin.');
+    return;
+  }
+
+  try {
+    await MaltaApi.request('/api/machines/' + encodeURIComponent(machineId) + '/power', {
+      method: 'PATCH',
+      body: JSON.stringify({ isPoweredOn: yeniDurum })
+    });
+
+    if (yeniDurum) {
+      const uniteler = await MaltaApi.request('/api/machines/' + encodeURIComponent(machineId) + '/units');
+      await Promise.all(uniteler
+        .filter(function(unit) { return !unit.is_jammed; })
+        .map(function(unit) {
+          return MaltaApi.request('/api/machines/' + encodeURIComponent(machineId) + '/units/' + encodeURIComponent(unit.unit_code), {
+            method: 'PATCH',
+            body: JSON.stringify({ isRunning: true })
+          });
+        })
+      );
+    }
+
+    state.makineAcik = yeniDurum;
+    tumUniteleriAyarla(yeniDurum);
+    makineGuncelle();
+  } catch (error) {
+    alert('Makine durumu güncellenemedi: ' + error.message);
+    console.error('[makine güç API]', error);
+  }
+  return;
+
+  state.makineAcik = !state.makineAcik;
+  tumUniteleriAyarla(state.makineAcik); // ezme + cam kırma ünitelerini otomatik başlat/durdur
+  makineGuncelle();
+}
+ 
+  // ── Gerçek güç durumunu backend'den çek ──────────────────────────────
+  // machine_power_state tablosundaki is_powered_on alanı, makine listesi
+  // (GET /api/machines) sorgusunda YER ALMAZ — sadece tek makine detayında
+  // (GET /api/machines/:id/power) döner. Bu yüzden aç/kapat göstergesi
+  // için doğrudan bu uç noktayı kullanıyoruz.
+  async function makineGucDurumunuYukle() {
+    let machineId = (typeof MaltaApi !== 'undefined') ? MaltaApi.machineId() : null;
+    if (!machineId) return; // henüz bir makine seçilmemiş (ör. doğrudan index.html'e gelinmiş)
+    try {
+      const guc = await MaltaApi.request('/api/machines/' + encodeURIComponent(machineId) + '/power');
+      state.makineAcik = !!(guc && guc.is_powered_on);
+    } catch (error) {
+      console.error('[makine güç durumu] Yüklenemedi:', error);
+    }
+    makineGuncelle();
+  }
+
+  function makineGuncelle() {
+    localStorage.setItem('makineAcik', JSON.stringify(state.makineAcik));
+
+    // Kapak motorlarını arka planda (kapak-motor-durum.html sayfası
+    // açık olmasa bile) makine durumuna göre otomatik aç/kapat ve
+    // logla. kapak-motor-veri.js yüklenmemişse (ör. dosya bulunamadıysa)
+    // sessizce atla.
+    if (typeof kapakMotorMakineSenkronKontrolEt === 'function') {
+      kapakMotorMakineSenkronKontrolEt();
+    }
+
+    const kart    = document.getElementById('makine-kart');
+    const toggle  = document.getElementById('makine-toggle');
+    const deger   = document.getElementById('makine-deger');
+    const icon    = document.getElementById('makine-icon');
+ 
+    // NOT: toggle butonunun className'i aşağıda tamamen yeniden yazılıyor.
+    // Bakanlık rolü için auth.js (bakanlikSaltOkunurModunuUygula) bu butona
+    // sayfa yüklenirken 'bakanlik-pasif' class'ını (gri görünüm) ekliyor;
+    // burada className'i sıfırdan atarken o class'ı kaybetmeyelim ki buton
+    // her güncellemede (setInterval ile 5sn'de bir) tekrar renkli görünmesin.
+    const bakanlikPasifMi = toggle.classList.contains('bakanlik-pasif');
+    const pasifEk = bakanlikPasifMi ? ' bakanlik-pasif' : '';
+
+    if (state.makineAcik) {
+      kart.className = 'makine-kart acik';
+      toggle.className = 'toggle on' + pasifEk;
+      deger.textContent = 'AÇIK';
+      icon.innerHTML = '<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>';
+    } else {
+      kart.className = 'makine-kart kapali';
+      toggle.className = 'toggle off' + pasifEk;
+      deger.textContent = 'KAPALI';
+      icon.innerHTML = '<circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>';
+    }
+  }
+</script>
+</html>
